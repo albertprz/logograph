@@ -1,27 +1,23 @@
 
-val sparkVersion = "2.4.5"
 
 lazy val settings = Seq(
 
-  scalaVersion := "2.13.2",
-  name := "pipeline",
+  scalaVersion := "2.13.4",
 
-  libraryDependencies += "com.chuusai" %% "shapeless" % "2.3.3",
-  libraryDependencies +=  "com.lihaoyi" % "ammonite" % "2.1.4" cross CrossVersion.full,
-  // libraryDependencies +=  "sh.almond" %% "ammonite-spark" % "0.9.0",
 
-  // libraryDependencies ++= Seq(
-  //   "org.apache.spark" %% "spark-core" % sparkVersion,
-  //   "org.apache.spark" %% "spark-sql" % sparkVersion,
-  //   "org.apache.spark" %% "spark-streaming" % sparkVersion,
-  // ),
+  libraryDependencies ++= Seq(
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+      "com.chuusai" %% "shapeless" % "2.3.3",
+      "com.lihaoyi" % "ammonite" % "2.3.8-4-88785969" % "test" cross CrossVersion.full
+  ),
 
   resolvers ++= Seq(
     Resolver.sonatypeRepo("releases"),
     Resolver.sonatypeRepo("snapshots")
   ),
 
-  scalacOptions ++= Seq("-Ymacro-debug-lite"),
+  // scalacOptions ++= Seq("-Ymacro-debug-lite"),
+
 
   // Ammmonite REPL when invoking test:run in the REPL
   sourceGenerators in Test += Def.task {
@@ -44,6 +40,13 @@ lazy val settings = Seq(
 )
 
 
+lazy val common = project
+  .in(file("common"))
+  .settings(
+    name := "common",
+    settings
+  )
+
 
 lazy val macros = project
   .in(file("macros"))
@@ -51,6 +54,8 @@ lazy val macros = project
     name := "macros",
     settings
   )
+.dependsOn(common)
+
 
 lazy val app = project
   .in(file("app"))
@@ -58,4 +63,5 @@ lazy val app = project
     name := "app",
     settings
   )
+.dependsOn(common)
 .dependsOn(macros)

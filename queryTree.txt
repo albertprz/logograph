@@ -1,0 +1,51 @@
+tree: Tree = Apply(
+  Select(
+    Apply(
+      TypeApply(
+        Select(Ident(QueryBuilder), from),
+        List(
+          AppliedTypeTree(
+            Ident(Tuple2),
+            List(Select(Ident(Application), Person), Select(Ident(Application), House))
+          )
+        )
+      ),
+      List()
+    ),
+    compile
+  ),
+  List(
+    Function(
+      List(ValDef(Modifiers(2105344L, , List()), x0$1, <type ?>, <empty>)),
+      Match(
+        Ident(x0$1),
+        List(
+          CaseDef(
+            Apply(Ident(Tuple2), List(Bind(p, Ident(_)), Bind(h, Ident(_)))),
+            <empty>,
+            Apply(
+              Select(Ident(Query), apply),
+              List(
+                Apply(
+                  Select(Ident(Select), apply),
+                  List(
+                    Apply(
+                      Select(Select(Ident(Application), Person), apply),
+                      List(Select(Ident(p), name), Select(Ident(p), age))
+                    )
+                  )
+                ),
+                Apply(
+                  Select(Ident(Where), apply),
+                  List(Apply(Select(Select(Ident(p), name), $eq$eq), List(Literal(Constant("")))))
+                ),
+                Apply(Select(Ident(GroupBy), apply), List(Select(Ident(p), age))),
+                Select(Ident(Query), apply$default$4)
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+)

@@ -1,0 +1,21 @@
+# sbt
+bin/
+project/
+target/
+app/target/
+macros/target/
+build/
+
+# emacs
+.bsp/
+.bloop/
+.metals/
+
+# other?
+.history
+.scala_dependencies
+.cache
+.cache-main
+
+#general
+*.class
