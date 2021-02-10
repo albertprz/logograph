@@ -1,5 +1,6 @@
 package orm
 
+import ast.QueryImpl
 import scala.language.experimental.macros
 
 
@@ -51,9 +52,6 @@ case class QueryBuilder [T] (private val subqueries: Seq[FullQuery[_, _]] = Seq.
   def where (filterFns: (T ⇒ Boolean)*) =
     query(_.where(filterFns))
 
-  def groupBy (groupFns: (T ⇒ Any)*) =
-    query(_.groupBy(groupFns))
-
   def orderBy (sortFns: (T ⇒ Any)*) =
     query(_.orderBy(sortFns))
 
@@ -70,10 +68,11 @@ object Application extends App {
 
 
   val h = QueryBuilder.from[(Person, House)].create {
+
     case (p, h) ⇒ Query(
-      Select (Person(p.name, p.age)),
-      Where (p.name == ""),
-      GroupBy (p.age)
+      Select (p.name, p.age, h.street),
+      Where (p.age + 50 == 100,
+             h.street != ""),
     ) }
 
 

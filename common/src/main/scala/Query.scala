@@ -1,20 +1,16 @@
 package orm
 
 
-
 case class Select [T] (select: T)
 case class Where (where: Boolean*)
-case class GroupBy (groupBy: Any*)
 case class OrderBy  (orderBy: Any*)
 
 case class Query[T] (private val select: Select[T],
                      private val where: Where = Where(),
-                     private val groupBy: GroupBy = GroupBy(),
                      private val orderBy: OrderBy = OrderBy())
 
 case class BaseQuery[T, R] (private val _select: T ⇒ R = (x: T) ⇒ x,
                             private val _where: Seq[T ⇒ Boolean] = Seq.empty,
-                            private val _groupBy: Seq[T ⇒ Any] = Seq.empty,
                             private val _orderBy: Seq[T ⇒ Any] = Seq.empty) {
 
   def select [A] (mapFn: T ⇒ A) =
@@ -22,9 +18,6 @@ case class BaseQuery[T, R] (private val _select: T ⇒ R = (x: T) ⇒ x,
 
   def where (filterFns: Seq[T ⇒ Boolean]) =
     copy(_where = filterFns)
-
-  def groupBy (groupFns: Seq[T ⇒ Any]) =
-    copy(_groupBy = groupFns)
 
   def orderBy (sortFns: Seq[T ⇒ Any]) =
     copy(_orderBy = sortFns)
@@ -55,9 +48,6 @@ case class IntermediateQuery [T, R] (private val query: Option[BaseQuery[T, R]] 
 
   def where (filterFns: (T ⇒ Boolean)*) =
     add(_.where(filterFns))
-
-  def groupBy (groupFns: (T ⇒ Any)*) =
-    add(_.groupBy(groupFns))
 
   def orderBy (sortFns: (T ⇒ Any)*) =
     add(_.orderBy(sortFns))
