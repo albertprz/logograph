@@ -3,80 +3,99 @@ package orm
 import ast.QueryImpl
 import scala.language.experimental.macros
 
-
 object QueryBuilder {
 
-  def from [T] () = QueryBuilder[T] ()
+  def query[T]() = QueryBuilder[T]()
 
-  def from [T] (fromQueries: FullQuery[_, _]*) =
-    QueryBuilder [T] (subqueries = fromQueries)
+  def query[T](fromQueries: FullQuery[_, _]*) =
+    QueryBuilder[T](subqueries = fromQueries)
 
-  def from [T] (fromQuery: FullQuery[_, T]) =
-    QueryBuilder [T] (subqueries = Seq(fromQuery))
+  def query[T](fromQuery: FullQuery[_, T]) =
+    QueryBuilder[T](subqueries = Seq(fromQuery))
 
-  def from [T, R] (fromQuery1: FullQuery[_, T], fromQuery2: FullQuery[_, R]) =
-    QueryBuilder [(T, R)] (subqueries = Seq(fromQuery1, fromQuery2))
+  def query[T, R](fromQuery1: FullQuery[_, T], fromQuery2: FullQuery[_, R]) =
+    QueryBuilder[(T, R)](subqueries = Seq(fromQuery1, fromQuery2))
 
-  def from [T, R, X] (fromQuery1: FullQuery[_, T], fromQuery2: FullQuery[_, R],
-                      fromQuery3: FullQuery[_, X]) =
-    QueryBuilder [(T, R, X)] (subqueries = Seq(fromQuery1, fromQuery2, fromQuery3))
+  def query[T, R, X](
+      fromQuery1: FullQuery[_, T],
+      fromQuery2: FullQuery[_, R],
+      fromQuery3: FullQuery[_, X]
+  ) =
+    QueryBuilder[(T, R, X)](subqueries =
+      Seq(fromQuery1, fromQuery2, fromQuery3)
+    )
 
-  def from [T, R, X, S] (fromQuery1: FullQuery[_, T], fromQuery2: FullQuery[_, R],
-                        fromQuery3: FullQuery[_, X], fromQuery4: FullQuery[_, S]) =
-    QueryBuilder [(T, R, X, S)] (subqueries = Seq(fromQuery1, fromQuery2, fromQuery3,
-                                                       fromQuery4))
+  def query[T, R, X, S](
+      fromQuery1: FullQuery[_, T],
+      fromQuery2: FullQuery[_, R],
+      fromQuery3: FullQuery[_, X],
+      fromQuery4: FullQuery[_, S]
+  ) =
+    QueryBuilder[(T, R, X, S)](subqueries =
+      Seq(fromQuery1, fromQuery2, fromQuery3, fromQuery4)
+    )
 
-  def from [T, R, X, S, Q] (fromQuery1: FullQuery[_, T], fromQuery2: FullQuery[_, R],
-                         fromQuery3: FullQuery[_, X], fromQuery4: FullQuery[_, S],
-                         fromQuery5: FullQuery[_, Q]) =
-    QueryBuilder [(T, R, X, S, Q)] (subqueries = Seq(fromQuery1, fromQuery2, fromQuery3,
-                                                          fromQuery4, fromQuery5))
+  def query[T, R, X, S, Q](
+      fromQuery1: FullQuery[_, T],
+      fromQuery2: FullQuery[_, R],
+      fromQuery3: FullQuery[_, X],
+      fromQuery4: FullQuery[_, S],
+      fromQuery5: FullQuery[_, Q]
+  ) =
+    QueryBuilder[(T, R, X, S, Q)](subqueries =
+      Seq(fromQuery1, fromQuery2, fromQuery3, fromQuery4, fromQuery5)
+    )
 
-
-  def from [T, R, X, S, Q, H] (fromQuery1: FullQuery[_, T], fromQuery2: FullQuery[_, R],
-                         fromQuery3: FullQuery[_, X], fromQuery4: FullQuery[_, S],
-                         fromQuery5: FullQuery[_, Q], fromQuery6: FullQuery[_, H]) =
-    QueryBuilder [(T, R, X, S, Q, H)] (subqueries = Seq(fromQuery1, fromQuery2, fromQuery3,
-                                                             fromQuery4, fromQuery5, fromQuery6))
+  def query[T, R, X, S, Q, H](
+      fromQuery1: FullQuery[_, T],
+      fromQuery2: FullQuery[_, R],
+      fromQuery3: FullQuery[_, X],
+      fromQuery4: FullQuery[_, S],
+      fromQuery5: FullQuery[_, Q],
+      fromQuery6: FullQuery[_, H]
+  ) =
+    QueryBuilder[(T, R, X, S, Q, H)](subqueries =
+      Seq(
+        fromQuery1,
+        fromQuery2,
+        fromQuery3,
+        fromQuery4,
+        fromQuery5,
+        fromQuery6
+      )
+    )
 }
 
-case class QueryBuilder [T] (private val subqueries: Seq[FullQuery[_, _]] = Seq.empty) {
+case class QueryBuilder[T](
+    private val subqueries: Seq[FullQuery[_, _]] = Seq.empty
+) {
 
+  def select[A](queryFnTree: T ⇒ Query[A]): FullQuery[T, A] =
+    macro QueryImpl.select[T, A]
 
-  def create [A] (queryFnTree: T ⇒ Query[A]): FinalQuery[T, A] =
-    macro QueryImpl.compile[T, A]
-
-  def select [A] (mapFn: T ⇒ A) =
-    query(_.select(mapFn))
-
-  def where (filterFns: (T ⇒ Boolean)*) =
-    query(_.where(filterFns))
-
-  def orderBy (sortFns: (T ⇒ Any)*) =
-    query(_.orderBy(sortFns))
-
-  private def query [A] (f: BaseQuery[T, Any] ⇒ BaseQuery[T, A]) =
-    IntermediateQuery(Some(f(BaseQuery[T, Any]())), subqueries)
+  def selectDebug[A](queryFnTree: T ⇒ Query[A]): FullQuery[T, A] =
+    macro QueryImpl.selectDebug[T, A]
 }
-
-
 
 object Application extends App {
 
-  case class Person (name: String, age: Int)
-  case class House (street: String)
+  case class Person(name: String, age: Int, houseId: Int, telephoneId: Int)
+  case class House(id: Int, street: String)
+  case class Telephone(id: Int, number: String)
+
+  import orm.QueryBuilder._
 
 
-  val h = QueryBuilder.from[(Person, House)].create {
-
-    case (p, h) ⇒ Query(
-      Select (p.name, p.age, h.street),
-      Where (p.age + 50 == 100,
-             h.street != ""),
-    ) }
-
+  val qry = query[(Person, House, Telephone)].selectDebug {
+    case (p, h, t) ⇒
+      Query(
+        Select       (p.name, p.age, h.street, t.number),
+        Where        (p.age * 2 < 50, h.street != "")) (
+        LeftJoin (h)(h.id == p.houseId),
+        LeftJoin (t)(t.id == p.telephoneId)
+      )
+  }
 
   println()
-  println(h.sql)
-
+  println(qry.sql)
 }

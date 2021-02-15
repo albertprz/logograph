@@ -1,59 +1,29 @@
 package orm
 
-
 case class Select [T] (select: T)
 case class Where (where: Boolean*)
 case class OrderBy  (orderBy: Any*)
+case class Join (joins: BaseJoin*)
+
+sealed abstract class BaseJoin()
+case class InnerJoin (table: Product) (join: Boolean*) extends BaseJoin
+case class LeftJoin (table: Product) (join: Boolean*) extends BaseJoin
+case class RightJoin (table: Product) (join: Boolean*) extends BaseJoin
 
 case class Query[T] (private val select: Select[T],
                      private val where: Where = Where(),
                      private val orderBy: OrderBy = OrderBy())
+                    (private val joins: BaseJoin*) {
 
-case class BaseQuery[T, R] (private val _select: T ⇒ R = (x: T) ⇒ x,
-                            private val _where: Seq[T ⇒ Boolean] = Seq.empty,
-                            private val _orderBy: Seq[T ⇒ Any] = Seq.empty) {
-
-  def select [A] (mapFn: T ⇒ A) =
-    copy(_select = mapFn)
-
-  def where (filterFns: Seq[T ⇒ Boolean]) =
-    copy(_where = filterFns)
-
-  def orderBy (sortFns: Seq[T ⇒ Any]) =
-    copy(_orderBy = sortFns)
+  def where (filterFns: Seq[T ⇒ Boolean]) = ???
 }
 
-abstract class FullQuery [T, R] (private val query: Option[Any] = None,
-                                 private val subqueries: Seq[FullQuery[_, _]] = Seq.empty,
-                                 private val queryClause: Option[QueryClause] = None)
-
-case class FinalQuery [T, R] (private val query: Option[T ⇒ Query[R]] = None,
+case class FullQuery [T, R] (private val query: Option[T ⇒ Query[R]] = None,
                               private val subqueries: Seq[FullQuery[_, _]] = Seq.empty,
-                              val queryClause: Option[QueryClause] = None)
-                             extends FullQuery[T, R] {
+                              val queryClause: Option[QueryClause] = None) {
 
   def as [A <: Product] () =
     copy[T, A] (query = query.asInstanceOf[Option[T ⇒ Query[A]]])
-
-  val sql = queryClause.fold("")(_.sql)
-}
-
-case class IntermediateQuery [T, R] (private val query: Option[BaseQuery[T, R]] = None,
-                                     private val subqueries: Seq[FullQuery[_, _]] = Seq.empty,
-                                     val queryClause: Option[QueryClause] = None)
-                                   extends FullQuery[T, R] {
-
-  def select [A] (mapFn: T ⇒ A) =
-    add(_.select(mapFn))
-
-  def where (filterFns: (T ⇒ Boolean)*) =
-    add(_.where(filterFns))
-
-  def orderBy (sortFns: (T ⇒ Any)*) =
-    add(_.orderBy(sortFns))
-
-  private def add [A] (f: BaseQuery[T, R] ⇒ BaseQuery[T, A]) =
-    copy(query = query.map(f))
 
   val sql = queryClause.fold("")(_.sql)
 }

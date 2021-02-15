@@ -14,6 +14,17 @@ case class Field (tableAlias: String, column: String) extends Expression {
   val sql = s"$tableAlias.[$column]"
 }
 
+case class TableAlias (tableAlias: String) {
+
+  val sql = tableAlias
+}
+
+case class Identity (names: List[String]) {
+
+  val sql = names.mkString(".")
+}
+
+
 abstract class OpType
 case class Infix () extends OpType
 case class Prefix () extends OpType
@@ -57,7 +68,7 @@ case class Operation (operator: String, operands: List[Expression]) extends Expr
 }
 
 
-abstract class Expression extends SQLClause {
+sealed abstract class Expression extends SQLClause {
 
   import Operation._
 
@@ -111,31 +122,62 @@ case class OrderByClause (exprs: List[Expression]) extends SQLClause {
             .mkString("ORDER BY     ", ", ", "\n")
 }
 
-case class FromClause (aliases : List[String], tableNames: List[String]) extends SQLClause {
+case class FromClause (tableAliases: Map[String, String]) extends SQLClause {
 
-  val sql = (aliases zip tableNames)
-              .map { case (alias, tableName) => s"[$tableName] AS $alias" }
+  val sql = tableAliases
+              .map { case (tableAlias, tableName) => s"[$tableName] AS $tableAlias" }
               .mkString("FROM       ", ", ", "\n")
 }
 
+sealed abstract class BaseJoinClause extends SQLClause {
+
+  val tableName: String
+  val tableAlias: String
+  val preds: List[Operation]
+
+  val joinType = this match {
+    case inner: InnerJoinClause => "INNER JOIN"
+    case left: LeftJoinClause   => "LEFT JOIN "
+    case right: RightJoinClause => "RIGHT JOIN"
+  }
+
+  val sql = preds
+            .map(x => s"(${x.sql})")
+            .mkString(s"$joinType [$tableName] AS $tableAlias ON ", " AND \n           ", "\n")
+}
+
+case class InnerJoinClause (tableName: String, tableAlias: String, preds: List[Operation])
+    extends BaseJoinClause
+
+case class LeftJoinClause (tableName: String, tableAlias: String, preds: List[Operation])
+    extends BaseJoinClause
+
+case class RightJoinClause (tableName: String, tableAlias: String, preds: List[Operation])
+    extends BaseJoinClause
+
 
 case class QueryClause (select: Option[SelectClause] = None, where: Option[WhereClause] = None,
-                        orderBy: Option[OrderByClause] = None, from: Option[FromClause] = None)
+                        orderBy: Option[OrderByClause] = None, from: Option[FromClause] = None,
+                        joins: List[BaseJoinClause])
                         extends SQLClause {
 
-
-  val sql = {
+  private val groupBy = {
 
     val nonAggFields = select.fold (List.empty[Field]) (_.exprs.flatMap(_.nonAggFields))
     val aggFields = select.fold (List.empty[Field]) (_.exprs.flatMap(_.aggFields))
 
-    val groupBy = if (!aggFields.isEmpty && !nonAggFields.isEmpty) Some(GroupByClause(nonAggFields))
-                  else None
+     if (!aggFields.isEmpty && !nonAggFields.isEmpty) Some(GroupByClause(nonAggFields))
+     else None
+  }
 
-      select.fold("")(_.sql)  +
-      from.fold("")(_.sql)    +
-      where.fold("")(_.sql)   +
-      groupBy.fold("")(_.sql) +
+  val sql = {
+
+      select.fold("")(_.sql)      +
+      from.fold("")(_.sql)        +
+      joins.map(x => s"${x.sql}")
+           .mkString("\n")        +
+      where.fold("")(_.sql)       +
+      groupBy.fold("")(_.sql)     +
       orderBy.fold("")(_.sql)
   }
 }

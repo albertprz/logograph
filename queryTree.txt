@@ -1,8 +1,8 @@
-tree: Tree = Apply(
+Apply(
   Select(
     Apply(
       TypeApply(
-        Select(Ident(QueryBuilder), from),
+        Select(Ident(QueryBuilder), query),
         List(
           AppliedTypeTree(
             Ident(Tuple2),
@@ -12,7 +12,7 @@ tree: Tree = Apply(
       ),
       List()
     ),
-    compile
+    select
   ),
   List(
     Function(
@@ -24,23 +24,39 @@ tree: Tree = Apply(
             Apply(Ident(Tuple2), List(Bind(p, Ident(_)), Bind(h, Ident(_)))),
             <empty>,
             Apply(
-              Select(Ident(Query), apply),
+              Apply(
+                Select(Ident(Query), apply),
+                List(
+                  Apply(
+                    Select(Ident(Select), apply),
+                    List(
+                      Apply(
+                        Select(Ident(Tuple3), apply),
+                        List(Select(Ident(p), name), Select(Ident(p), age), Select(Ident(h), street)
+                      )
+                    )
+                  ),
+                  Apply(
+                    Select(Ident(Where), apply),
+                    List(
+                      Apply(
+                        Select(
+                          Apply(Select(Select(Ident(p), age), $plus), List(Literal(Constant(50)))),
+                          $eq$eq
+                        ),
+                        List(Literal(Constant(100)))
+                      ),
+                      Apply(Select(Select(Ident(h), street), $bang$eq), List(Literal(Constant(""))))
+                    )
+                  ),
+                  Select(Ident(Query), apply$default$3)
+                )
+              ),
               List(
                 Apply(
-                  Select(Ident(Select), apply),
-                  List(
-                    Apply(
-                      Select(Select(Ident(Application), Person), apply),
-                      List(Select(Ident(p), name), Select(Ident(p), age))
-                    )
-                  )
-                ),
-                Apply(
-                  Select(Ident(Where), apply),
-                  List(Apply(Select(Select(Ident(p), name), $eq$eq), List(Literal(Constant("")))))
-                ),
-                Apply(Select(Ident(GroupBy), apply), List(Select(Ident(p), age))),
-                Select(Ident(Query), apply$default$4)
+                  Apply(Select(Ident(InnerJoin), apply), List(Ident(p))),
+                  List(Apply(Select(Select(Ident(h), street), $eq$eq), List(Select(Ident(p), name)))
+                )
               )
             )
           )
