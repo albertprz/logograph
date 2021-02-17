@@ -24,7 +24,10 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     val joinClauses = getJoinClauses(tree)
     val fromClause = getFromClause(tree, joinClauses)
 
-     QueryClause (selectClause, whereClause, orderByClause, fromClause, joinClauses)
+    val queryClause = QueryClause (selectClause, whereClause, orderByClause, fromClause, joinClauses)
+    val params = QueryClause.findParameters(queryClause)
+
+    (queryClause, params)
   }
 
   private def getSelectClause (tree: Tree) = {
@@ -123,43 +126,29 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
   private def getLiteral(tree: Tree) =
     tree match {
-        case Literal(Constant(value)) => Some(LiteralVal(convertLiteral(value)))
+        case Literal(Constant(value)) => Some(LiteralVal(QueryUtils.convertLiteral(value)))
         case _ => None
-    }
-
-  private def convertLiteral(literal: Any) =
-    literal match {
-      case str: String => s"'$str'"
-      case num: Number => num.toString
-      case bool: Boolean => if (bool) "1" else "0"
-      case obj: Any => obj.toString
     }
 
   private def getIdentity(tree: Tree) = {
 
-    val idents = tree match {
-      case q"$ident1.$ident2.$ident3.$ident4.$ident5" => List(ident1, ident2, ident3, ident4, ident5)
-      case q"$ident1.$ident2.$ident3.$ident4" => List(ident1, ident2, ident3, ident4)
-      case q"$ident1.$ident2.$ident3" => List(ident1, ident2, ident3)
-      case q"$ident1.$ident2" => List(ident1, ident2)
-      case Ident(ident) => List(ident)
-      case _ => List.empty
+    val identity = tree match {
+      case ident @ q"$ident1.$ident2.$ident3.$ident4.$ident5" => Some(ident)
+      case ident @ q"$ident1.$ident2.$ident3.$ident4" => Some(ident)
+      case ident @ q"$ident1.$ident2.$ident3" => Some(ident)
+      case ident @ q"$ident1.$ident2" => Some(ident)
+      case Ident(ident) => Some(ident.asInstanceOf[Tree])
+      case _ => None
     }
 
-    if (idents.nonEmpty) Some(Identity(idents map (_.toString)))
-    else                 None
+    identity map (ident => Identity(ident.toString, Some(ident)))
   }
 
   private def getTableAliases (tree: Tree, typeName: String) = {
 
     val aliases = ops.getCaseDefArgs(tree)
-    val tableNames = splitTupledTypeTag(typeName)
+    val tableNames = QueryUtils.splitTupledTypeTag(typeName)
 
     (aliases zip tableNames).toMap
   }
-
-  private def splitTupledTypeTag (typeTagStr: String) =
-
-    typeTagStr.replace("(", "").replace(")", "")
-      .split(',').map(_.split('.').last).toList
 }

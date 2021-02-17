@@ -75,17 +75,23 @@ object Application extends App {
 
   val a = 3
   val b = Person("", 12, 1, 1)
+  val cond = a > 0
 
 
-  val qry = query[(Person, House, Telephone)].selectDebug {
+  val qry = query[(Person, House, Telephone)].select {
     case (p, h, t) ⇒ Query(
-        Select       (p.name, p.age, h.street, t.number, a, b.age),
-        Where        (p.age * 2 < 50,
-                      h.street <>  "")) (
+        Select       (p.name, p.age, h.street, t.number, b.age),
+        Where        (p.age * a < 50,
+                      h.street <>  "",
+                      cond)) (
         LeftJoin (h) (h.id === p.houseId),
         LeftJoin (t) (t.id === p.telephoneId)
       )
   }
 
+
+  println()
   println(qry.sql)
+  println(qry.params)
+  println()
 }

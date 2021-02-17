@@ -20,10 +20,35 @@ case class Query[T] (private val select: Select[T],
 
 case class FullQuery [T, R] (private val query: Option[T ⇒ Query[R]] = None,
                               private val subqueries: Seq[FullQuery[_, _]] = Seq.empty,
-                              val queryClause: Option[QueryClause] = None) {
+                              private val queryClauseSql: Option[String] = None,
+                              val params: Map[String, Any] = Map.empty) {
 
   def as [A <: Product] () =
     copy[T, A] (query = query.asInstanceOf[Option[T ⇒ Query[A]]])
 
-  val sql = queryClause.fold("")(_.sql)
+  val sql = queryClauseSql.fold("") (replaceParams)
+
+
+  private def replaceParams(query: String): String =
+    params.foldLeft (query) { case (qry, (name, value)) =>
+                              qry.replace(name, QueryUtils.convertLiteral(value)) }
+}
+
+object QueryUtils {
+
+  def splitTupledTypeTag (typeTagStr: String) =
+
+    typeTagStr.replace("(", "").replace(")", "")
+      .split(',').map(_.split('.').last).toList
+
+  def convertLiteral(literal: Any) =
+    literal match {
+      case str: String   => s"'$str'"
+      case num: Number   => num.toString
+      case bool: Boolean => if (bool) "1" else "0"
+      case obj: Any      => throw new Exception(s"""|Unknown types cannot be used in queries
+                                                    |for constant or runtime values \n
+                                                    |Type: ${literal.getClass} Value: $literal""".stripMargin)
+  }
+
 }

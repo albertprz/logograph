@@ -1,95 +1,6 @@
 
 package orm
 
-trait SQLClause {
-  val sql: String
-}
-
-case class LiteralVal (value: String) extends Expression {
-
-  val sql = value
-}
-
-case class Field (tableAlias: String, column: String) extends Expression {
-
-  val sql = s"$tableAlias.[$column]"
-}
-
-case class Identity (names: List[String]) extends Expression {
-
-  val sql = names.mkString("@", ".", "")
-}
-
-
-sealed abstract class OpType
-case class Infix () extends OpType
-case class Prefix () extends OpType
-case class Postfix () extends OpType
-
-object Operation {
-
-  val aggOps = List("sum", "product", "stringAgg")
-
-  val infixOps = List("-", "+", "*", "/", "===", "<>", "<", ">", "like")
-
-  val postfixOps = List("desc", "asc")
-}
-
-case class Operation (operator: String, operands: List[Expression]) extends Expression {
-
-  import Operation._
-
-  val opType = if       (infixOps.contains(operator))
-                 Infix()
-               else if  (postfixOps.contains(operator))
-                 Postfix()
-               else
-                 Prefix()
-
-  val sql = opType match {
-
-      case Infix() ⇒ operands.map(_.sql)
-                              .mkString(s" $operator ")
-
-      case Postfix() ⇒ operands.head.sql + " " + operator
-
-      case Prefix() ⇒ {
-
-        val operandsStr = operands.map(_.sql)
-                        .mkString(", ")
-
-        s"$operator ($operandsStr)"
-      }
-  }
-}
-
-
-sealed abstract class Expression extends SQLClause {
-
-  import Operation._
-
-  private def findAggFields (isAgg: Boolean = false): List[Field] =
-    this match {
-      case fld: Field => if (isAgg) List(fld) else List.empty
-      case op: Operation => op.operands
-                              .flatMap(_.findAggFields(aggOps.contains(op.operator)))
-      case _ => List.empty
-    }
-
-  val fields: List[Field] =
-    this match {
-      case fld: Field => List(fld)
-      case op: Operation => op.operands
-                              .flatMap(_.fields)
-      case _ => List.empty
-    }
-
-  val aggFields = findAggFields()
-
-  val nonAggFields = fields diff aggFields
-}
-
-
 case class SelectClause (exprs: List[Expression]) extends SQLClause {
 
   val sql = exprs
@@ -100,7 +11,8 @@ case class SelectClause (exprs: List[Expression]) extends SQLClause {
 case class WhereClause (preds: List[Expression]) extends SQLClause {
 
   val sql = preds
-            .map(x => if (preds.size > 1) s"(${x.sql})" else x.sql)
+            .map(Predicate.adaptSql)
+            .map(str => if (preds.size > 1) s"($str)" else str)
             .mkString("WHERE      ", " AND \n           ", "\n")
 }
 
@@ -138,7 +50,8 @@ sealed abstract class BaseJoinClause extends SQLClause {
   }
 
   val sql = preds
-            .map(x => if (preds.size > 1) s"(${x.sql})" else x.sql)
+            .map(Predicate.adaptSql)
+            .map(str => if (preds.size > 1) s"($str)" else str)
             .mkString(s"$joinType [$tableName] AS $tableAlias ON ", " AND \n           ", "\n")
 }
 
@@ -151,10 +64,21 @@ case class LeftJoinClause (tableName: String, tableAlias: String, preds: List[Ex
 case class RightJoinClause (tableName: String, tableAlias: String, preds: List[Expression])
     extends BaseJoinClause
 
+object QueryClause {
+
+  def findParameters(model: Any): Map[String, Any] =
+
+     model match {
+      case ident: Identity => ident.parameters
+      case prod: Product => prod.productIterator.map(findParameters).fold(Map.empty)(_++_)
+      case iter: Iterable[Any] => iter.map(findParameters).fold(Map.empty)(_++_)
+      case _ => Map.empty
+    }
+}
 
 case class QueryClause (select: Option[SelectClause] = None, where: Option[WhereClause] = None,
                         orderBy: Option[OrderByClause] = None, from: Option[FromClause] = None,
-                        joins: List[BaseJoinClause])
+                        joins: List[BaseJoinClause] = List.empty)
                         extends SQLClause {
 
   private val groupBy = {
