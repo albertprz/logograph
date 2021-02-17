@@ -1,27 +1,11 @@
-Apply(
-  Select(
-    Apply(
-      TypeApply(
-        Select(Ident(QueryBuilder), query),
-        List(
-          AppliedTypeTree(
-            Ident(Tuple2),
-            List(Select(Ident(Application), Person), Select(Ident(Application), House))
-          )
-        )
-      ),
-      List()
-    ),
-    select
-  ),
-  List(
+ List(
     Function(
       List(ValDef(Modifiers(2105344L, , List()), x0$1, <type ?>, <empty>)),
       Match(
         Ident(x0$1),
         List(
           CaseDef(
-            Apply(Ident(Tuple2), List(Bind(p, Ident(_)), Bind(h, Ident(_)))),
+            Apply(Ident(Tuple3), List(Bind(p, Ident(_)), Bind(h, Ident(_)), Bind(t, Ident(_)))),
             <empty>,
             Apply(
               Apply(
@@ -31,8 +15,13 @@ Apply(
                     Select(Ident(Select), apply),
                     List(
                       Apply(
-                        Select(Ident(Tuple3), apply),
-                        List(Select(Ident(p), name), Select(Ident(p), age), Select(Ident(h), street)
+                        Select(Ident(Tuple4), apply),
+                        List(
+                          Select(Ident(p), name),
+                          Select(Ident(p), age),
+                          Select(Ident(h), street),
+                          Select(Ident(t), number)
+                        )
                       )
                     )
                   ),
@@ -41,10 +30,10 @@ Apply(
                     List(
                       Apply(
                         Select(
-                          Apply(Select(Select(Ident(p), age), $plus), List(Literal(Constant(50)))),
-                          $eq$eq
+                          Apply(Select(Select(Ident(p), age), $times), List(Literal(Constant(2)))),
+                          $less
                         ),
-                        List(Literal(Constant(100)))
+                        List(Literal(Constant(50)))
                       ),
                       Apply(Select(Select(Ident(h), street), $bang$eq), List(Literal(Constant(""))))
                     )
@@ -54,8 +43,14 @@ Apply(
               ),
               List(
                 Apply(
-                  Apply(Select(Ident(InnerJoin), apply), List(Ident(p))),
-                  List(Apply(Select(Select(Ident(h), street), $eq$eq), List(Select(Ident(p), name)))
+                  Apply(Select(Ident(LeftJoin), apply), List(Ident(h))),
+                  List(Apply(Select(Select(Ident(h), id), $eq$eq), List(Select(Ident(p), houseId))))
+                ),
+                Apply(
+                  Apply(Select(Ident(LeftJoin), apply), List(Ident(t))),
+                  List(
+                    Apply(Select(Select(Ident(t), id), $eq$eq), List(Select(Ident(p), telephoneId)))
+                  )
                 )
               )
             )
@@ -63,5 +58,3 @@ Apply(
         )
       )
     )
-  )
-)

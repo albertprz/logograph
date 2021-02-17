@@ -16,15 +16,16 @@ class QueryImpl(val c: blackbox.Context) {
     buildFullQuery[T, R] (queryFnTree, debug = true)
 
 
-  val ops = new TreeOps[c.type](c)
+  val extractor = new QueryExtractor[c.type](c)
 
  implicit val liftExpression: Liftable[Expression] = Liftable[Expression] {exp =>
-    liftExpression
+    val liftExpr = liftExpression
 
     exp match {
       case fld: Field => q"Field(${fld.tableAlias}, ${fld.column})"
       case op: Operation => q"Operation(${op.operator}, ${op.operands})"
       case ltr: LiteralVal => q"LiteralVal(${ltr.value})"
+      case ident: Identity => q"Identity(${ident.names})"
     }
   }
 
@@ -75,22 +76,12 @@ class QueryImpl(val c: blackbox.Context) {
 
   def buildFullQuery[T: WeakTypeTag, R: WeakTypeTag] (queryFnTree: Tree, debug: Boolean = false) = {
 
-    val tableAliases = ops.getTableAliases(queryFnTree, weakTypeOf[T].toString)
-
-    val selectClause = ops.getSelectClause(queryFnTree)
-    val whereClause = ops.getWhereClause(queryFnTree)
-    val orderByClause = ops.getOrderByClause(queryFnTree)
-    val joinClauses = ops.getJoinClauses(queryFnTree, tableAliases)
-    val fromClause = ops.getFromClause(queryFnTree, tableAliases, joinClauses)
-
-    val queryClause = QueryClause (selectClause, whereClause,
-                                   orderByClause, fromClause, joinClauses)
+    val queryClause = extractor.getQueryClause(queryFnTree, weakTypeOf[T].toString)
 
     if (debug) {
-      throw new Exception(s"  Debugging query: \n\n\n${queryClause.sql}\n")
+      throw new Exception(s"  Debugging query: \n\n\n${queryClause.sql}\n ")
     }
 
     c.Expr[FullQuery[T, R]](q"""FullQuery(queryClause = Some($queryClause))""")
-    // c.Expr[FullQuery[T, R]](q"""FullQuery()""")
   }
 }

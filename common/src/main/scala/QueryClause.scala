@@ -6,6 +6,7 @@ trait SQLClause {
 }
 
 case class LiteralVal (value: String) extends Expression {
+
   val sql = value
 }
 
@@ -14,18 +15,13 @@ case class Field (tableAlias: String, column: String) extends Expression {
   val sql = s"$tableAlias.[$column]"
 }
 
-case class TableAlias (tableAlias: String) {
+case class Identity (names: List[String]) extends Expression {
 
-  val sql = tableAlias
-}
-
-case class Identity (names: List[String]) {
-
-  val sql = names.mkString(".")
+  val sql = names.mkString("@", ".", "")
 }
 
 
-abstract class OpType
+sealed abstract class OpType
 case class Infix () extends OpType
 case class Prefix () extends OpType
 case class Postfix () extends OpType
@@ -34,7 +30,7 @@ object Operation {
 
   val aggOps = List("sum", "product", "stringAgg")
 
-  val infixOps = List("-", "+", "*", "/", "==", "!=", "like")
+  val infixOps = List("-", "+", "*", "/", "===", "<>", "<", ">", "like")
 
   val postfixOps = List("desc", "asc")
 }
@@ -74,18 +70,18 @@ sealed abstract class Expression extends SQLClause {
 
   private def findAggFields (isAgg: Boolean = false): List[Field] =
     this match {
-      case ltr: LiteralVal => List.empty
       case fld: Field => if (isAgg) List(fld) else List.empty
       case op: Operation => op.operands
                               .flatMap(_.findAggFields(aggOps.contains(op.operator)))
+      case _ => List.empty
     }
 
   val fields: List[Field] =
     this match {
-      case ltr: LiteralVal => List.empty
       case fld: Field => List(fld)
       case op: Operation => op.operands
                               .flatMap(_.fields)
+      case _ => List.empty
     }
 
   val aggFields = findAggFields()
@@ -101,10 +97,10 @@ case class SelectClause (exprs: List[Expression]) extends SQLClause {
             .mkString("SELECT     ", ", ", "\n")
 }
 
-case class WhereClause (preds: List[Operation]) extends SQLClause {
+case class WhereClause (preds: List[Expression]) extends SQLClause {
 
   val sql = preds
-            .map(x => s"(${x.sql})")
+            .map(x => if (preds.size > 1) s"(${x.sql})" else x.sql)
             .mkString("WHERE      ", " AND \n           ", "\n")
 }
 
@@ -133,7 +129,7 @@ sealed abstract class BaseJoinClause extends SQLClause {
 
   val tableName: String
   val tableAlias: String
-  val preds: List[Operation]
+  val preds: List[Expression]
 
   val joinType = this match {
     case inner: InnerJoinClause => "INNER JOIN"
@@ -142,17 +138,17 @@ sealed abstract class BaseJoinClause extends SQLClause {
   }
 
   val sql = preds
-            .map(x => s"(${x.sql})")
+            .map(x => if (preds.size > 1) s"(${x.sql})" else x.sql)
             .mkString(s"$joinType [$tableName] AS $tableAlias ON ", " AND \n           ", "\n")
 }
 
-case class InnerJoinClause (tableName: String, tableAlias: String, preds: List[Operation])
+case class InnerJoinClause (tableName: String, tableAlias: String, preds: List[Expression])
     extends BaseJoinClause
 
-case class LeftJoinClause (tableName: String, tableAlias: String, preds: List[Operation])
+case class LeftJoinClause (tableName: String, tableAlias: String, preds: List[Expression])
     extends BaseJoinClause
 
-case class RightJoinClause (tableName: String, tableAlias: String, preds: List[Operation])
+case class RightJoinClause (tableName: String, tableAlias: String, preds: List[Expression])
     extends BaseJoinClause
 
 
@@ -174,8 +170,8 @@ case class QueryClause (select: Option[SelectClause] = None, where: Option[Where
 
       select.fold("")(_.sql)      +
       from.fold("")(_.sql)        +
-      joins.map(x => s"${x.sql}")
-           .mkString("\n")        +
+      joins.map(_.sql)
+           .mkString("")          +
       where.fold("")(_.sql)       +
       groupBy.fold("")(_.sql)     +
       orderBy.fold("")(_.sql)
