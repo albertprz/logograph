@@ -1,18 +1,8 @@
 package orm
 
-trait PrettyPrint {
-
-  override def toString() = this match {
-      case prod: Product =>  s"${prod.getClass.getSimpleName}\n  ( ${prod.productIterator.mkString(",\n")} )"
-      case iter: Iterable[Any] => s"( ${iter.mkString(",")} )"
-      case _ => super.toString
-  }
-}
-
 trait SQLClause extends PrettyPrint {
   val sql: String
 }
-
 
 sealed abstract class Expression extends SQLClause {
 
@@ -38,6 +28,7 @@ sealed abstract class Expression extends SQLClause {
 
   val nonAggFields = fields diff aggFields
 }
+
 
 object Predicate {
 
@@ -89,7 +80,7 @@ case class Operation (operator: String, operands: List[Expression]) extends Expr
                else if  (postfixOps.contains(operator))      Postfix
                else                                          Prefix
 
-  val newOperator = if (opsConversion.contains(operator)) opsConversion(operator) else operator
+  val newOperator =  opsConversion.getOrElse(operator, operator)
 
   val sql = opType match {
 

@@ -76,9 +76,9 @@ object QueryClause {
     }
 }
 
-case class QueryClause (select: Option[SelectClause] = None, where: Option[WhereClause] = None,
-                        orderBy: Option[OrderByClause] = None, from: Option[FromClause] = None,
-                        joins: List[BaseJoinClause] = List.empty)
+case class QueryClause (select: Option[SelectClause] = None, from: Option[FromClause] = None,
+                        joins: List[BaseJoinClause] = List.empty, where: Option[WhereClause] = None,
+                        orderBy: Option[OrderByClause] = None)
                         extends SQLClause {
 
   private val groupBy = {

@@ -24,7 +24,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     val joinClauses = getJoinClauses(tree)
     val fromClause = getFromClause(tree, joinClauses)
 
-    val queryClause = QueryClause (selectClause, whereClause, orderByClause, fromClause, joinClauses)
+    val queryClause = QueryClause (selectClause, fromClause, joinClauses, whereClause, orderByClause)
     val params = QueryClause.findParameters(queryClause)
 
     (queryClause, params)
