@@ -100,35 +100,37 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     expressions.flatten.headOption
   }
 
-  private def getOperation(tree: Tree) =
-  tree match {
-    case Apply(Select(operand, operator), operands) =>
-      Some(Operation (operator.decodedName.toString,
-                      (operand :: operands).flatMap(getExpression)))
+  private def getOperation(tree: Tree) = {
 
-    case _ => None
-  }
-
-  private def getField(tree: Tree) = {
-
-    tree match {
-      case q"$tableAlias.$column" if (tableAliases.keySet.contains(tableAlias.toString))
-          => Some(Field(tableAlias.toString, column.toString))
-        case _ => None
-    }
-  }
-
-   private def getTableAlias(tree: Tree) =
-    tree match {
-      case Ident(tableAlias) => Some(tableAlias.toString)
+    val op = tree match {
+      case q"orm.QueryOps.$operator[$tpe](..$operands)" =>  Some((operator, operands))
+      case q"orm.QueryOps.$operator(..$operands)"       =>  Some((operator, operands))
+      case q"$operand.$operator(..$operands)"           =>  Some((operator, operand +: operands))
       case _ => None
     }
 
-  private def getLiteral(tree: Tree) =
-    tree match {
-        case Literal(Constant(value)) => Some(LiteralVal(QueryUtils.convertLiteral(value)))
-        case _ => None
-    }
+    for ((operator, operands) <- op)
+      yield Operation(operator.decodedName.toString, operands.flatMap(getExpression))
+  }
+
+  private def getField(tree: Tree) = tree match {
+
+    case q"$tableAlias.$column" if (tableAliases.keySet.contains(tableAlias.toString)) =>
+      Some(Field(tableAlias.toString, column.toString))
+    case _ => None
+  }
+
+  private def getTableAlias(tree: Tree) = tree match {
+
+    case Ident(tableAlias) => Some(tableAlias.toString)
+    case _ => None
+  }
+
+  private def getLiteral(tree: Tree) = tree match {
+
+    case Literal(Constant(value)) => Some(LiteralVal(QueryUtils.convertLiteral(value)))
+    case _ => None
+  }
 
   private def getIdentity(tree: Tree) = {
 

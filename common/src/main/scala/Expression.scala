@@ -1,5 +1,6 @@
 package orm
 
+
 trait SQLClause extends PrettyPrint {
   val sql: String
 }
@@ -63,13 +64,15 @@ case object Postfix  extends OpType
 
 object Operation {
 
-  val aggOps = List("sum", "product", "stringAgg")
+  val aggOps = List("count", "sum", "avg", "max", "min", "stringAgg")
 
-  val infixOps = List("-", "+", "*", "/", "===", "<>", "<", ">", "LIKE")
+  val infixOps = List("-", "+", "*", "/", "==", "!=", "<", ">", "like")
 
-  val postfixOps = List("DESC", "ASC")
+  val postfixOps = List("desc", "asc")
 
-  val opsConversion = Map("unary_!" -> "NOT", "&&" -> "AND", "||" -> "OR")
+  val opsConversion = Map("unary_!" -> "not", "&&" -> "and", "||" -> "or",
+                          "==" -> "=", "!=" -> "<>", "isNull" -> "isnull")
+
 }
 
 case class Operation (operator: String, operands: List[Expression]) extends Expression {
@@ -80,7 +83,9 @@ case class Operation (operator: String, operands: List[Expression]) extends Expr
                else if  (postfixOps.contains(operator))      Postfix
                else                                          Prefix
 
-  val newOperator =  opsConversion.getOrElse(operator, operator)
+  private val newOperator = toUnderscoreCase(opsConversion.getOrElse(operator, operator))
+                                         .toUpperCase
+
 
   val sql = opType match {
 
@@ -96,5 +101,26 @@ case class Operation (operator: String, operands: List[Expression]) extends Expr
 
         s"$newOperator ($operandsStr)"
       }
+  }
+
+  private def toUnderscoreCase (st: String) =
+    splitWhere(st, _.isUpper).mkString("_")
+
+  private def splitWhere (st: String, fn: Char => Boolean) = {
+
+    import scala.collection.mutable.ListBuffer
+    val indexes = ListBuffer(0)
+    var s = st
+
+    while(s.indexWhere(fn) >= 0) {
+      indexes += s.indexWhere(fn)
+      s = s.substring(indexes.last + 1)
+    }
+
+    indexes += st.size
+
+    indexes.sliding(2)
+           .map(x => if (x.size == 2) st.slice(x(0), x(1)) else x(0))
+           .toList
   }
 }

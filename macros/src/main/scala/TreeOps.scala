@@ -1,18 +1,7 @@
 package ast
 
-import orm._
 import scala.reflect.macros.blackbox
 
-
-object Functional {
-    class PipedObject[T] private[Functional] (value:T)
-    {
-        def |>[R] (f : T => R) = f(this.value)
-    }
-    implicit def toPiped[T] (value:T) = new PipedObject[T](value)
-}
-
- import Functional._
 
 class TreeOps [C <: blackbox.Context] (val c: C) {
 

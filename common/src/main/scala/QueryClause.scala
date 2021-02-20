@@ -5,7 +5,7 @@ case class SelectClause (exprs: List[Expression]) extends SQLClause {
 
   val sql = exprs
             .map(_.sql)
-            .mkString("SELECT     ", ", ", "\n")
+            .mkString("SELECT      ", ", ", "\n")
 }
 
 case class WhereClause (preds: List[Expression]) extends SQLClause {
@@ -13,28 +13,28 @@ case class WhereClause (preds: List[Expression]) extends SQLClause {
   val sql = preds
             .map(Predicate.adaptSql)
             .map(str => if (preds.size > 1) s"($str)" else str)
-            .mkString("WHERE      ", " AND \n           ", "\n")
+            .mkString("WHERE       ", " AND \n            ", "\n")
 }
 
 case class GroupByClause (fields: List[Field]) extends SQLClause {
 
   val sql = fields
             .map(_.sql)
-            .mkString("GROUP BY   ", ", ", "\n")
+            .mkString("GROUP BY    ", ", ", "\n")
 }
 
 case class OrderByClause (exprs: List[Expression]) extends SQLClause {
 
   val sql = exprs
             .map(_.sql)
-            .mkString("ORDER BY     ", ", ", "\n")
+            .mkString("ORDER BY    ", ", ", "\n")
 }
 
 case class FromClause (tableAliases: Map[String, String]) extends SQLClause {
 
   val sql = tableAliases
               .map { case (tableAlias, tableName) => s"[$tableName] AS $tableAlias" }
-              .mkString("FROM       ", ", ", "\n")
+              .mkString("FROM        ", ", ", "\n")
 }
 
 sealed abstract class BaseJoinClause extends SQLClause {
@@ -52,7 +52,7 @@ sealed abstract class BaseJoinClause extends SQLClause {
   val sql = preds
             .map(Predicate.adaptSql)
             .map(str => if (preds.size > 1) s"($str)" else str)
-            .mkString(s"$joinType [$tableName] AS $tableAlias ON ", " AND \n           ", "\n")
+            .mkString(s"$joinType  [$tableName] AS $tableAlias ON ", " AND \n            ", "\n")
 }
 
 case class InnerJoinClause (tableName: String, tableAlias: String, preds: List[Expression])
@@ -92,12 +92,12 @@ case class QueryClause (select: Option[SelectClause] = None, from: Option[FromCl
 
   val sql = {
 
-      select.fold("")(_.sql)      +
-      from.fold("")(_.sql)        +
+      select.fold("")(_.sql)           +
+      from.fold("")(_.sql)             +
       joins.map(_.sql)
-           .mkString("")          +
-      where.fold("")(_.sql)       +
-      groupBy.fold("")(_.sql)     +
+           .mkString("", "", "\n")     +
+      where.fold("")(_.sql)            +
+      groupBy.fold("")(_.sql)          +
       orderBy.fold("")(_.sql)
   }
 }

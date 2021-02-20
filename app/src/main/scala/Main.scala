@@ -2,6 +2,7 @@ package orm
 
 import ast.QueryImpl
 import scala.language.experimental.macros
+import scala.language.implicitConversions
 
 object QueryBuilder {
 
@@ -35,24 +36,6 @@ object QueryBuilder {
                               fromQuery5: FullQuery[_, Q], fromQuery6: FullQuery[_, H]) =
     QueryBuilder[(T, R, X, S, Q, H)](subqueries = Seq(fromQuery1, fromQuery2, fromQuery3,
                                                   fromQuery4, fromQuery5, fromQuery6))
-
-
-  implicit class RichAny[T] (x: T) {
-
-    def === [R <% T] (y: R): Boolean = ???
-    def <>  [R <% T] (y: R): Boolean = ???
-  }
-
-  implicit class RichAnyVal [T <: AnyVal] (x: T) {
-
-    def sum (): T = ???
-    def product (): T = ???
-  }
-
-  implicit class RichString  (x: String) {
-
-    def stringAgg (): String = ???
-  }
 }
 
 case class QueryBuilder[T](private val subqueries: Seq[FullQuery[_, _]] = Seq.empty) {
@@ -65,6 +48,27 @@ case class QueryBuilder[T](private val subqueries: Seq[FullQuery[_, _]] = Seq.em
 
 }
 
+trait Table extends Product with Serializable {
+
+  val * = this
+}
+
+object QueryOps {
+
+    def sum[T <: AnyVal] (x: T): T = ???
+    def avg[T <: AnyVal] (x: T): T = ???
+    def max[T <: AnyVal] (x: T): T = ???
+    def min[T <: AnyVal] (x: T): T = ???
+    def stringAgg (x: String): String = ???
+
+    def isNull[T] (x: T, y: T): Boolean = ???
+    def count (x: Any): Int = ???
+
+    def asc[T] (x: T): T = ???
+    def desc[T] (x: T): T = ???
+}
+
+
 object Application extends App {
 
   case class Person(name: String, age: Int, houseId: Int, telephoneId: Int)
@@ -72,6 +76,7 @@ object Application extends App {
   case class Telephone(id: Int, number: String)
 
   import orm.QueryBuilder._
+  import orm.QueryOps._
 
   val a = 3
   val b = Person("", 12, 1, 1)
@@ -80,13 +85,14 @@ object Application extends App {
 
   val qry = query[(Person, House, Telephone)].select {
     case (p, h, t) ⇒ Query(
-        Select       (p.name, p.age, h.street, t.number, b.age),
-        Where        (p.age * a < 50,
-                      h.street <>  "",
-                      cond)) (
-        LeftJoin (h) (h.id === p.houseId),
-        LeftJoin (t) (t.id === p.telephoneId)
-      )
+          Select       (stringAgg(p.name), sum(p.age), isNull(h.street, ""), t.number, b.age),
+          Where        (p.age * a < 50,
+                        h.street !=  "",
+                        cond),
+          OrderBy      (asc (p.name), desc(p.age))) (
+          LeftJoin (h) (h.id == p.houseId),
+          LeftJoin (t) (t.id == p.telephoneId)
+        )
   }
 
 

@@ -24,7 +24,7 @@ class QueryImpl(val c: blackbox.Context) {
 
     if (debug) {
       throw new Exception(s""" |  Debugging query: \n\n\n${queryClause.sql}\n\n
-                               |Query Tree: \n\n ${queryClause}\n\n""".stripMargin)
+                               |Query Tree: \n ${queryClause}\n\n\n""".stripMargin)
     }
 
     c.Expr[FullQuery[T, R]](q"""FullQuery(queryClauseSql = Some(${queryClause.sql}),

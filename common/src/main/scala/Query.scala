@@ -1,9 +1,9 @@
 package orm
 
+
 case class Select [T] (select: T)
 case class Where (where: Boolean*)
 case class OrderBy  (orderBy: Any*)
-case class Join (joins: BaseJoin*)
 
 sealed abstract class BaseJoin()
 case class InnerJoin (table: Product) (join: Boolean*) extends BaseJoin
