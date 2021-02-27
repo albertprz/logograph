@@ -2,8 +2,6 @@ package ast
 
 import orm._
 import scala.reflect.macros.blackbox
-import scala.reflect.api.Liftables
-import scala.reflect.api.StandardLiftables
 
 class QueryImpl(val c: blackbox.Context) {
 

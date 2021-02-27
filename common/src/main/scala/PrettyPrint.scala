@@ -31,9 +31,8 @@ trait PrettyPrint {
     if (st.size < 25) st else s"\n$indentation$st"
   }
 
-  private def strIterable (iter: Iterable[Any], depth: Int) = {
+  private def strIterable (iter: Iterable[Any], depth: Int) =
     s"[${concatStr(iter.iterator, depth)}]"
-  }
 
   private def concatStr(iter: Iterator[Any], depth: Int) =
     iter.map (str(_, depth))

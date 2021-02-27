@@ -2,7 +2,10 @@ package orm
 
 import ast.QueryImpl
 import scala.language.experimental.macros
-import scala.language.implicitConversions
+
+import java.sql.{Connection, DriverManager, ResultSet, Statement}
+import scala.util.Try
+import scala.collection.mutable.ListBuffer
 
 object QueryBuilder {
 
@@ -40,64 +43,156 @@ object QueryBuilder {
 
 case class QueryBuilder[T](private val subqueries: Seq[FullQuery[_, _]] = Seq.empty) {
 
-  def select[A](queryFnTree: T ⇒ Query[A]): FullQuery[T, A] =
+  def select[A <: Product](queryFnTree: T ⇒ Query[A]): FullQuery[T, A] =
     macro QueryImpl.select[T, A]
 
-  def selectDebug[A](queryFnTree: T ⇒ Query[A]): FullQuery[T, A] =
+  def selectDebug[A <: Product](queryFnTree: T ⇒ Query[A]): FullQuery[T, A] =
     macro QueryImpl.selectDebug[T, A]
 
 }
 
-trait Table extends Product with Serializable {
+trait Table extends Product {
 
   val * = this
 }
 
+
 object QueryOps {
 
-    def sum[T <: AnyVal] (x: T): T = ???
-    def avg[T <: AnyVal] (x: T): T = ???
-    def max[T <: AnyVal] (x: T): T = ???
-    def min[T <: AnyVal] (x: T): T = ???
-    def stringAgg (x: String): String = ???
+  // Aggregate Functions
+  def sum[T <: AnyVal] (x: T): T = ???
+  def avg[T <: AnyVal] (x: T): T = ???
+  def max[T <: AnyVal] (x: T): T = ???
+  def min[T <: AnyVal] (x: T): T = ???
+  def stringAgg (x: String): String = ???
+  def count (x: Any): Int = ???
 
-    def isNull[T] (x: T, y: T): Boolean = ???
-    def count (x: Any): Int = ???
+  // isNull Function
+  def isNull (x: Int, y: Int): Int = ???
+  def isNull (x: Long, y: Long): Long = ???
+  def isNull (x: Float, y: Float): Float = ???
+  def isNull (x: Double, y: Double): Double = ???
+  def isNull (x: String, y: String): String = ???
 
-    def asc[T] (x: T): T = ???
-    def desc[T] (x: T): T = ???
+  // Order By Functions
+  def asc[T <: AnyVal] (x: T): T = ???
+  def asc (x: String): String = ???
+  def desc[T <: AnyVal] (x: T): T = ???
+  def desc (x: String): String = ???
+
+  // Infix Functions for Value Types (Number & Booleans)
+  implicit class RichAnyVal[T <: AnyVal] (x: T) {
+
+    def === (y: T): Boolean = ???
+    def <>  (y: T): Boolean = ???
+    def in  (y: Seq[T]): Boolean = ???
+  }
+
+  // Infix Functions for Strings
+  implicit class RichString (x: String) {
+
+    def === (y: String): Boolean = ???
+    def <>  (y: String): Boolean = ???
+    def in (y: Seq[String]): Boolean = ???
+    def like (y: String): Boolean = ???
+  }
+}
+
+object ReflectionUtils {
+
+  import scala.reflect.runtime.universe._
+  private lazy val universeMirror = runtimeMirror(getClass.getClassLoader)
+
+  def companionOf[T: TypeTag] = {
+    val companionMirror = universeMirror.reflectModule(typeOf[T].typeSymbol.companionSymbol.asModule)
+    companionMirror.instance.asInstanceOf[Companion]
+  }
+}
+
+trait Companion {
+  def apply(x: Any*): Any
+
+  val paramNames =
+    applyMethod.getParameters
+                  .map(_.getName)
+
+  val paramTypes =
+    applyMethod.getParameterTypes
+                  .map(_.getName)
+
+  val paramCount =
+    applyMethod.getParameterCount
+
+  private val applyMethod =
+    this.getClass.getDeclaredMethods
+                 .filter(_.getName == "apply")
+                 .find(_.getReturnType.getName != "java.lang.Object").get
+}
+
+class ScalaQLContext (conn: Connection) {
+
+  import scala.reflect.runtime.{universe => ru}
+
+  def run [T: ru.TypeTag] (query: FullQuery[_, T]) =
+    runQuery(query).get
+
+  private def runQuery [T: ru.TypeTag] (query: FullQuery[_, T]) = Try {
+
+    val companion = ReflectionUtils.companionOf[T]
+    val stmt = conn.createStatement
+    val resultSet = stmt.executeQuery(query.sql)
+
+    val results = ListBuffer[T]()
+
+    while (resultSet.next()) {
+      val ctorArgs = getCtorArgs(resultSet, companion.paramCount, companion.paramTypes)
+      results += companion.apply(ctorArgs).asInstanceOf[T]
+    }
+
+    results.toList
+  }
+
+  private def getCtorArgs(results: ResultSet, paramCount: Int, paramTypes: Array[String]) =
+    for (i <- 0 to paramCount)
+        yield paramTypes(i) match {
+          case "int" => results.getInt(i + 1)
+          case "java.lang.String" => results.getString(i + 1)
+          case _ => null
+        }
 }
 
 
 object Application extends App {
 
-  case class Person(name: String, age: Int, houseId: Int, telephoneId: Int)
-  case class House(id: Int, street: String)
+  case class Person(name: String, age: Int, isEmployer: Boolean, addressId: Int, telephoneId: Int)
+  case class Address(id: Int, street: String)
   case class Telephone(id: Int, number: String)
 
   import orm.QueryBuilder._
   import orm.QueryOps._
 
-  val a = 3
-  val b = Person("", 12, 1, 1)
-  val cond = a > 0
+  val john = Person("", 12, false, 1, 1)
+  val names = List("John", "Richard", "Thomas")
 
+  val conn = DriverManager.getConnection("jbdc:sqlite::memory")
+  val context = new ScalaQLContext(conn)
 
-  val qry = query[(Person, House, Telephone)].select {
+  val qry = query[(Person, Address, Telephone)].select {
     case (p, h, t) ⇒ Query(
-          Select       (stringAgg(p.name), sum(p.age), isNull(h.street, ""), t.number, b.age),
-          Where        (p.age * a < 50,
-                        h.street !=  "",
-                        cond),
-          OrderBy      (asc (p.name), desc(p.age))) (
-          LeftJoin (h) (h.id == p.houseId),
-          LeftJoin (t) (t.id == p.telephoneId)
-        )
-  }
-
+      Select       (p.name, p.age, h.street, t.number),
+      Where        (h.street like "%Baker St%",
+                    p.name in names,
+                    p.isEmployer,
+                    p.age <> john.age),
+      OrderBy      (desc (p.age))) (
+      LeftJoin (h) (h.id === p.addressId),
+      LeftJoin (t) (t.id === p.telephoneId)
+    ) }
 
   println()
   println(qry.sql)
   println(qry.params)
   println()
+
+  val result = context.run(qry)
 }

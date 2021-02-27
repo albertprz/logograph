@@ -103,6 +103,10 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
   private def getOperation(tree: Tree) = {
 
     val op = tree match {
+      case q"orm.QueryOps.RichAnyVal[$tpe1]($operand1).$operator($operand2)" =>
+        Some((operator, List(operand1, operand2)))
+      case q"orm.QueryOps.RichString($operand1).$operator($operand2)" =>
+        Some((operator, List(operand1, operand2)))
       case q"orm.QueryOps.$operator[$tpe](..$operands)" =>  Some((operator, operands))
       case q"orm.QueryOps.$operator(..$operands)"       =>  Some((operator, operands))
       case q"$operand.$operator(..$operands)"           =>  Some((operator, operand +: operands))
@@ -128,7 +132,8 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
   private def getLiteral(tree: Tree) = tree match {
 
-    case Literal(Constant(value)) => Some(LiteralVal(QueryUtils.convertLiteral(value)))
+    case Literal(Constant(value)) =>
+      Some(LiteralVal(QueryUtils.convertLiteral(value)))
     case _ => None
   }
 
@@ -143,7 +148,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
       case _ => None
     }
 
-    identity map (ident => Identity(ident.toString, Some(ident)))
+    identity map (ident => Identity(ident.toString, ident))
   }
 
   private def getTableAliases (tree: Tree, typeName: String) = {

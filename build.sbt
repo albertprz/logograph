@@ -8,7 +8,8 @@ lazy val settings = Seq(
   libraryDependencies ++= Seq(
       "org.scala-lang" % "scala-reflect" % scalaVersion.value,
       "com.chuusai" %% "shapeless" % "2.3.3",
-      "com.lihaoyi" % "ammonite" % "2.3.8-4-88785969" % "test" cross CrossVersion.full
+      "com.lihaoyi" % "ammonite" % "2.3.8-4-88785969" % "test" cross CrossVersion.full,
+      "org.xerial" % "sqlite-jdbc" % "3.14.2"
   ),
 
   resolvers ++= Seq(
