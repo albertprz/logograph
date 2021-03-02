@@ -1,4 +1,30 @@
-package orm
+package utils
+
+import orm.Identity
+
+object StringUtils {
+
+  def toUnderscoreCase (st: String) =
+    splitWhere(st, _.isUpper).mkString("_")
+
+  def splitWhere (st: String, fn: Char => Boolean) = {
+
+    import scala.collection.mutable.ListBuffer
+    val indexes = ListBuffer(0)
+    var s = st
+
+    while(s.indexWhere(fn) >= 0) {
+      indexes += s.indexWhere(fn)
+      s = s.substring(indexes.last + 1)
+    }
+
+    indexes += st.size
+
+    indexes.sliding(2)
+           .map(x => if (x.size == 2) st.slice(x(0), x(1)) else x(0))
+           .toList
+  }
+}
 
 trait PrettyPrint {
 

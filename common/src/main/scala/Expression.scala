@@ -1,5 +1,7 @@
 package orm
 
+import utils.{StringUtils, PrettyPrint}
+
 
 trait SQLClause extends PrettyPrint {
 
@@ -43,7 +45,7 @@ case object Postfix  extends OpType
 
 case class Operation (operator: String, operands: List[Expression]) extends Expression {
 
-  import Operation._
+  import QueryOps._
 
   val opType = if       (infixOps.contains(operator))        Infix
                else if  (postfixOps.contains(operator))      Postfix
@@ -69,32 +71,13 @@ case class Operation (operator: String, operands: List[Expression]) extends Expr
 }
 
 
-
-object Operation {
-
-  val aggOps = List("count", "sum", "avg", "max", "min", "stringAgg")
-
-  val infixOps = List("-", "+", "*", "/", "===", "<>", "&&", "||", "<", ">", "like", "in")
-
-  val postfixOps = List("desc", "asc")
-
-  val prefixOps = List("unary_!", "isNull", "count", "sum", "avg", "max", "min", "stringAgg")
-
-  val opsConversion = Map("unary_!" -> "not", "&&" -> "and", "||" -> "or",
-                           "===" -> "=", "isNull" -> "isnull")
-
-  val allOps = infixOps ++ postfixOps ++ prefixOps
-}
-
 private object Expression {
-
-  import Operation._
 
   private def findAggFields (expr: Expression, isAgg: Boolean = false): List[Field] =
     expr match {
       case fld: Field => if (isAgg) List(fld) else List.empty
       case op: Operation => op.operands
-                              .flatMap(findAggFields(_, isAgg || aggOps.contains(op.operator)))
+                              .flatMap(findAggFields(_, isAgg || QueryOps.aggOps.contains(op.operator)))
       case _ => List.empty
     }
 
@@ -112,29 +95,5 @@ private object Predicate {
   def adaptSql (exp: Expression) = exp match {
       case op: Operation => op.sql
       case _ => s"${exp.sql} = 1"
-  }
-}
-
-private object StringUtils {
-
-  def toUnderscoreCase (st: String) =
-    splitWhere(st, _.isUpper).mkString("_")
-
-  def splitWhere (st: String, fn: Char => Boolean) = {
-
-    import scala.collection.mutable.ListBuffer
-    val indexes = ListBuffer(0)
-    var s = st
-
-    while(s.indexWhere(fn) >= 0) {
-      indexes += s.indexWhere(fn)
-      s = s.substring(indexes.last + 1)
-    }
-
-    indexes += st.size
-
-    indexes.sliding(2)
-           .map(x => if (x.size == 2) st.slice(x(0), x(1)) else x(0))
-           .toList
   }
 }

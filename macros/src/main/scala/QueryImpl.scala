@@ -20,6 +20,7 @@ class QueryImpl(val c: blackbox.Context) {
 
     val (queryClause, params) = extractor.getQueryClause(queryFnTree, weakTypeOf[T].toString)
 
+
     if (debug) {
       throw new Exception(s""" |  Debugging query: \n\n\n${queryClause.sql}\n\n
                                |Query Tree: \n ${queryClause}\n\n\n""".stripMargin)

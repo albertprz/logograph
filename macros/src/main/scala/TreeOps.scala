@@ -12,9 +12,11 @@ class TreeOps [C <: blackbox.Context] (val c: C) {
 
     val ctor = find(tree, t ⇒
       t match {
-        case Apply(Apply(TypeApply(Select(Ident(x), _), _), _), _) ⇒ x.toString.contains(className)
-        case Apply(TypeApply(Select(Ident(x), _), _), _) ⇒ x.toString.contains(className)
-        case _ ⇒ false
+        case Apply(Apply(TypeApply(Select(x, _), _), _), _) ⇒ x.toString.contains(s".$className")
+        case Apply(TypeApply(Select(x, _), _), _) ⇒ x.toString.contains(s".$className")
+        case _ ⇒ {
+          false
+        }
       })
 
     val ctorArgs = ctor flatMap extractArgTrees
@@ -33,8 +35,8 @@ class TreeOps [C <: blackbox.Context] (val c: C) {
 
     val ctor = find(tree, t ⇒
       t match {
-        case Apply(Apply(Select(Ident(x), _), _), _) ⇒ x.toString.contains(className)
-        case Apply(Select(Ident(x), _), _) ⇒ x.toString.contains(className)
+        case Apply(Apply(Select(x, _), _), _) ⇒ x.toString.contains(s".$className")
+        case Apply(Select(x, _), _) ⇒ x.toString.contains(s".$className")
         case _ ⇒ false
       })
 
