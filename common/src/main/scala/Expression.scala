@@ -1,9 +1,8 @@
 package orm
 
-import utils._
+import utils.StringUtils._
 
-
-trait SQLClause extends PrettyPrint {
+trait SQLClause extends PrettyPrintTree {
 
   val validate: Unit
   val sql: String

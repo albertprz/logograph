@@ -26,7 +26,7 @@ class QueryImpl(val c: blackbox.Context) {
                                |Query Tree: \n ${queryClause}\n\n\n""".stripMargin)
     }
 
-    c.Expr[FullQuery[T, R]](q"""FullQuery(queryClauseSql = Some(${queryClause.sql}),
+    c.Expr[SelectQuery[T, R]](q"""SelectQuery(queryClauseSql = Some(${queryClause.sql}),
                                           params = ${params.asInstanceOf[Map[String, Tree]]})""")
   }
 }

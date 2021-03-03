@@ -1,17 +1,28 @@
 
 package orm
 
-trait ExpressionClause {
+trait ExpressionClause extends SQLClause {
   val exprs: List[Expression]
 }
 
-case class SelectClause (exprs: List[Expression]) extends SQLClause with ExpressionClause {
+sealed abstract class BaseSelectClause extends ExpressionClause
+
+case class SelectClause (exprs: List[Expression]) extends BaseSelectClause {
 
   val validate = {}
 
   val sql = exprs
             .map(_.sql)
             .mkString("SELECT      ", ", ", "\n")
+}
+
+case class SelectDistinctClause (exprs: List[Expression]) extends BaseSelectClause {
+
+  val validate = {}
+
+  val sql = exprs
+            .map(_.sql)
+            .mkString("SELECT      DISTINCT ", ", ", "\n")
 }
 
 case class FromClause (tableAliases: Map[String, String]) extends SQLClause {
@@ -23,7 +34,7 @@ case class FromClause (tableAliases: Map[String, String]) extends SQLClause {
               .mkString("FROM        ", ", ", "\n")
 }
 
-case class WhereClause (exprs: List[Expression]) extends SQLClause with ExpressionClause {
+case class WhereClause (exprs: List[Expression]) extends ExpressionClause {
 
   val validate = {}
 
@@ -42,7 +53,7 @@ case class GroupByClause (fields: List[Field]) extends SQLClause {
             .mkString("GROUP BY    ", ", ", "\n")
 }
 
-case class HavingClause (exprs: List[Expression]) extends SQLClause with ExpressionClause {
+case class HavingClause (exprs: List[Expression]) extends ExpressionClause {
 
   val validate = {}
 
@@ -52,7 +63,7 @@ case class HavingClause (exprs: List[Expression]) extends SQLClause with Express
             .mkString("HAVING      ", " AND \n            ", "\n")
 }
 
-case class OrderByClause (exprs: List[Expression]) extends SQLClause with ExpressionClause {
+case class OrderByClause (exprs: List[Expression]) extends ExpressionClause {
 
   val validate = {
 
@@ -69,7 +80,7 @@ case class OrderByClause (exprs: List[Expression]) extends SQLClause with Expres
             .mkString("ORDER BY    ", ", ", "\n")
 }
 
-sealed abstract class BaseJoinClause extends SQLClause with ExpressionClause {
+sealed abstract class BaseJoinClause extends ExpressionClause {
 
   val tableName: String
   val tableAlias: String
@@ -98,7 +109,7 @@ case class LeftJoinClause (tableName: String, tableAlias: String, exprs: List[Ex
 case class RightJoinClause (tableName: String, tableAlias: String, exprs: List[Expression])
     extends BaseJoinClause
 
-case class QueryClause (select: Option[SelectClause] = None, from: Option[FromClause] = None,
+case class QueryClause (select: Option[BaseSelectClause] = None, from: Option[FromClause] = None,
                         joins: List[BaseJoinClause] = List.empty, wher: Option[WhereClause] = None,
                         orderBy: Option[OrderByClause] = None)
                         extends SQLClause {

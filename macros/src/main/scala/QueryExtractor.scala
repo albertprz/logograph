@@ -1,6 +1,7 @@
 package ast
 
 import orm._
+import utils.QueryUtils
 import scala.reflect.macros.blackbox
 
 class QueryExtractor [C <: blackbox.Context] (val c: C) {
@@ -32,11 +33,18 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
   private def getSelectClause (tree: Tree) = {
 
-    val args = (ops.findTypedCtorArgs(tree, "Select").flatten ++ ops.findCtorArgs(tree, "Select").flatten)
-                .flatMap(getExpression)
+    val args = ops.findTypedCtorArgs(tree, "Select")
+                  .flatten
+                  .flatMap(getExpression)
 
-    if (!args.isEmpty)  Some(SelectClause(args))
-    else                None
+    val distinctArgs =  ops.findTypedCtorArgs(tree, "SelectDistinct")
+                           .flatten
+                           .flatMap(getExpression)
+
+
+    if      (distinctArgs.nonEmpty)  Some(SelectDistinctClause(args))
+    else if (args.nonEmpty)          Some(SelectClause(args))
+      else                           None
   }
 
   private def getWhereClause (tree: Tree) = {
@@ -44,7 +52,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     val args = ops.findCtorArgs(tree, "Where").flatten
                 .flatMap(getExpression)
 
-    if (!args.isEmpty)  Some(WhereClause(args))
+    if (args.nonEmpty)  Some(WhereClause(args))
     else                None
   }
 
@@ -53,7 +61,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     val args = ops.findCtorArgs (tree, "OrderBy").flatten
                 .flatMap(getExpression)
 
-    if (!args.isEmpty)  Some(OrderByClause(args))
+    if (args.nonEmpty)  Some(OrderByClause(args))
     else                None
   }
 
@@ -63,7 +71,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     val fromTableAliases = tableAliases filter
       { case (tableAlias, _) => !joinTableAliases.contains(tableAlias) }
 
-    if (!tableAliases.isEmpty)  Some(FromClause(fromTableAliases))
+    if (tableAliases.nonEmpty)  Some(FromClause(fromTableAliases))
     else                        None
   }
 

@@ -11,17 +11,17 @@ class ScalaQLContext (conn: Connection) {
 
   import ScalaQLContext._
 
-  def run [T: ru.TypeTag] (query: FullQuery[_, T]) =
+  def run [T: ru.TypeTag] (query: SelectQuery[_, T]) =
     runQuery(query).get
 
-  def tryRun [T: ru.TypeTag] (query: FullQuery[_, T]) =
+  def tryRun [T: ru.TypeTag] (query: SelectQuery[_, T]) =
     runQuery(query)
 
-  private def runQuery [T: ru.TypeTag] (query: FullQuery[_, T]) = Try {
+  private def runQuery [T: ru.TypeTag] (query: SelectQuery[_, T]) = Try {
 
     val companion = ReflectionUtils.companionOf[T]
     val parameters = query.params.values.toList
-    val sql = replaceQuery(query.sql, parameters)
+    val sql = flattenQuery(query.sql, parameters)
     val params = flattenParameters(parameters)
 
     val stmt = conn.prepareStatement(sql)
@@ -31,7 +31,7 @@ class ScalaQLContext (conn: Connection) {
     val results = ListBuffer[T]()
 
     while (resultSet.next()) {
-      val ctorArgs = getCtorArgs(resultSet, companion.paramCount, companion.paramTypes)
+      val ctorArgs = getCtorArgs(resultSet, companion.paramTypes)
       results += companion.apply(ctorArgs).asInstanceOf[T]
     }
 
@@ -41,7 +41,7 @@ class ScalaQLContext (conn: Connection) {
 
 object ScalaQLContext {
 
-  private def replaceQuery(sql: String, params: List[Any]) =
+  private def flattenQuery (sql: String, params: List[Any]) =
     params.filter(_.isInstanceOf[List[Any]])
           .foldLeft(sql) {
             case (acc, curr: List[Any]) => acc.replaceFirst("in [?]", curr.map(x => "?")
@@ -74,8 +74,8 @@ object ScalaQLContext {
       }
     }
 
-  private def getCtorArgs(resultSet: ResultSet, paramCount: Int, paramTypes: Array[String]) =
-    for (i <- 0 to paramCount - 1)
+  private def getCtorArgs (resultSet: ResultSet, paramTypes: Array[String]) =
+    for (i <- 0 to paramTypes.size - 1)
         yield paramTypes(i) match {
           case "int"                  => resultSet.getInt(i + 1)
           case "long"                 => resultSet.getLong(i + 1)
