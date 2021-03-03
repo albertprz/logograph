@@ -161,7 +161,7 @@ object QueryClause {
   def findParameters(model: Any): Map[String, Any] =
 
      model match {
-      case ident: Identity => ident.parameters
+      case ident: Identity => ident.parameter
       case prod: Product => prod.productIterator.map(findParameters).fold(Map.empty)(_++_)
       case iter: Iterable[Any] => iter.map(findParameters).fold(Map.empty)(_++_)
       case _ => Map.empty

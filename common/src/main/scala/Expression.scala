@@ -1,6 +1,6 @@
 package orm
 
-import utils.{StringUtils, PrettyPrint}
+import utils._
 
 
 trait SQLClause extends PrettyPrint {
@@ -32,8 +32,12 @@ case class Field (tableAlias: String, column: String) extends Expression {
 case class Identity (name: String, tree: Any) extends Expression {
 
   val validate = {}
-  val sql = s"@${name.replace("this.","")}"
-  val parameters =  Map(sql -> tree)
+  val sql = "?"
+
+  val parameter = {
+    val paramName = name.replace("this.", "")
+    Map(s"@$paramName" -> tree)
+  }
 }
 
 
@@ -59,8 +63,9 @@ case class Operation (operator: String, operands: List[Expression]) extends Expr
   }
 
   val sql = {
-   val newOperator = StringUtils.toUnderscoreCase(opsConversion.getOrElse(operator, operator))
-                        .toUpperCase
+
+    val newOperator = CamelCase(opsConversion.getOrElse(operator, operator))
+                        .toCase[SnakeCase]
 
     opType match {
       case Infix ⇒ operands.map(_.sql).mkString(s" $newOperator ")

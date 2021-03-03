@@ -2,29 +2,110 @@ package utils
 
 import orm.Identity
 
-object StringUtils {
+case class CamelCase(str: String) extends StringCase
+case class PascalCase (str: String) extends StringCase
+case class SnakeCase(str: String) extends StringCase
+case class SnakeUpperCase(str: String) extends StringCase
+case class KebabCase(str: String) extends StringCase
+case class KebabUpperCase(str: String) extends StringCase
 
-  def toUnderscoreCase (st: String) =
-    splitWhere(st, _.isUpper).mkString("_")
+sealed abstract class StringCase {
 
-  def splitWhere (st: String, fn: Char => Boolean) = {
+  val str: String
+
+  import StringUtils._
+
+  val splitString = this match {
+    case CamelCase(str)      => splitWhere(str, _.isUpper)
+    case PascalCase(str)     => splitWhere(str, _.isUpper)
+    case SnakeCase(str)      => str.split("_")
+    case SnakeUpperCase(str) => str.split("_")
+    case KebabCase(str)      => str.split("-")
+    case KebabUpperCase(str) => str.split("-")
+  }
+
+  def toCase [T <: StringCase] (implicit converter: ToStringCase[T]) =
+    converter.toCase(splitString)
+}
+
+
+trait ToStringCase[T <: StringCase] {
+  def toCase (splitString: Array[String]): String
+}
+
+
+object ToStringCase {
+
+  implicit object ToCamelCase extends ToStringCase[CamelCase] {
+
+    def toCase (splitString: Array[String]) = {
+      val lower = splitString.map(_.toLowerCase)
+      val adaptedList = lower.head +: lower.tail.map(x => x(0).toUpper + x.substring(1))
+
+      adaptedList.mkString("")
+    }
+  }
+
+  implicit object ToPascalCase extends ToStringCase[PascalCase] {
+
+    def toCase (splitString: Array[String]) =
+      splitString.map(_.toLowerCase)
+                 .map(x => x(0).toUpper + x.substring(1))
+                 .mkString("")
+  }
+
+  implicit object ToSnakeCase extends ToStringCase[SnakeCase] {
+
+    def toCase (splitString: Array[String]) =
+      splitString.map(_.toLowerCase)
+                 .mkString("_")
+  }
+
+  implicit object ToUpperSnakeCase extends ToStringCase[SnakeUpperCase] {
+
+    def toCase (splitString: Array[String]) =
+      splitString.map(_.toUpperCase)
+                 .mkString("_")
+  }
+
+  implicit object ToKebabCase extends ToStringCase[KebabCase] {
+
+    def toCase (splitString: Array[String]) =
+      splitString.map(_.toLowerCase)
+                 .mkString("-")
+  }
+
+  implicit object ToUpperKebabCase extends ToStringCase[KebabUpperCase] {
+
+    def toCase (splitString: Array[String]) =
+      splitString.map(_.toUpperCase)
+                 .mkString("-")
+  }
+}
+
+private object StringUtils {
+
+  def splitWhere (str: String, fn: Char => Boolean) = {
 
     import scala.collection.mutable.ListBuffer
     val indexes = ListBuffer(0)
-    var s = st
 
-    while(s.indexWhere(fn) >= 0) {
-      indexes += s.indexWhere(fn)
-      s = s.substring(indexes.last + 1)
+    while(str.indexWhere(fn, indexes.last + 1) >= 0) {
+      indexes += str.indexWhere(fn, indexes.last + 1)
     }
 
-    indexes += st.size
+    indexes += str.size
 
-    indexes.sliding(2)
-           .map(x => if (x.size == 2) st.slice(x(0), x(1)) else x(0))
-           .toList
+    if (indexes.size == 1)
+      Array(str)
+
+    else
+      indexes.sliding(2)
+             .map(x => str.slice(x(0), x(1)))
+             .toArray
   }
 }
+
 
 trait PrettyPrint {
 
@@ -50,11 +131,11 @@ trait PrettyPrint {
       case _ =>  concatStr(prod.productIterator, depth)
     }
 
-    val st = if (!className.contains("Tuple")) s"$className ($iter)"
+    val str = if (!className.contains("Tuple")) s"$className ($iter)"
              else iter
     val indentation = " ".repeat(depth)
 
-    if (st.size < 25) st else s"\n$indentation$st"
+    if (str.size < 25) str else s"\n$indentation$str"
   }
 
   private def strIterable (iter: Iterable[Any], depth: Int) =

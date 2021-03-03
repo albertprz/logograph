@@ -14,9 +14,7 @@ class TreeOps [C <: blackbox.Context] (val c: C) {
       t match {
         case Apply(Apply(TypeApply(Select(x, _), _), _), _) ⇒ x.toString.contains(s".$className")
         case Apply(TypeApply(Select(x, _), _), _) ⇒ x.toString.contains(s".$className")
-        case _ ⇒ {
-          false
-        }
+        case _ ⇒ false
       })
 
     val ctorArgs = ctor flatMap extractArgTrees
@@ -84,7 +82,7 @@ class TreeOps [C <: blackbox.Context] (val c: C) {
 
     else if (tree.nonEmpty && tree.children.nonEmpty)
       tree.children
-        .flatMap(find (_, filterFn))
+          .flatMap(find (_, filterFn))
 
     else List.empty
 }

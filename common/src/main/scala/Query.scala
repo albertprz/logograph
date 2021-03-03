@@ -1,6 +1,5 @@
 package orm
 
-
 case class Select [T] (select: T)
 case class Where (where: Boolean*)
 case class OrderBy  (orderBy: Any*)
@@ -23,11 +22,7 @@ case class FullQuery [T, R] (private val query: Option[T ⇒ Query[R]] = None,
                              private val queryClauseSql: Option[String] = None,
                              val params: Map[String, Any] = Map.empty) {
 
-  val sql = queryClauseSql.fold("") (replaceParams)
-
-  private def replaceParams(query: String): String =
-    params.foldLeft (query) { case (qry, (name, value)) =>
-                              qry.replace(name, QueryUtils.convertLiteral(value)) }
+  val sql = queryClauseSql.fold("") (QueryUtils.replaceParams(_, params))
 }
 
 object QueryUtils {
@@ -39,14 +34,18 @@ object QueryUtils {
 
   def convertLiteral(literal: Any): String =
     literal match {
-      case str: String   => s"'$str'"
+      case str: String   => s"'${str.replace("'", "''")}'"
       case num: Number   => num.toString
       case bool: Boolean => if (bool) "1" else "0"
       case list: List[Any] => list.map(convertLiteral)
                                   .mkString("(", ", ", ")")
       case other: Any      => throw new Exception("Unknown types cannot be used in queries " +
-                                                   "for constant or runtime values: \n" +
+                                                   "for constant or runtime parameter values: \n" +
                                                   s"""|Type: ${literal.getClass.getSimpleName}
                                                       |Value: $literal""".stripMargin)
   }
+
+  def replaceParams(query: String, params: Map[String, Any]) =
+    params.foldLeft (query) { case (qry, (name, value)) =>
+                              qry.replace(name, QueryUtils.convertLiteral(value)) }
 }

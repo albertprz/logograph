@@ -34,6 +34,7 @@ object Application extends App {
 
   val stmt = conn.createStatement()
 
+
   for (sql <- sqls)
     stmt.addBatch(sql)
 
