@@ -22,13 +22,16 @@ object ReflectionUtils {
 
     val paramNames =
       applyMethod.getParameters
-                    .map(_.getName)
+                    .map(_.getName).toList
 
     val paramTypes =
       applyMethod.getParameterTypes
-                    .map(_.getName)
+                    .map(_.getName).toList
 
     val paramCount =
       applyMethod.getParameterCount
+
+    val className =
+      companionObject.getClass.getSimpleName.replace("$", "")
   }
 }

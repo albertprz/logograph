@@ -2,7 +2,7 @@ package example
 
 import java.sql.DriverManager
 import orm._
-import orm.QueryBuilder._
+import orm.StatementBuilder._
 import orm.QueryOps._
 import utils.StringUtils._
 
@@ -24,13 +24,9 @@ object Setup {
                       telephoneId int) """,
 
                     "CREATE TABLE Address (id int, street text)",
-                    "CREATE TABLE Telephone (id int, number string)",
-                    "INSERT INTO Person VALUES ('John', 34, 1, 2, 3)",
-                    "INSERT INTO Person VALUES ('John', 34, 1, 2, 3)",
-                    "INSERT INTO Address VALUES (2, 'Baker Street')")
+                    "CREATE TABLE Telephone (id int, number string)")
 
     val stmt = sqliteConnection.createStatement()
-
 
     for (sql <- sqls)
       stmt.addBatch(sql)
@@ -57,24 +53,26 @@ object Application extends App {
   case class Result (name: String, age: Int, street: String, telephoneNumber: String) extends DbResult
 
 
-  val john = Person("", 50, false, 1, 1)
   val names = List("John", "Richard", "Thomas")
+  val john = Person ("John", 50, true, 2, 1)
+  val johnAddress = Address (2, "Baker Street")
 
+  val context = new ScalaQLContext(conn)
+
+  context.run(insert(john),
+              insert(johnAddress))
 
   val qry = query[(Person, Address, Telephone)].select {
     case (p, h, t) ⇒ Query(
-      SelectDistinct  (Result (p.name, p.age, h.street, t.number)),
+      Select          (Result (p.name, p.age, h.street, t.number)),
       Where           (h.street like "%Baker St%",
                        p.name in names,
-                       p.isEmployer,
-                       p.age <> john.age),
+                       p.isEmployer),
       OrderBy         (desc (p.age)),
       LeftJoin (h)    (h.id === p.addressId),
       LeftJoin (t)    (t.id === p.telephoneId))
   }
 
-
-  val context = new ScalaQLContext(conn)
   val results = context.run(qry)
 
   println(s"""|\nQuery: \n\n${qry.sql} \n\nParams:  \n\n${pprint(qry.params)}

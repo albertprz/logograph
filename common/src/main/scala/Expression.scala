@@ -33,10 +33,8 @@ case class Identity (name: String, tree: Any) extends Expression {
   val validate = {}
   val sql = "?"
 
-  val parameter = {
-    val paramName = name.replace("this.", "")
-    Map(s"@$paramName" -> tree)
-  }
+  private val paramName = name.replace("this.", "")
+  val parameter = Map(s"@$paramName" -> tree)
 }
 
 

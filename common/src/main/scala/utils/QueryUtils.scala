@@ -19,8 +19,4 @@ object QueryUtils {
                                                   s"""|Type: ${literal.getClass.getSimpleName}
                                                       |Value: $literal""".stripMargin)
   }
-
-  def replaceParams(query: String, params: Map[String, Any]) =
-    params.foldLeft (query) { case (qry, (name, value)) =>
-                              qry.replace(name, QueryUtils.convertLiteral(value)) }
 }

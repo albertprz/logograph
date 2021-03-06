@@ -38,6 +38,8 @@ object StringUtils {
     case other @ _ => other.toString
   }
 
+  def stringify (seq: Seq[String]) = seq.mkString("(", ", ", ")")
+
   def splitWhere (str: String, fn: Char => Boolean) = {
 
     import scala.collection.mutable.ListBuffer

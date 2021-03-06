@@ -5,27 +5,34 @@ import java.math.BigDecimal
 import scala.util.Try
 import scala.collection.mutable.ListBuffer
 import scala.reflect.runtime.{universe => ru}
-import utils.ReflectionUtils
+import utils.ReflectionUtils._
+import utils.StringUtils._
 
 class ScalaQLContext (conn: Connection) {
 
   import ScalaQLContext._
 
-  def run [T: ru.TypeTag] (query: SelectQuery[_, T]) =
-    runQuery(query).get
+  conn.setAutoCommit(false)
 
-  def tryRun [T: ru.TypeTag] (query: SelectQuery[_, T]) =
+  def run [T <: DbDataSet] (query: SelectQuery[_, T]) (implicit tag: ru.TypeTag[T]) =
+    tryRun(query).get
+
+  def tryRun [T <: DbDataSet] (query: SelectQuery[_, T]) (implicit tag: ru.TypeTag[T]) =
     runQuery(query)
 
-  private def runQuery [T: ru.TypeTag] (query: SelectQuery[_, T]) = Try {
+  def run (inserts: InsertStatement[_]*) =
+      tryRun(inserts:_*).get
 
-    val companion = ReflectionUtils.companionOf[T]
-    val parameters = query.params.values.toList
-    val sql = flattenQuery(query.sql, parameters)
-    val params = flattenParameters(parameters)
+  def tryRun (inserts: InsertStatement[_]*) =
+    runInsertBatch(inserts)
 
-    val stmt = conn.prepareStatement(sql)
-    parameteriseStatement(stmt, params)
+
+  private def runQuery [T <: DbDataSet] (query: SelectQuery[_, T]) (implicit tag: ru.TypeTag[T]) = Try {
+
+    val companion = companionOf[T]
+
+    val stmt = conn.prepareStatement(query.sql)
+    parameteriseStatement(stmt, query.paramList)
 
     val resultSet = stmt.executeQuery()
     val results = ListBuffer[T]()
@@ -37,23 +44,20 @@ class ScalaQLContext (conn: Connection) {
 
     results.toList
   }
+
+  private def runInsertBatch  (inserts: Seq[InsertStatement[_]]) = Try {
+
+    for ((sql, paramList) <- inserts.map(x => (x.sql, x.paramList))) {
+      val stmt = conn.prepareStatement(sql)
+      parameteriseStatement(stmt, paramList)
+      stmt.execute
+    }
+
+    conn.commit()
+  }
 }
 
 object ScalaQLContext {
-
-  private def flattenQuery (sql: String, params: List[Any]) =
-    params.filter(_.isInstanceOf[List[Any]])
-          .foldLeft(sql) {
-            case (acc, curr: List[Any]) => acc.replaceFirst("in [?]", curr.map(x => "?")
-                                                                          .mkString("in (", ", ", ")"))
-        }
-
-  private def flattenParameters (params: List[Any]) =
-    params flatMap { _ match {
-        case list: List[Any] => list
-        case other: Any => List(other)
-      }
-    }
 
   private def parameteriseStatement (stmt: PreparedStatement, params: List[Any]) =
     for (i <- 0 to params.size - 1) {
@@ -67,14 +71,14 @@ object ScalaQLContext {
         case dec: BigDecimal => stmt.setBigDecimal(i + 1, dec)
         case date: Date      => stmt.setDate(i + 1, date)
         case time: Time      => stmt.setTime(i + 1, time)
-        case other: Any      => throw new Exception("Unknown types cannot be used in queries " +
+        case other @ _      => throw new Exception("Unknown types cannot be used in queries " +
                                                     "for constant or runtime parameter values: \n" +
                                                     s"""|Type: ${other.getClass.getSimpleName}
                                                         |Value: $other""".stripMargin)
       }
     }
 
-  private def getCtorArgs (resultSet: ResultSet, paramTypes: Array[String]) =
+  private def getCtorArgs (resultSet: ResultSet, paramTypes: List[String]) =
     for (i <- 0 to paramTypes.size - 1)
         yield paramTypes(i) match {
           case "int"                  => resultSet.getInt(i + 1)

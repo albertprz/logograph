@@ -27,6 +27,6 @@ class QueryImpl(val c: blackbox.Context) {
     }
 
     c.Expr[SelectQuery[T, R]](q"""SelectQuery(queryClauseSql = Some(${queryClause.sql}),
-                                          params = ${params.asInstanceOf[Map[String, Tree]]})""")
+                                              params = ${params.asInstanceOf[Map[String, Tree]]})""")
   }
 }

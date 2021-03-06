@@ -1,7 +1,5 @@
 package orm
 
-import utils.QueryUtils
-import utils.StringUtils._
 
 sealed abstract class SelectBase [T]
 case class Select [T <: DbDataSet] (select: T) extends SelectBase[T]
@@ -13,14 +11,6 @@ sealed abstract class BaseJoin
 case class InnerJoin (table: DbDataSet) (join: Boolean*) extends BaseJoin
 case class LeftJoin (table: DbDataSet) (join: Boolean*) extends BaseJoin
 case class RightJoin (table: DbDataSet) (join: Boolean*) extends BaseJoin
-
-
-sealed abstract class DbDataSet extends Product with Serializable
-abstract class DbResult extends DbDataSet
-
-sealed abstract class BaseDbTable extends DbDataSet
-abstract class DbTable extends BaseDbTable
-abstract class DbTempTable extends BaseDbTable
 
 
 class Query[T] {
@@ -57,12 +47,4 @@ object Query {
                 where: Where,
                 orderBy: OrderBy,
                 joins: BaseJoin*) = new Query[T]
-}
-
-case class SelectQuery [T, R] (private val query: Option[T ⇒ Query[R]] = None,
-                             private val subqueries: Seq[SelectQuery[_, _]] = Seq.empty,
-                             private val queryClauseSql: Option[String] = None,
-                             val params: Map[String, Any] = Map.empty) {
-
-  val sql = queryClauseSql.fold("") (QueryUtils.replaceParams(_, params))
 }
