@@ -10,6 +10,9 @@ object ReflectionUtils {
     Companion(companionMirror.instance)
   }
 
+  def className[T: TypeTag] =
+    typeOf[T].toString.split('.').last
+
   case class Companion(companionObject: Any) {
 
     def apply (x: Seq[Any]) =
@@ -27,11 +30,5 @@ object ReflectionUtils {
     val paramTypes =
       applyMethod.getParameterTypes
                     .map(_.getName).toList
-
-    val paramCount =
-      applyMethod.getParameterCount
-
-    val className =
-      companionObject.getClass.getSimpleName.replace("$", "")
   }
 }

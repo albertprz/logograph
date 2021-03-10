@@ -44,7 +44,7 @@ object Application extends App {
 
   // Database Table Models
   case class Person (name: String, age: Int, isEmployer: Boolean, addressId: Int, telephoneId: Int)
-      extends DbTable
+                      extends DbTable
   case class Address (id: Int, street: String) extends DbTable
   case class Telephone (id: Int, number: String) extends DbTable
 
@@ -58,6 +58,13 @@ object Application extends App {
   val johnAddress = Address (2, "Baker Street")
 
   val context = new ScalaQLContext(conn)
+
+
+  val updt = update[Person] (p => Map(p.name -> "John",
+                                      p.age -> 12))
+
+
+  println(updt)
 
   context.run(insert(john),
               insert(johnAddress))
@@ -75,6 +82,5 @@ object Application extends App {
 
   val results = context.run(qry)
 
-  println(s"""|\nQuery: \n\n${qry.sql} \n\nParams:  \n\n${pprint(qry.params)}
-              |\n\nResults: \n\n${pprint(results)} \n""".stripMargin)
+  println(s"$qry \nResults: \n\n${pprint(results)} \n")
 }

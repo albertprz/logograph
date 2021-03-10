@@ -5,7 +5,7 @@ trait ExpressionClause extends SQLClause {
   val exprs: List[Expression]
 }
 
-sealed abstract class BaseSelectClause extends ExpressionClause
+sealed trait BaseSelectClause extends ExpressionClause
 
 case class SelectClause (exprs: List[Expression]) extends BaseSelectClause {
 
@@ -40,7 +40,7 @@ case class WhereClause (exprs: List[Expression]) extends ExpressionClause {
 
   val sql = exprs
             .map(Predicate.adaptSql)
-            .map(str => if (exprs.size > 1) s"($str)" else str)
+            .map(str => s"($str)")
             .mkString("WHERE       ", " AND \n            ", "\n")
 }
 
@@ -114,7 +114,7 @@ case class QueryClause (select: Option[BaseSelectClause] = None, from: Option[Fr
                         orderBy: Option[OrderByClause] = None)
                         extends SQLClause {
 
-  import QueryClause._
+  import ExpressionClause._
 
   private val aggFields = (List(select, wher, orderBy) flatMap getAggFields) ++ getAggFields(joins)
   private val nonAggFields = (List(select, wher, orderBy) flatMap getNonAggFields) ++ getNonAggFields(joins)
@@ -166,8 +166,32 @@ case class QueryClause (select: Option[BaseSelectClause] = None, from: Option[Fr
   }
 }
 
+case class SetClause (setMap: Map[Field, Expression]) extends ExpressionClause {
 
-object QueryClause {
+  val exprs = (setMap.keys ++ setMap.values).toList
+
+  val validate = {}
+
+  val sql = setMap.map { case (key, value) => s"${key.sql} = ${value.sql}" }
+                  .mkString("SET ", ",\n    ", "")
+}
+
+case class UpdateClause (tableAliasMap: Map[String, String], setClause: SetClause) extends SQLClause {
+
+  private val (tableAlias, tableName) = tableAliasMap.head
+
+  val validate = {
+    if (setClause.setMap.exists { case (key, value) => key.tableAlias != tableAlias })
+      throw new Exception(s"""|A different alias than the update table alias "$tableAlias"
+                              | has been used for the Set Clause in an Update statement """.stripMargin)
+  }
+
+  val sql = s"""|UPDATE [$tableName] $tableAlias
+                |${setClause.sql}""".stripMargin
+}
+
+
+object ExpressionClause {
 
   def findParameters(model: Any): Map[String, Any] =
 
@@ -178,22 +202,22 @@ object QueryClause {
       case _ => Map.empty
     }
 
-  private def getAllFields(clause: Option[ExpressionClause]) =
+  def getAllFields(clause: Option[ExpressionClause]) =
       clause.fold (List.empty[Field]) (_.exprs.flatMap(_.fields))
 
-  private def getAllFields(clause: List[ExpressionClause]) =
+  def getAllFields(clause: List[ExpressionClause]) =
       clause.flatMap (_.exprs.flatMap(_.fields))
 
-  private def getAggFields(clause: Option[ExpressionClause]) =
+  def getAggFields(clause: Option[ExpressionClause]) =
       clause.fold (List.empty[Field]) (_.exprs.flatMap(_.aggFields))
 
-  private def getAggFields(clause: List[ExpressionClause]) =
+  def getAggFields(clause: List[ExpressionClause]) =
       clause.flatMap (_.exprs.flatMap(_.aggFields))
 
-  private def getNonAggFields(clause: Option[ExpressionClause]) =
+  def getNonAggFields(clause: Option[ExpressionClause]) =
       clause.fold (List.empty[Field]) (_.exprs.flatMap(_.nonAggFields))
 
-  private def getNonAggFields(clause: List[ExpressionClause]) =
+  def getNonAggFields(clause: List[ExpressionClause]) =
       clause.flatMap (_.exprs.flatMap(_.nonAggFields))
 
 }

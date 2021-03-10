@@ -7,26 +7,37 @@ class QueryImpl(val c: blackbox.Context) {
 
   import c.universe._
 
-  def select[T: WeakTypeTag, R: WeakTypeTag] (queryFnTree: Tree) =
-    buildFullQuery[T, R] (queryFnTree)
+  def select[T, R <: DbDataSet] (tree: Tree) (implicit tag1: WeakTypeTag[T], tag2: WeakTypeTag[R]) =
+    buildQuery[T, R] (tree)
 
-  def selectDebug[T: WeakTypeTag, R: WeakTypeTag] (queryFnTree: Tree) =
-    buildFullQuery[T, R] (queryFnTree, debug = true)
+  def selectDebug[T, R <: DbDataSet] (tree: Tree) (implicit tag1: WeakTypeTag[T], tag2: WeakTypeTag[R]) =
+    buildQuery[T, R] (tree, debug = true)
+
+  def update[T <: DbTable] (tree: Tree) (implicit tag: WeakTypeTag[T]) =
+    buildUpdate[T] (tree)
 
 
   private val extractor = new QueryExtractor[c.type](c)
 
-  private def buildFullQuery[T: WeakTypeTag, R: WeakTypeTag] (queryFnTree: Tree, debug: Boolean = false) = {
+  private def buildQuery[T, R <: DbDataSet] (tree: Tree, debug: Boolean = false)
+                                            (implicit tag1: WeakTypeTag[T], tag2: WeakTypeTag[R]) = {
 
-    val (queryClause, params) = extractor.getQueryClause(queryFnTree, weakTypeOf[T].toString)
-
+    val (clause, params) = extractor.getQueryClause(tree, weakTypeOf[T].toString)
 
     if (debug) {
-      throw new Exception(s""" |  Debugging query: \n\n\n${queryClause.sql}\n\n
-                               |Query Tree: \n ${queryClause}\n\n\n""".stripMargin)
+      throw new Exception(s""" |  Debugging query: \n\n\n${clause.sql}\n\n
+                               |Query Tree: \n ${clause}\n\n\n""".stripMargin)
     }
 
-    c.Expr[SelectQuery[T, R]](q"""SelectQuery(queryClauseSql = Some(${queryClause.sql}),
-                                              params = ${params.asInstanceOf[Map[String, Tree]]})""")
+    c.Expr[SelectQuery[R]](q"""SelectQuery(sqlTemplate = Some(${clause.sql}),
+                                           params = ${params.asInstanceOf[Map[String, Tree]]})""")
+  }
+
+  private def buildUpdate[T <: DbTable] (tree: Tree) (implicit tag: WeakTypeTag[T]) = {
+
+     val (clause, params) = extractor.getUpdateClause(tree, weakTypeOf[T].toString)
+
+    c.Expr[UpdateStatement[T]](q"""UpdateStatement(sqlTemplate = ${clause.sql},
+                                                   params = ${params.asInstanceOf[Map[String, Tree]]})""")
   }
 }

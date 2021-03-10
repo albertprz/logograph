@@ -12,7 +12,7 @@ object StringUtils {
   case class KebabCase(str: String) extends StringCase
   case class KebabUpperCase(str: String) extends StringCase
 
-  sealed abstract class StringCase {
+  sealed trait StringCase {
 
     val str: String
 
@@ -31,9 +31,13 @@ object StringUtils {
 
   def pprint (value: Any): String = value match {
     case seq: Seq[_]   => seq.map(pprint)
-                             .mkString("[", if (seq.toString.size > 30) ",\n " else ", ", "]")
-    case dict: Map[_, _] => dict.map { case (k, v) => s"$k -> ${pprint(v)}" }.mkString("{", ",\n ", "}")
-    case prod: Product   => prod.productIterator.map(pprint).mkString("(", ", ", ")")
+                             .mkString("[", getSeparator(seq), "]")
+    case dict: Map[_, _] => dict.map { case (k, v) => (pprint(k),  pprint(v)) }
+                                .map { case (k, v) => s"$k -> $v" }
+                                .mkString("{", getSeparator(dict), "}")
+    case prod: Product   => prod.productIterator
+                                .map(pprint)
+                                .mkString("(", ", ", ")")
     case null => "null"
     case other @ _ => other.toString
   }
@@ -60,6 +64,9 @@ object StringUtils {
              .toArray
   }
 
+  private def getSeparator (value: Any) =
+    if (value.toString.size > 30) ",\n " else ", "
+
   trait PrettyPrintTree {
 
     override def toString() = str(this, 0)
@@ -68,7 +75,8 @@ object StringUtils {
 
       val result = value match {
         case opt: Option[_] => opt.fold("") (str(_, depth + 1))
-        case iter: Seq[_]   => strIterable(iter, depth + 1)
+        case dict: Map[_, _] => strMap(dict, depth + 1)
+        case seq: Seq[_]   => strSeq(seq, depth + 1)
         case prod: Product  => strProduct(prod, depth + 1)
         case other @ _ => other.toString
       }
@@ -91,10 +99,20 @@ object StringUtils {
       if (str.size < 25) str else s"\n$indentation$str"
     }
 
-    private def strIterable (iter: Iterable[Any], depth: Int) =
-      s"[${concatStr(iter.iterator, depth)}]"
+    private def strMap (dict: Map[_, _], depth: Int) = {
+      val dictString = dict.asInstanceOf[Map[Any, Any]]
+                           .map { case (k, v) => (str(k, depth), str(v, depth)) }
+                           .map { case (k, v) => s"$k -> $v" }
+                           .mkString(", ")
+      s"{$dictString}"
+    }
 
-    private def concatStr(iter: Iterator[Any], depth: Int) =
+    private def strSeq (seq: Seq[_], depth: Int) = {
+      val seqString = concatStr(seq.iterator, depth)
+      s"[$seqString]"
+    }
+
+    private def concatStr(iter: Iterator[_], depth: Int) =
       iter.map (str(_, depth))
           .mkString(", ")
   }

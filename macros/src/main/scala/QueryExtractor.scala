@@ -3,21 +3,37 @@ package ast
 import orm._
 import utils.QueryUtils
 import scala.reflect.macros.blackbox
+import utils.StringUtils
 
 class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
   import c.universe._
 
   private val ops = new TreeOps[c.type](c)
-  private var tableAliases: Map[String, String] = null
+  private var tableAliasMap: Map[String, String] = null
 
   private def init (tree: Tree, fromTypeName: String) = {
-    tableAliases = getTableAliases(tree, fromTypeName)
+    tableAliasMap = getTableAliasMap(tree, fromTypeName)
   }
 
-  def getQueryClause (tree: Tree, queryTypeName: String) = {
+  def getUpdateClause (tree: Tree, typeName: String) = {
 
-    init(tree, queryTypeName)
+    init(tree, typeName)
+
+    val mapArgs = ops.findMapArgs(tree)
+    val setMap = mapArgs.map { case (key, value) => (getField(key).get, getExpression(value).get)  }
+                        .toMap
+
+    val setClause = SetClause(setMap)
+    val updateClause = UpdateClause(tableAliasMap, setClause)
+    val params = ExpressionClause.findParameters(setClause)
+
+    (updateClause, params)
+  }
+
+  def getQueryClause (tree: Tree, typeName: String) = {
+
+    init(tree, typeName)
 
     val selectClause = getSelectClause(tree)
     val whereClause = getWhereClause(tree)
@@ -26,7 +42,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     val fromClause = getFromClause(tree, joinClauses)
 
     val queryClause = QueryClause (selectClause, fromClause, joinClauses, whereClause, orderByClause)
-    val params = QueryClause.findParameters(queryClause)
+    val params = ExpressionClause.findParameters(queryClause)
 
     (queryClause, params)
   }
@@ -65,13 +81,13 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     else                None
   }
 
-  private def getFromClause (tree: Tree, joinClauses: List[BaseJoinClause]) = {
+  private def getFromClause (tree: Tree, joinClauses: List[BaseJoinClause] = List.empty) = {
 
     val joinTableAliases = joinClauses map (_.tableAlias)
-    val fromTableAliases = tableAliases filter
+    val fromTableAliases = tableAliasMap filter
       { case (tableAlias, _) => !joinTableAliases.contains(tableAlias) }
 
-    if (tableAliases.nonEmpty)  Some(FromClause(fromTableAliases))
+    if (tableAliasMap.nonEmpty)  Some(FromClause(fromTableAliases))
     else                        None
   }
 
@@ -88,7 +104,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
     args.map { case (joinType, tableAlias, exps) => {
 
-        val tableName = tableAliases(tableAlias)
+        val tableName = tableAliasMap(tableAlias)
         val joinCtor = joinType match {
                   case "InnerJoin" => InnerJoinClause
                   case "RightJoin" => RightJoinClause
@@ -111,7 +127,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
   private def getOperation(tree: Tree) = {
 
     val op = tree match {
-      case q"orm.QueryOps.RichAnyVal[$tpe1]($operand1).$operator($operand2)" =>
+      case q"orm.QueryOps.RichAnyVal[$_]($operand1).$operator($operand2)" =>
         Some((operator, List(operand1, operand2)))
       case q"orm.QueryOps.RichString($operand1).$operator($operand2)" =>
         Some((operator, List(operand1, operand2)))
@@ -127,7 +143,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
   private def getField(tree: Tree) = tree match {
 
-    case q"$tableAlias.$column" if (tableAliases.keySet.contains(tableAlias.toString)) =>
+    case q"$tableAlias.$column" if (tableAliasMap.keySet.contains(tableAlias.toString)) =>
       Some(Field(tableAlias.toString, column.toString))
     case _ => None
   }
@@ -148,10 +164,10 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
   private def getIdentity(tree: Tree) = {
 
     val identity = tree match {
-      case ident @ q"$ident1.$ident2.$ident3.$ident4.$ident5" => Some(ident)
-      case ident @ q"$ident1.$ident2.$ident3.$ident4" => Some(ident)
-      case ident @ q"$ident1.$ident2.$ident3" => Some(ident)
-      case ident @ q"$ident1.$ident2" => Some(ident)
+      case ident @ q"$_.$_.$_.$_.$_" => Some(ident)
+      case ident @ q"$_.$_.$_.$_" => Some(ident)
+      case ident @ q"$_.$_.$_" => Some(ident)
+      case ident @ q"$_.$_" => Some(ident)
       case Ident(ident) => Some(ident.asInstanceOf[Tree])
       case _ => None
     }
@@ -159,11 +175,13 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     identity map (ident => Identity(ident.toString, ident))
   }
 
-  private def getTableAliases (tree: Tree, typeName: String) = {
+  private def getTableAliasMap (tree: Tree, typeName: String) = {
 
-    val aliases = ops.getCaseDefArgs(tree)
+    val tableAliases = ops.findLambdaFnArgs(tree)
+                     .map(_.toString)
+
     val tableNames = QueryUtils.splitTupledTypeTag(typeName)
 
-    (aliases zip tableNames).toMap
+    (tableAliases zip tableNames).toMap
   }
 }

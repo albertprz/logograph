@@ -5,32 +5,43 @@ import utils.QueryUtils
 import utils.ReflectionUtils._
 import utils.StringUtils._
 
-sealed abstract class SQLStatement
+sealed trait SQLStatement {
+  val sql: String
+}
 
-case class SelectQuery [T, R] (private val query: Option[T ⇒ Query[R]] = None,
-                               private val subqueries: Seq[SelectQuery[_, _]] = Seq.empty,
-                               private val queryClauseSql: Option[String] = None,
-                               val params: Map[String, Any] = Map.empty)
-                               extends SQLStatement {
+case class SelectQuery [T <: DbDataSet] (private val subqueries: Seq[SelectQuery[_]] = Seq.empty,
+                                         private val sqlTemplate: Option[String] = None,
+                                         private val params: Map[String, Any] = Map.empty)
+                                        (implicit tag: ru.TypeTag[T]) extends SQLStatement {
 
-  private val querySql =
-    params.values
-              .filter(_.isInstanceOf[List[Any]])
-              .foldLeft(queryClauseSql.getOrElse("")) {
-                case (acc, curr: List[Any]) => acc.replaceFirst("in [?]", curr.map(x => "?")
-                                                                              .mkString("in (", ", ", ")"))
-    }
-
-  val sql = querySql
+  val sql = if (sqlTemplate.isDefined) getSQL
+            else                       getSimpleSQL
 
   val paramList = (params.values flatMap { _ match {
         case list: List[Any] => list
         case other: Any => List(other)
       }
     }).toList
+
+
+  private def getSimpleSQL () = {
+    val tableName = className[T]
+    s"SELECT * FROM [$tableName]"
+  }
+
+  private def getSQL () =
+    params.values
+          .filter (_.isInstanceOf[List[Any]])
+          .foldLeft (sqlTemplate.getOrElse("")) {
+            case (acc, curr: List[Any]) => acc.replaceFirst("in [?]", curr.map(x => "?")
+                                                                          .mkString("in (", ", ", ")"))
+          }
+
+  override def toString () =
+    s"Query: \n\n${sql} \n\nParams:  \n\n${pprint(params)}\n\n"
 }
 
-case class InsertStatement [T <: DbTable] (val data: Either[Seq[T], SelectQuery[_, T]])
+case class InsertStatement [T <: DbTable] (val data: Either[Seq[T], SelectQuery[T]])
                                             (implicit tag: ru.TypeTag[T])
                                             extends SQLStatement {
 
@@ -40,10 +51,11 @@ case class InsertStatement [T <: DbTable] (val data: Either[Seq[T], SelectQuery[
     case Right(query) => getSQL(query)
   }
 
+
   private def getSQL [T <: DbTable] (data: Seq[T]) (implicit tag: ru.TypeTag[T]) = {
 
     val companion = companionOf[T]
-    val tableName = companion.className
+    val tableName = className[T]
     val paramNames = companion.paramNames
     val paramPlaceholders = (0 to data.size - 1).map(x => paramNames.map(x => "?"))
                                                 .map(stringify)
@@ -57,11 +69,10 @@ case class InsertStatement [T <: DbTable] (val data: Either[Seq[T], SelectQuery[
     (sql, paramList)
   }
 
+  private def getSQL [T <: DbTable] (query: SelectQuery[T]) (implicit tag: ru.TypeTag[T]) = {
 
-  private def getSQL [T <: DbTable] (query: SelectQuery[_, T]) (implicit tag: ru.TypeTag[T]) = {
-
+    val tableName = className[T]
     val companion = companionOf[T]
-    val tableName = companion.className
     val paramNames = stringify(companion.paramNames)
 
     val sql = s"""|INSERT INTO [$tableName] $paramNames
@@ -69,4 +80,45 @@ case class InsertStatement [T <: DbTable] (val data: Either[Seq[T], SelectQuery[
 
     (sql, query.paramList)
   }
+
+  override def toString () =
+    s"Insert Statement: \n\n${sql} \n\n"
+}
+
+case class DeleteStatement [T <: DbTable] () (implicit tag: ru.TypeTag[T]) extends SQLStatement {
+
+  val sql = getSQL
+
+
+  private def getSQL [T <: DbTable] (implicit tag: ru.TypeTag[T]) = {
+    val tableName = className[T]
+    s"""|DELETE FROM [$tableName]""".stripMargin
+  }
+
+  override def toString () =
+    s"Delete Statement: \n\n${sql} \n\n"
+}
+
+case class UpdateStatement [T <: DbTable] (private val sqlTemplate: String,
+                                           private val params: Map[String, Any] = Map.empty)
+                                          extends SQLStatement {
+
+  val sql = getSQL
+
+  val paramList = (params.values flatMap { _ match {
+        case list: List[Any] => list
+        case other: Any => List(other)
+      }
+    }).toList
+
+  private def getSQL () =
+    params.values
+          .filter (_.isInstanceOf[List[Any]])
+          .foldLeft (sqlTemplate) {
+            case (acc, curr: List[Any]) => acc.replaceFirst("in [?]", curr.map(x => "?")
+                                                                          .mkString("in (", ", ", ")"))
+          }
+
+  override def toString () =
+    s"Update Statement: \n\n${sql} \n\nParams:  \n\n${pprint(params)}\n\n"
 }
