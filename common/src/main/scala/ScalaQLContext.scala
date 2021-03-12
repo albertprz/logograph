@@ -2,7 +2,7 @@ package orm
 
 import java.sql.{Connection, ResultSet, PreparedStatement, Statement, Date, Time}
 import java.math.BigDecimal
-import scala.util.Try
+import scala.util.{Try, Success, Failure}
 import scala.collection.mutable.ListBuffer
 import scala.reflect.runtime.{universe => ru}
 import utils.ReflectionUtils._
@@ -14,32 +14,48 @@ class ScalaQLContext (conn: Connection) {
 
   conn.setAutoCommit(false)
 
-  def run [T <: DbDataSet] (query: SelectQuery[T]) (implicit tag: ru.TypeTag[T]) =
+  def run [T <: DbDataSet] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
     tryRun(query).get
 
-  def tryRun [T <: DbDataSet] (query: SelectQuery[T]) (implicit tag: ru.TypeTag[T])  =
+  def tryRun [T <: DbDataSet] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T])  =
     runQuery(query)
 
   def run (inserts: InsertStatement[_]*) =
     tryRun(inserts:_*).get
 
   def tryRun (inserts: InsertStatement[_]*) =
-    runInsertBatch(inserts)
+    runInsertBatch(inserts, true)
 
   def run (deletes: DeleteStatement[_]*) (implicit d: DummyImplicit) =
     tryRun(deletes:_*)(d).get
 
   def tryRun (deletes: DeleteStatement[_]*) (implicit d: DummyImplicit) =
-    runDeleteBatch(deletes)
+    runDeleteBatch(deletes, true)
 
   def run (updates: UpdateStatement[_]*) (implicit d1: DummyImplicit, d2: DummyImplicit) =
     tryRun(updates:_*)(d1, d2).get
 
   def tryRun (updates: UpdateStatement[_]*) (implicit d1: DummyImplicit, d2: DummyImplicit) =
-    runUpdateBatch(updates)
+    runUpdateBatch(updates, true)
 
+  def run (stmts: SQLStatefulStatement*) (implicit d1: DummyImplicit, d2: DummyImplicit,
+                                          d3: DummyImplicit) =
+    tryRun(stmts:_*)(d1, d2, d3).get
 
-  private def runQuery [T <: DbDataSet] (query: SelectQuery[T]) (implicit tag: ru.TypeTag[T]) = Try {
+  def tryRun (stmts: SQLStatefulStatement*) (implicit d1: DummyImplicit, d2: DummyImplicit,
+                                                      d3: DummyImplicit) = {
+
+    val rets = for (stmt <- stmts)
+      yield stmt match {
+        case insert: InsertStatement[_] => runInsertBatch(Seq(insert))
+        case delete: DeleteStatement[_] => runDeleteBatch(Seq(delete))
+        case update: UpdateStatement[_] => runUpdateBatch(Seq(update))
+      }
+
+    Try { for (ret <- rets) ret.get }
+  }
+
+  private def runQuery [T <: DbDataSet] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) = Try {
 
     val companion = companionOf[T]
 
@@ -57,7 +73,7 @@ class ScalaQLContext (conn: Connection) {
     results.toList
   }
 
-  private def runInsertBatch  (inserts: Seq[InsertStatement[_]]) = Try {
+  private def runInsertBatch  (inserts: Seq[InsertStatement[_]], commit: Boolean = false) = Try {
 
     for ((sql, paramList) <- inserts.map(x => (x.sql, x.paramList))) {
       val stmt = conn.prepareStatement(sql)
@@ -65,27 +81,33 @@ class ScalaQLContext (conn: Connection) {
       stmt.execute()
     }
 
-    conn.commit()
+    if (commit) {
+      conn.commit()
+    }
   }
 
-  private def runDeleteBatch (deletes: Seq[DeleteStatement[_]]) = Try {
+  private def runDeleteBatch (deletes: Seq[DeleteStatement[_]], commit: Boolean = false) = Try {
 
     for (sql <- deletes map (_.sql)) {
       val stmt = conn.createStatement()
       stmt.execute(sql)
     }
 
-    conn.commit()
+    if (commit) {
+      conn.commit()
+    }
   }
 
-  private def runUpdateBatch (updates: Seq[UpdateStatement[_]]) = Try {
+  private def runUpdateBatch (updates: Seq[UpdateStatement[_]], commit: Boolean = false) = Try {
 
     for (sql <- updates map (_.sql)) {
       val stmt = conn.createStatement()
       stmt.execute(sql)
     }
 
-    conn.commit()
+    if (commit) {
+      conn.commit()
+    }
   }
 }
 

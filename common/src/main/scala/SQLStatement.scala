@@ -7,49 +7,50 @@ import utils.StringUtils._
 
 sealed trait SQLStatement {
   val sql: String
+  def run () (implicit context: ScalaQLContext): Any
+  def tryRun () (implicit context: ScalaQLContext): Any
 }
 
-case class SelectQuery [T <: DbDataSet] (private val subqueries: Seq[SelectQuery[_]] = Seq.empty,
+sealed trait SQLStatefulStatement extends SQLStatement
+
+case class SelectStatement [T <: DbDataSet] (private val subqueries: Seq[SelectStatement[_]] = Seq.empty,
                                          private val sqlTemplate: Option[String] = None,
                                          private val params: Map[String, Any] = Map.empty)
                                         (implicit tag: ru.TypeTag[T]) extends SQLStatement {
 
-  val sql = if (sqlTemplate.isDefined) getSQL
-            else                       getSimpleSQL
+  import SQLStatement._
 
-  val paramList = (params.values flatMap { _ match {
-        case list: List[Any] => list
-        case other: Any => List(other)
-      }
-    }).toList
-
-
-  private def getSimpleSQL () = {
-    val tableName = className[T]
-    s"SELECT * FROM [$tableName]"
+  val sql = sqlTemplate match {
+    case Some(template) => getSQL(template, params)
+    case None => s"SELECT * FROM [${className[T]}]"
   }
 
-  private def getSQL () =
-    params.values
-          .filter (_.isInstanceOf[List[Any]])
-          .foldLeft (sqlTemplate.getOrElse("")) {
-            case (acc, curr: List[Any]) => acc.replaceFirst("in [?]", curr.map(x => "?")
-                                                                          .mkString("in (", ", ", ")"))
-          }
+  val paramList = getParamList(params)
+
+  def run () (implicit context: ScalaQLContext) =
+    context.run(this)
+
+  def tryRun () (implicit context: ScalaQLContext) =
+    context.tryRun(this)
 
   override def toString () =
     s"Query: \n\n${sql} \n\nParams:  \n\n${pprint(params)}\n\n"
 }
 
-case class InsertStatement [T <: DbTable] (val data: Either[Seq[T], SelectQuery[T]])
+case class InsertStatement [T <: DbTable] (val data: Either[Seq[T], SelectStatement[T]])
                                             (implicit tag: ru.TypeTag[T])
-                                            extends SQLStatement {
+                                            extends SQLStatefulStatement {
 
   val (sql, paramList) = data match {
-
     case Left(data) => getSQL(data)
     case Right(query) => getSQL(query)
   }
+
+  def run () (implicit context: ScalaQLContext) =
+    context.run(this)
+
+  def tryRun () (implicit context: ScalaQLContext) =
+    context.tryRun(this)
 
 
   private def getSQL [T <: DbTable] (data: Seq[T]) (implicit tag: ru.TypeTag[T]) = {
@@ -69,7 +70,7 @@ case class InsertStatement [T <: DbTable] (val data: Either[Seq[T], SelectQuery[
     (sql, paramList)
   }
 
-  private def getSQL [T <: DbTable] (query: SelectQuery[T]) (implicit tag: ru.TypeTag[T]) = {
+  private def getSQL [T <: DbTable] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) = {
 
     val tableName = className[T]
     val companion = companionOf[T]
@@ -85,40 +86,58 @@ case class InsertStatement [T <: DbTable] (val data: Either[Seq[T], SelectQuery[
     s"Insert Statement: \n\n${sql} \n\n"
 }
 
-case class DeleteStatement [T <: DbTable] () (implicit tag: ru.TypeTag[T]) extends SQLStatement {
+case class DeleteStatement [T <: DbTable]  (private val sqlTemplate: String,
+                                            private val params: Map[String, Any] = Map.empty)
+                                           extends SQLStatefulStatement {
+  import SQLStatement._
 
-  val sql = getSQL
+  val sql = getSQL(sqlTemplate, params)
+  val paramList = getParamList(params)
 
+  def run () (implicit context: ScalaQLContext) =
+    context.run(this)
 
-  private def getSQL [T <: DbTable] (implicit tag: ru.TypeTag[T]) = {
-    val tableName = className[T]
-    s"""|DELETE FROM [$tableName]""".stripMargin
-  }
+  def tryRun () (implicit context: ScalaQLContext) =
+    context.tryRun(this)
 
   override def toString () =
-    s"Delete Statement: \n\n${sql} \n\n"
+    s"Delete Statement: \n\n${sql} \n\nParams:  \n\n${pprint(params)}\n\n"
 }
 
 case class UpdateStatement [T <: DbTable] (private val sqlTemplate: String,
                                            private val params: Map[String, Any] = Map.empty)
-                                          extends SQLStatement {
+                                          extends SQLStatefulStatement {
 
-  val sql = getSQL
+  import SQLStatement._
 
-  val paramList = (params.values flatMap { _ match {
+  val sql = getSQL(sqlTemplate, params)
+  val paramList = getParamList(params)
+
+  def run () (implicit context: ScalaQLContext) =
+    context.run(this)
+
+  def tryRun () (implicit context: ScalaQLContext) =
+    context.tryRun(this)
+
+  override def toString () =
+    s"Update Statement: \n\n${sql} \n\nParams:  \n\n${pprint(params)}\n\n"
+}
+
+object SQLStatement {
+
+  def getParamList (params: Map[String, Any]) =
+    (params.values flatMap { _ match {
         case list: List[Any] => list
         case other: Any => List(other)
       }
     }).toList
 
-  private def getSQL () =
+
+  def getSQL (sqlTemplate: String, params: Map[String, Any]) =
     params.values
           .filter (_.isInstanceOf[List[Any]])
           .foldLeft (sqlTemplate) {
             case (acc, curr: List[Any]) => acc.replaceFirst("in [?]", curr.map(x => "?")
                                                                           .mkString("in (", ", ", ")"))
           }
-
-  override def toString () =
-    s"Update Statement: \n\n${sql} \n\nParams:  \n\n${pprint(params)}\n\n"
 }

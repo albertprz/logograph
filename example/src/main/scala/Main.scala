@@ -14,7 +14,7 @@ object Setup {
     DriverManager.getConnection("jdbc:sqlite::memory:")
   }
 
-  def initializeDb () = {
+  val initializeDb = {
 
     val sqls = Seq( """ CREATE TABLE Person (
                       name text,
@@ -37,10 +37,7 @@ object Setup {
 
 object Application extends App {
 
-
   val conn = Setup.sqliteConnection
-  Setup.initializeDb()
-
 
   // Database Table Models
   case class Person (name: String, age: Int, isEmployer: Boolean, addressId: Int, telephoneId: Int)
@@ -53,34 +50,35 @@ object Application extends App {
   case class Result (name: String, age: Int, street: String, telephoneNumber: String) extends DbResult
 
 
-  val names = List("John", "Richard", "Thomas")
+
+  val names = List("John", "Mark", "Thomas")
   val john = Person ("John", 50, true, 2, 1)
   val johnAddress = Address (2, "Baker Street")
 
-  val context = new ScalaQLContext(conn)
+  implicit val context = new ScalaQLContext(conn)
 
+  val stmts = Seq(insert(john),
+                  insert(johnAddress),
+                  updateWhere[Person] (p => (Map(p.name -> "Mark",
+                                            p.age  -> 50),
+                                             Where(p.age >= 10))),
+                  deleteWhere[Person] (p => Where(p.name like "M%k")))
 
-  val updt = update[Person] (p => Map(p.name -> "John",
-                                      p.age -> 12))
-
-
-  println(updt)
-
-  context.run(insert(john),
-              insert(johnAddress))
+  context.run(stmts:_*)
 
   val qry = query[(Person, Address, Telephone)].select {
-    case (p, h, t) ⇒ Query(
-      Select          (Result (p.name, p.age, h.street, t.number)),
-      Where           (h.street like "%Baker St%",
+    case (p, a, t) ⇒ Query(
+      Select          (Result (p.name, p.age, a.street, t.number)),
+      Where           (a.street like "%Baker St%",
                        p.name in names,
-                       p.isEmployer),
+                       coalesce(p.isEmployer, false)),
       OrderBy         (desc (p.age)),
-      LeftJoin (h)    (h.id === p.addressId),
+      LeftJoin (a)    (a.id === p.addressId),
       LeftJoin (t)    (t.id === p.telephoneId))
   }
 
-  val results = context.run(qry)
+  val results = qry.run()
 
+  println(stmts.mkString("\n\n", "", ""))
   println(s"$qry \nResults: \n\n${pprint(results)} \n")
 }

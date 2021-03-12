@@ -2,18 +2,17 @@ package orm
 
 object QueryOps {
 
-  val infixOps = List("-", "+", "*", "/", "===", "<>", "&&", "||", "<", ">", "like", "in")
+  val infixOps = List("-", "+", "*", "/", "===", "<>", "&&", "||", "<", ">", "<=", ">=", "like", "in")
 
   val postfixOps = List("desc", "asc")
 
-  val prefixOps = List("unary_!", "isNull", "count", "sum", "avg", "max", "min", "stringAgg")
+  val prefixOps = List("unary_!", "coalesce", "count", "sum", "avg", "max", "min", "stringAgg")
 
   val allOps = infixOps ++ postfixOps ++ prefixOps
 
   val aggOps = List("count", "sum", "avg", "max", "min", "stringAgg")
 
-  val opsConversion = Map("unary_!" -> "not", "&&" -> "and", "||" -> "or",
-                           "===" -> "=", "isNull" -> "isnull")
+  val opsConversion = Map("unary_!" -> "not", "&&" -> "and", "||" -> "or", "===" -> "=")
 
 
 
@@ -25,12 +24,8 @@ object QueryOps {
   def stringAgg (x: String): String = ???
   def count (x: Any): Int = ???
 
-  // isNull Function
-  def isNull (x: Int, y: Int): Int = ???
-  def isNull (x: Long, y: Long): Long = ???
-  def isNull (x: Float, y: Float): Float = ???
-  def isNull (x: Double, y: Double): Double = ???
-  def isNull (x: String, y: String): String = ???
+  // Coalesce function
+  def coalesce [T <: AnyVal] (x: T*): T = ???
 
   // Order By Functions
   def asc[T <: AnyVal] (x: T): T = ???

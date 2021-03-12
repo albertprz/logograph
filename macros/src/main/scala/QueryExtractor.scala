@@ -16,19 +16,37 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     tableAliasMap = getTableAliasMap(tree, fromTypeName)
   }
 
-  def getUpdateClause (tree: Tree, typeName: String) = {
+  def getUpdateClause (updateTree: Tree, typeName: String) = {
 
-    init(tree, typeName)
+    init(updateTree, typeName)
 
-    val mapArgs = ops.findMapArgs(tree)
+    val mapArgs = ops.findMapArgs(updateTree)
     val setMap = mapArgs.map { case (key, value) => (getField(key).get, getExpression(value).get)  }
                         .toMap
 
     val setClause = SetClause(setMap)
-    val updateClause = UpdateClause(tableAliasMap, setClause)
-    val params = ExpressionClause.findParameters(setClause)
+    val whereClause = getWhereClause(updateTree)
+    val tableName = QueryUtils.splitTupledTypeTag(typeName).head
+
+    val updateClause = UpdateClause(tableName, setClause, whereClause)
+    val params = ExpressionClause.findParameters(updateClause)
 
     (updateClause, params)
+  }
+
+  def getDeleteClause (whereTree: Option[Tree], typeName: String) = {
+
+    if (whereTree.isDefined) {
+        init(whereTree.get, typeName)
+    }
+
+    val whereClause = whereTree.flatMap(getWhereClause)
+    val tableName = QueryUtils.splitTupledTypeTag(typeName).head
+
+    val deleteClause = DeleteClause(tableName, whereClause)
+    val params = ExpressionClause.findParameters(deleteClause)
+
+    (deleteClause, params)
   }
 
   def getQueryClause (tree: Tree, typeName: String) = {

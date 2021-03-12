@@ -1,6 +1,8 @@
 
 package orm
 
+import utils.StringUtils._
+
 trait ExpressionClause extends SQLClause {
   val exprs: List[Expression]
 }
@@ -40,7 +42,7 @@ case class WhereClause (exprs: List[Expression]) extends ExpressionClause {
 
   val sql = exprs
             .map(Predicate.adaptSql)
-            .map(str => s"($str)")
+            .map(str => if (exprs.size > 1) s"($str)" else str)
             .mkString("WHERE       ", " AND \n            ", "\n")
 }
 
@@ -147,10 +149,23 @@ case class QueryClause (select: Option[BaseSelectClause] = None, from: Option[Fr
 
     val overlappedFields = aggFields intersect nonAggFields
 
-    if (overlappedFields.nonEmpty)
-      throw new Exception("\nThere are some fields which are being used both in aggregate functions and " +
-                          s"as regular columns:\n${overlappedFields.mkString("[", ", ", "]")} \n" +
-                          "Please only use these fields within an aggregation function \n")
+    if (overlappedFields.nonEmpty) {
+      throw new Exception("""|\nThere are some fields which are being used both in aggregate functions and
+                             | as regular columns:\n${pprint(overlappedFields)}
+                             |Please only use these fields within an aggregation function \n""".stripMargin)
+    }
+
+    val orderByExprs = orderBy.fold (List.empty[Expression]) (_.exprs) diff
+                       select.fold  (List.empty[Expression]) (_.exprs)
+
+    if ((groupBy.isDefined || select.fold(false)(_.isInstanceOf[SelectDistinct[_]])) &&
+         orderByExprs.nonEmpty) {
+      throw new Exception(s"""|\nThere are some expressions used in the Order By Clause, which were not
+                              |included in the Select Clause:\n${pprint(orderByExprs)}
+                              |Please only use expressions already included in the Select clause
+                              |for the Order By clause if the query is using
+                              | a Group By or Distinct clause \n""".stripMargin)
+    }
   }
 
   val sql = {
@@ -172,22 +187,31 @@ case class SetClause (setMap: Map[Field, Expression]) extends ExpressionClause {
 
   val validate = {}
 
-  val sql = setMap.map { case (key, value) => s"${key.sql} = ${value.sql}" }
-                  .mkString("SET ", ",\n    ", "")
+  val sql = setMap.map { case (key, value) => s"[${key.column}] = ${value.sql}" }
+                  .mkString("SET         ", ",\n            ", "")
 }
 
-case class UpdateClause (tableAliasMap: Map[String, String], setClause: SetClause) extends SQLClause {
+case class UpdateClause (tableName: String, setClause: SetClause,
+                         whereClause: Option[WhereClause]) extends SQLClause {
 
-  private val (tableAlias, tableName) = tableAliasMap.head
+  val validate = {}
 
-  val validate = {
-    if (setClause.setMap.exists { case (key, value) => key.tableAlias != tableAlias })
-      throw new Exception(s"""|A different alias than the update table alias "$tableAlias"
-                              | has been used for the Set Clause in an Update statement """.stripMargin)
-  }
+  private val setClauseSql = setClause.sql
+  private val whereClauseSql = whereClause.fold ("") (ExpressionClause.removeAliases)
 
-  val sql = s"""|UPDATE [$tableName] $tableAlias
-                |${setClause.sql}""".stripMargin
+  val sql = s"""|UPDATE      [$tableName]
+                |$setClauseSql
+                |$whereClauseSql""".stripMargin
+}
+
+case class DeleteClause (tableName: String, whereClause: Option[WhereClause]) extends SQLClause {
+
+  val validate = {}
+
+  private val whereClauseSql = whereClause.fold ("") (ExpressionClause.removeAliases)
+
+  val sql = s"""|DELETE FROM [$tableName]
+                |$whereClauseSql""".stripMargin
 }
 
 
@@ -220,4 +244,6 @@ object ExpressionClause {
   def getNonAggFields(clause: List[ExpressionClause]) =
       clause.flatMap (_.exprs.flatMap(_.nonAggFields))
 
+  def removeAliases (exprClause: ExpressionClause) =
+    exprClause.sql.replaceAll("[a-zA-Z]\\.\\[", "[")
 }
