@@ -57,14 +57,14 @@ object Application extends App {
 
   implicit val context = new ScalaQLContext(conn)
 
+
   val stmts = Seq(insert(john),
                   insert(johnAddress),
-                  updateWhere[Person] (p => (Map(p.name -> "Mark",
+                  update[Person] (p => (Map(p.name -> "Mark",
                                             p.age  -> 50),
-                                             Where(p.age >= 10))),
-                  deleteWhere[Person] (p => Where(p.name like "M%k")))
+                                             Where(p.age >= 10))))
 
-  context.run(stmts:_*)
+
 
   val qry = query[(Person, Address, Telephone)].select {
     case (p, a, t) ⇒ Query(
@@ -77,6 +77,7 @@ object Application extends App {
       LeftJoin (t)    (t.id === p.telephoneId))
   }
 
+  context.run(stmts:_*)
   val results = qry.run()
 
   println(stmts.mkString("\n\n", "", ""))

@@ -2,10 +2,14 @@ package ast
 
 import orm._
 import scala.reflect.macros.blackbox
+import utils.QueryUtils
 
 class QueryImpl(val c: blackbox.Context) {
 
   import c.universe._
+
+  def selectAll[T <: DbDataSet] () (implicit tag: WeakTypeTag[T]) =
+    buildQueryAll[T]
 
   def select[T, R <: DbDataSet] (query: Tree) (implicit tag1: WeakTypeTag[T], tag2: WeakTypeTag[R]) =
     buildQuery[T, R] (query)
@@ -13,16 +17,16 @@ class QueryImpl(val c: blackbox.Context) {
   def selectDebug[T, R <: DbDataSet] (query: Tree) (implicit tag1: WeakTypeTag[T], tag2: WeakTypeTag[R]) =
     buildQuery[T, R] (query, debug = true)
 
+  def updateAll[T <: DbTable] (setMap: Tree) (implicit tag: WeakTypeTag[T]) =
+    buildUpdate[T] (setMap)
+
   def update[T <: DbTable] (setMap: Tree) (implicit tag: WeakTypeTag[T]) =
     buildUpdate[T] (setMap)
 
-  def updateWhere[T <: DbTable] (setMap: Tree) (implicit tag: WeakTypeTag[T]) =
-    buildUpdate[T] (setMap)
-
-  def delete[T <: DbTable] (implicit tag: WeakTypeTag[T])  =
+  def deleteAll[T <: DbTable] (implicit tag: WeakTypeTag[T])  =
     buildDelete[T] ()
 
-  def deleteWhere[T <: DbTable] (where: Tree)  (implicit tag: WeakTypeTag[T])  =
+  def delete[T <: DbTable] (where: Tree)  (implicit tag: WeakTypeTag[T])  =
     buildDelete[T] (Some(where))
 
   private val extractor = new QueryExtractor[c.type](c)
@@ -37,8 +41,16 @@ class QueryImpl(val c: blackbox.Context) {
                                |Query Tree: \n ${clause}\n\n\n""".stripMargin)
     }
 
-    c.Expr[SelectStatement[R]](q"""SelectStatement(sqlTemplate = Some(${clause.sql}),
+    c.Expr[SelectStatement[R]](q"""SelectStatement(sqlTemplate = ${clause.sql},
                                                    params = ${params.asInstanceOf[Map[String, Tree]]})""")
+  }
+
+  private def buildQueryAll[T <: DbDataSet] (implicit tag: WeakTypeTag[T]) = {
+
+    val clause = extractor.getQueryClause(weakTypeOf[T].toString)
+
+    c.Expr[SelectStatement[T]](q"""SelectStatement(sqlTemplate = ${clause.sql},
+                                                   params = Map.empty[String, Any])""")
   }
 
   private def buildUpdate[T <: DbTable] (updateTree: Tree) (implicit tag: WeakTypeTag[T]) = {

@@ -197,7 +197,8 @@ case class UpdateClause (tableName: String, setClause: SetClause,
   val validate = {}
 
   private val setClauseSql = setClause.sql
-  private val whereClauseSql = whereClause.fold ("") (ExpressionClause.removeAliases)
+  private val whereClauseSql = whereClause
+                                          .fold ("") (ExpressionClause.removeAliases)
 
   val sql = s"""|UPDATE      [$tableName]
                 |$setClauseSql

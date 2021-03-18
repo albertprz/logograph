@@ -20,39 +20,12 @@ class ScalaQLContext (conn: Connection) {
   def tryRun [T <: DbDataSet] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T])  =
     runQuery(query)
 
-  def run (inserts: InsertStatement[_]*) =
-    tryRun(inserts:_*).get
+  def run (stmts: SQLStatefulStatement*) =
+    tryRun(stmts:_*).get
 
-  def tryRun (inserts: InsertStatement[_]*) =
-    runInsertBatch(inserts, true)
+  def tryRun (stmts: SQLStatefulStatement*) = {
+    runStatefulStatement(stmts)
 
-  def run (deletes: DeleteStatement[_]*) (implicit d: DummyImplicit) =
-    tryRun(deletes:_*)(d).get
-
-  def tryRun (deletes: DeleteStatement[_]*) (implicit d: DummyImplicit) =
-    runDeleteBatch(deletes, true)
-
-  def run (updates: UpdateStatement[_]*) (implicit d1: DummyImplicit, d2: DummyImplicit) =
-    tryRun(updates:_*)(d1, d2).get
-
-  def tryRun (updates: UpdateStatement[_]*) (implicit d1: DummyImplicit, d2: DummyImplicit) =
-    runUpdateBatch(updates, true)
-
-  def run (stmts: SQLStatefulStatement*) (implicit d1: DummyImplicit, d2: DummyImplicit,
-                                          d3: DummyImplicit) =
-    tryRun(stmts:_*)(d1, d2, d3).get
-
-  def tryRun (stmts: SQLStatefulStatement*) (implicit d1: DummyImplicit, d2: DummyImplicit,
-                                                      d3: DummyImplicit) = {
-
-    val rets = for (stmt <- stmts)
-      yield stmt match {
-        case insert: InsertStatement[_] => runInsertBatch(Seq(insert))
-        case delete: DeleteStatement[_] => runDeleteBatch(Seq(delete))
-        case update: UpdateStatement[_] => runUpdateBatch(Seq(update))
-      }
-
-    Try { for (ret <- rets) ret.get }
   }
 
   private def runQuery [T <: DbDataSet] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) = Try {
@@ -73,36 +46,12 @@ class ScalaQLContext (conn: Connection) {
     results.toList
   }
 
-  private def runInsertBatch  (inserts: Seq[InsertStatement[_]], commit: Boolean = false) = Try {
+  private def runStatefulStatement  (stmts: Seq[SQLStatefulStatement], commit: Boolean = false) = Try {
 
-    for ((sql, paramList) <- inserts.map(x => (x.sql, x.paramList))) {
+    for ((sql, paramList) <- stmts.map(x => (x.sql, x.paramList))) {
       val stmt = conn.prepareStatement(sql)
       parameteriseStatement(stmt, paramList)
       stmt.execute()
-    }
-
-    if (commit) {
-      conn.commit()
-    }
-  }
-
-  private def runDeleteBatch (deletes: Seq[DeleteStatement[_]], commit: Boolean = false) = Try {
-
-    for (sql <- deletes map (_.sql)) {
-      val stmt = conn.createStatement()
-      stmt.execute(sql)
-    }
-
-    if (commit) {
-      conn.commit()
-    }
-  }
-
-  private def runUpdateBatch (updates: Seq[UpdateStatement[_]], commit: Boolean = false) = Try {
-
-    for (sql <- updates map (_.sql)) {
-      val stmt = conn.createStatement()
-      stmt.execute(sql)
     }
 
     if (commit) {

@@ -7,24 +7,20 @@ import utils.StringUtils._
 
 sealed trait SQLStatement {
   val sql: String
+  val paramList: List[Any]
   def run () (implicit context: ScalaQLContext): Any
   def tryRun () (implicit context: ScalaQLContext): Any
 }
 
 sealed trait SQLStatefulStatement extends SQLStatement
 
-case class SelectStatement [T <: DbDataSet] (private val subqueries: Seq[SelectStatement[_]] = Seq.empty,
-                                         private val sqlTemplate: Option[String] = None,
-                                         private val params: Map[String, Any] = Map.empty)
-                                        (implicit tag: ru.TypeTag[T]) extends SQLStatement {
+case class SelectStatement [T <: DbDataSet] (private val sqlTemplate: String,
+                                             private val params: Map[String, Any])
+                                            (implicit tag: ru.TypeTag[T]) extends SQLStatement {
 
   import SQLStatement._
 
-  val sql = sqlTemplate match {
-    case Some(template) => getSQL(template, params)
-    case None => s"SELECT * FROM [${className[T]}]"
-  }
-
+  val sql = getSQL(sqlTemplate, params)
   val paramList = getParamList(params)
 
   def run () (implicit context: ScalaQLContext) =
@@ -37,7 +33,7 @@ case class SelectStatement [T <: DbDataSet] (private val subqueries: Seq[SelectS
     s"Query: \n\n${sql} \n\nParams:  \n\n${pprint(params)}\n\n"
 }
 
-case class InsertStatement [T <: DbTable] (val data: Either[Seq[T], SelectStatement[T]])
+case class InsertStatement [T <: DbTable] (private val data: Either[Seq[T], SelectStatement[T]])
                                             (implicit tag: ru.TypeTag[T])
                                             extends SQLStatefulStatement {
 

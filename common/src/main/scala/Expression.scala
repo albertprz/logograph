@@ -25,7 +25,7 @@ case class LiteralVal (value: String) extends Expression {
 case class Field (tableAlias: String, column: String) extends Expression {
 
   val validate = {}
-  val sql = s"$tableAlias.[$column]"
+  val sql = s"$tableAlias." + (if (column != "*") s"[$column]" else column)
 }
 
 case class Identity (name: String, tree: Any) extends Expression {
