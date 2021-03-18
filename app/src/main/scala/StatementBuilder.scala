@@ -4,14 +4,6 @@ import ast.QueryImpl
 import scala.language.experimental.macros
 import scala.reflect.runtime.{universe => ru}
 
-case class QueryBuilder[T](private val subqueries: Seq[SelectStatement[_]] = Seq.empty) {
-
-  def select[R <: DbDataSet](query: T ⇒ Query[R]): SelectStatement[R] =
-    macro QueryImpl.select[T, R]
-
-  def selectDebug[R <: DbDataSet](query: T ⇒ Query[R]): SelectStatement[R] =
-    macro QueryImpl.selectDebug[T, R]
-}
 
 object StatementBuilder {
 
@@ -40,4 +32,14 @@ object StatementBuilder {
 
   def updateAll[T <: DbTable] (setMap: T => Map[Any, Any]): UpdateStatement[T] =
     macro QueryImpl.updateAll[T]
+}
+
+
+case class QueryBuilder[T]() {
+
+  def select[R <: DbDataSet](query: T ⇒ Query[R]): SelectStatement[R] =
+    macro QueryImpl.select[T, R]
+
+  def selectDebug[R <: DbDataSet](query: T ⇒ Query[R]): SelectStatement[R] =
+    macro QueryImpl.selectDebug[T, R]
 }
