@@ -1,4 +1,6 @@
 
+ThisBuild / organization := "org.alberto-perez-1994"
+ThisBuild / version      := "1.0.0"
 
 lazy val settings = Seq(
 
@@ -13,10 +15,10 @@ lazy val settings = Seq(
 )
 
 
-lazy val common = project
-  .in(file("common"))
+lazy val core = project
+  .in(file("core"))
   .settings(
-    name := "common",
+    name := "core",
     settings
   )
 
@@ -26,12 +28,13 @@ lazy val macros = project
     name := "macros",
     settings
   )
-.dependsOn(common)
+.dependsOn(core)
 
 lazy val app = project
-  .in(file("app"))
+  .in(file("."))
   .settings(
-    name := "app",
+    name := "scalaql",
     settings
   )
-.dependsOn(common, macros)
+.dependsOn(core, macros)
+.aggregate(core, macros)
