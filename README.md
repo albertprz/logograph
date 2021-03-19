@@ -17,8 +17,8 @@ to never happen in production code.
 The generated SQL statements can embed runtime values and are fully parameterised,<br>
 so there is no risk of SQL Injection attacks.
 
-The DSL works in a similar fashion to some other SQL compile-time DSLs avilable for Scala,<br>
-for example [Quill] (https://github.com/getquill/quill),
+The DSL works in a similar fashion to some other SQL compile-time DSLs available for Scala,<br>
+for example [Quill](https://github.com/getquill/quill),
 but it aims to provide a streamlined API, with a focus on simplicity<br>
 from the user standpoint, leaving some advanced functionality aside, in order to adapt better<br>
 to the most common business use cases, following the convention over configuration motto.<br>
@@ -95,7 +95,7 @@ that was used to generate the SQL:
       Operation (===, [Field (t, id), Field (p, telephoneId)])])],
     WhereClause ([
       Operation (like, [Field (a, street),
-        LiteralVal ('%Baker St%')]),
+        LiteralVal ('%Baker St%')],
       Operation (in, [Field (p, name), Identity (?)]),
       Operation (coalesce, [Field (p, isEmployer), LiteralVal (0)])]),
     OrderByClause ([
