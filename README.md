@@ -95,7 +95,7 @@ that was used to generate the SQL:
       Operation (===, [Field (t, id), Field (p, telephoneId)])])],
     WhereClause ([
       Operation (like, [Field (a, street),
-        LiteralVal ('%Baker St%')],
+        LiteralVal ("%Baker St%")]),
       Operation (in, [Field (p, name), Identity (?)]),
       Operation (coalesce, [Field (p, isEmployer), LiteralVal (0)])]),
     OrderByClause ([
