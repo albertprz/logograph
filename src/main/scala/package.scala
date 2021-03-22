@@ -31,11 +31,17 @@ package object scalaql {
   def deleteAll[T <: DbTable]: DeleteStatement[T] =
     macro QueryImpl.deleteAll[T]
 
+  def deleteDebug[T <: DbTable] (where: T => Where): DeleteStatement[T] =
+    macro QueryImpl.deleteDebug[T]
+
   def update[T <: DbTable] (setMap: T => (Map[Any, Any], Where)): UpdateStatement[T] =
     macro QueryImpl.update[T]
 
   def updateAll[T <: DbTable] (setMap: T => Map[Any, Any]): UpdateStatement[T] =
     macro QueryImpl.updateAll[T]
+
+  def updateDebug[T <: DbTable] (setMap: T => (Map[Any, Any], Where)): UpdateStatement[T] =
+    macro QueryImpl.updateDebug[T]
 
 
   // Query factory functions

@@ -4,7 +4,7 @@ ThisBuild / version      := "1.0.0"
 
 lazy val settings = Seq(
 
-  scalaVersion := "2.11.0",
+  scalaVersion := "2.13.0",
   libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
 )
 

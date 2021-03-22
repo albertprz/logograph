@@ -17,7 +17,7 @@ object ReflectionUtils {
 
   case class Companion(companionObject: Any) {
 
-    def apply (x: Seq[Object]) =
+    def apply (x: Seq[Any]) =
       applyMethod.invoke(companionObject, x :_ *)
 
     private val applyMethod =

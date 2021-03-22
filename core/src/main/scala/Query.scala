@@ -1,4 +1,4 @@
-package com.albertoperez1994.scalaql.core
+package com.albertoperez1994.scalaql
 
 
 sealed trait SelectBase [T]

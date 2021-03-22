@@ -1,4 +1,4 @@
-package com.albertoperez1994.scalaql.core
+package com.albertoperez1994.scalaql
 
 import java.sql.{Connection, ResultSet, PreparedStatement, Statement, Date, Time}
 import java.math.BigDecimal
@@ -42,7 +42,7 @@ class ScalaQLContext (conn: Connection) {
 
     while (resultSet.next()) {
       val ctorArgs = getCtorArgs(resultSet, companion.paramTypes)
-      results += companion.apply(ctorArgs.asInstanceOf[Seq[Object]]).asInstanceOf[T]
+      results += companion.apply(ctorArgs).asInstanceOf[T]
     }
 
     results.toList

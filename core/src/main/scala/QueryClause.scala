@@ -1,5 +1,6 @@
 package com.albertoperez1994.scalaql.core
 
+import com.albertoperez1994.scalaql.SelectDistinct
 import com.albertoperez1994.scalaql.utils.StringUtils._
 
 trait ExpressionClause extends SQLClause {

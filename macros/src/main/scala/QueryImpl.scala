@@ -2,7 +2,7 @@ package com.albertoperez1994.scalaql.macros
 
 import scala.reflect.macros.blackbox
 
-import com.albertoperez1994.scalaql.core._
+import com.albertoperez1994.scalaql._
 import com.albertoperez1994.scalaql.{utils => utils}
 import utils.QueryUtils
 
@@ -25,11 +25,17 @@ class QueryImpl(val c: blackbox.Context) {
   def update[T <: DbTable] (setMap: Tree) (implicit tag: WeakTypeTag[T]) =
     buildUpdate[T] (setMap)
 
+  def updateDebug[T <: DbTable] (setMap: Tree) (implicit tag: WeakTypeTag[T]) =
+    buildUpdate[T] (setMap, debug = true)
+
   def deleteAll[T <: DbTable] (implicit tag: WeakTypeTag[T])  =
     buildDelete[T] ()
 
   def delete[T <: DbTable] (where: Tree)  (implicit tag: WeakTypeTag[T])  =
     buildDelete[T] (Some(where))
+
+  def deleteDebug[T <: DbTable] (where: Tree)  (implicit tag: WeakTypeTag[T])  =
+    buildDelete[T] (Some(where), debug = true)
 
   private val extractor = new QueryExtractor[c.type](c)
 
@@ -55,17 +61,29 @@ class QueryImpl(val c: blackbox.Context) {
                                                    params = Map.empty[String, Any])""")
   }
 
-  private def buildUpdate[T <: DbTable] (updateTree: Tree) (implicit tag: WeakTypeTag[T]) = {
+  private def buildUpdate[T <: DbTable] (updateTree: Tree, debug: Boolean = false)
+                         (implicit tag: WeakTypeTag[T]) = {
 
      val (clause, params) = extractor.getUpdateClause(updateTree, weakTypeOf[T].toString)
+
+    if (debug) {
+      throw new Exception(s""" |  Debugging update: \n\n\n${clause.sql}\n\n
+                               |Update Tree: \n ${clause}\n\n\n""".stripMargin)
+    }
 
     c.Expr[UpdateStatement[T]](q"""UpdateStatement(sqlTemplate = ${clause.sql},
                                                    params = ${params.asInstanceOf[Map[String, Tree]]})""")
   }
 
-  private def buildDelete[T <: DbTable] (whereTree: Option[Tree] = None) (implicit tag: WeakTypeTag[T]) = {
+  private def buildDelete[T <: DbTable] (whereTree: Option[Tree] = None, debug: Boolean = false)
+                         (implicit tag: WeakTypeTag[T]) = {
 
      val (clause, params) = extractor.getDeleteClause(whereTree, weakTypeOf[T].toString)
+
+    if (debug) {
+      throw new Exception(s""" |  Debugging delete: \n\n\n${clause.sql}\n\n
+                               |Delete Tree: \n ${clause}\n\n\n""".stripMargin)
+    }
 
     c.Expr[DeleteStatement[T]](q"""DeleteStatement(sqlTemplate = ${clause.sql},
                                                    params = ${params.asInstanceOf[Map[String, Tree]]})""")
