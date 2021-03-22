@@ -1,10 +1,12 @@
-package orm
+package com.albertoperez1994.scalaql.core
 
 import java.sql.{Connection, ResultSet, PreparedStatement, Statement, Date, Time}
 import java.math.BigDecimal
 import scala.util.{Try, Success, Failure}
 import scala.collection.mutable.ListBuffer
 import scala.reflect.runtime.{universe => ru}
+
+import com.albertoperez1994.scalaql.{utils => utils}
 import utils.ReflectionUtils._
 import utils.StringUtils._
 
@@ -40,7 +42,7 @@ class ScalaQLContext (conn: Connection) {
 
     while (resultSet.next()) {
       val ctorArgs = getCtorArgs(resultSet, companion.paramTypes)
-      results += companion.apply(ctorArgs).asInstanceOf[T]
+      results += companion.apply(ctorArgs.asInstanceOf[Seq[Object]]).asInstanceOf[T]
     }
 
     results.toList

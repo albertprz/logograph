@@ -1,6 +1,8 @@
-package orm
+package com.albertoperez1994.scalaql.core
 
 import scala.reflect.runtime.{universe => ru}
+
+import com.albertoperez1994.scalaql.{utils => utils}
 import utils.QueryUtils
 import utils.ReflectionUtils._
 import utils.StringUtils._

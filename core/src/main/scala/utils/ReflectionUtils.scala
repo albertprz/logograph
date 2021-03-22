@@ -1,4 +1,4 @@
-package utils
+package com.albertoperez1994.scalaql.utils
 
 object ReflectionUtils {
 
@@ -6,7 +6,9 @@ object ReflectionUtils {
   private lazy val universeMirror = runtimeMirror(getClass.getClassLoader)
 
   def companionOf[T: TypeTag] = {
-    val companionMirror = universeMirror.reflectModule(typeOf[T].typeSymbol.companionSymbol.asModule)
+
+    val module = typeOf[T].typeSymbol.companionSymbol.asModule
+    val companionMirror = universeMirror.reflectModule(module)
     Companion(companionMirror.instance)
   }
 
@@ -15,7 +17,7 @@ object ReflectionUtils {
 
   case class Companion(companionObject: Any) {
 
-    def apply (x: Seq[Any]) =
+    def apply (x: Seq[Object]) =
       applyMethod.invoke(companionObject, x :_ *)
 
     private val applyMethod =

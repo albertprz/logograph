@@ -1,7 +1,9 @@
-package ast
+package com.albertoperez1994.scalaql.macros
 
-import orm._
 import scala.reflect.macros.blackbox
+
+import com.albertoperez1994.scalaql.core._
+import com.albertoperez1994.scalaql.{utils => utils}
 import utils.QueryUtils
 
 class QueryImpl(val c: blackbox.Context) {

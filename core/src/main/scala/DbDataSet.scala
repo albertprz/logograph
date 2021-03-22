@@ -1,4 +1,4 @@
-package orm
+package com.albertoperez1994.scalaql.core
 
 sealed trait DbDataSet extends Product with Serializable {
 

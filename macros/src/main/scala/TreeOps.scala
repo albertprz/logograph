@@ -1,4 +1,4 @@
-package ast
+package com.albertoperez1994.scalaql.macros
 
 import scala.reflect.macros.blackbox
 

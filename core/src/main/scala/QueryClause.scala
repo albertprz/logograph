@@ -1,7 +1,6 @@
+package com.albertoperez1994.scalaql.core
 
-package orm
-
-import utils.StringUtils._
+import com.albertoperez1994.scalaql.utils.StringUtils._
 
 trait ExpressionClause extends SQLClause {
   val exprs: List[Expression]

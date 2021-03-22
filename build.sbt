@@ -1,31 +1,25 @@
 
-ThisBuild / organization := "org.alberto-perez-1994"
+ThisBuild / organization := "com.albertoperez1994"
 ThisBuild / version      := "1.0.0"
 
 lazy val settings = Seq(
 
-  scalaVersion := "2.13.4",
-
+  scalaVersion := "2.11.0",
   libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-
-  resolvers ++= Seq(
-    Resolver.sonatypeRepo("releases"),
-    Resolver.sonatypeRepo("snapshots")
-  ),
 )
 
 
 lazy val core = project
   .in(file("core"))
   .settings(
-    name := "core",
+    name := "scalaql-core",
     settings
   )
 
 lazy val macros = project
   .in(file("macros"))
   .settings(
-    name := "macros",
+    name := "scalaql-macros",
     settings
   )
 .dependsOn(core)

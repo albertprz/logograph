@@ -1,6 +1,6 @@
-package orm
+package com.albertoperez1994.scalaql.core
 
-import utils.StringUtils._
+import com.albertoperez1994.scalaql.utils.StringUtils._
 
 trait SQLClause extends PrettyPrintTree {
 

@@ -1,4 +1,4 @@
-package utils
+package com.albertoperez1994.scalaql.utils
 
 object QueryUtils {
 

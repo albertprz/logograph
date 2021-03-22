@@ -1,7 +1,6 @@
-package utils
+package com.albertoperez1994.scalaql.utils
 
-import orm.Identity
-import StringUtils._
+import com.albertoperez1994.scalaql.core.Identity
 
 object StringUtils {
 
@@ -118,10 +117,11 @@ object StringUtils {
   }
 }
 
+import StringUtils._
+
 trait ToStringCase[T <: StringCase] {
   def toCase (splitString: Array[String]): String
 }
-
 
 object ToStringCase {
 
