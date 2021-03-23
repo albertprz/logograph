@@ -3,9 +3,11 @@ package com.albertoperez1994.scalaql.utils
 object QueryUtils {
 
   def splitTupledTypeTag (typeTagStr: String) =
-
-    typeTagStr.replace("(", "").replace(")", "")
-      .split(',').map(_.split('.').last).toList
+    typeTagStr.replace("(", "")
+              .replace(")", "")
+              .split(',')
+              .map(_.split('.').last)
+              .toList
 
   def convertLiteral(literal: Any): String =
     literal match {

@@ -25,10 +25,9 @@ class ScalaQLContext (conn: Connection) {
   def run (stmts: SQLStatefulStatement*) =
     tryRun(stmts:_*).get
 
-  def tryRun (stmts: SQLStatefulStatement*) = {
+  def tryRun (stmts: SQLStatefulStatement*) =
     runStatefulStatement(stmts)
 
-  }
 
   private def runQuery [T <: DbDataSet] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) = Try {
 

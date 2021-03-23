@@ -158,9 +158,15 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
   private def getOperation(tree: Tree) = {
 
     val op = tree match {
-      case q"com.albertoperez1994.scalaql.`package`.RichAnyVal[$_]($operand1).$operator($operand2)" =>
-        Some((operator, List(operand1, operand2)))
       case q"com.albertoperez1994.scalaql.`package`.RichString($operand1).$operator($operand2)" =>
+        Some((operator, List(operand1, operand2)))
+      case q"com.albertoperez1994.scalaql.`package`.RichBoolean($operand1).$operator($operand2)" =>
+        Some((operator, List(operand1, operand2)))
+      case q"com.albertoperez1994.scalaql.`package`.RichInt($operand1).$operator($operand2)" =>
+        Some((operator, List(operand1, operand2)))
+      case q"com.albertoperez1994.scalaql.`package`.RichLong($operand1).$operator($operand2)" =>
+        Some((operator, List(operand1, operand2)))
+      case q"com.albertoperez1994.scalaql.`package`.RichBigDecimal($operand1).$operator($operand2)" =>
         Some((operator, List(operand1, operand2)))
       case q"com.albertoperez1994.scalaql.`package`.$operator[$tpe](..$operands)" =>  Some((operator, operands))
       case q"com.albertoperez1994.scalaql.`package`.$operator(..$operands)"       =>  Some((operator, operands))
