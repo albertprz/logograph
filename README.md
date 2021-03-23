@@ -50,7 +50,6 @@ val qry = query[(Person, Address, Telephone)].select {
   }
 ```
 
-
 The DSL is very concise and uses the same operator and functions that the SQL equivalent.<br>
 The SQL output for this query would be the following:
 
@@ -76,7 +75,6 @@ case classes that extend the **DbTable** trait and the query result type must be
 that extends either the **DbTable** or the **DbResult** traits.<br>
 The qry value will be an object of type **SelectStatement[Result]**, in this case.
 
-
 ```scala
 // Database Table Models
 case class Person (name: String, age: Int, isEmployer: Boolean, addressId: Int, telephoneId: Int)
@@ -88,7 +86,6 @@ case class Telephone (id: Int, number: String) extends DbTable
 // Query Result Model
 case class Result (name: String, age: Int, street: String, telephoneNumber: String) extends DbResult
 ```
-
 
 Additionally the SQL Statement API methods ending in **Debug**, can be used in order to generate<br>
 a compile time error that will expose the SQL statement at compile time as well as the internal AST,<br>

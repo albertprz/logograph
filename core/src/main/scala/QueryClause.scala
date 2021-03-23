@@ -2,6 +2,7 @@ package com.albertoperez1994.scalaql.core
 
 import com.albertoperez1994.scalaql.SelectDistinct
 import com.albertoperez1994.scalaql.utils.StringUtils._
+import com.albertoperez1994.scalaql.SelectDistinctAll
 
 trait ExpressionClause extends SQLClause {
   val exprs: List[Expression]
@@ -18,6 +19,15 @@ case class SelectClause (exprs: List[Expression]) extends BaseSelectClause {
             .mkString("SELECT      ", ", ", "\n")
 }
 
+case class SelectAllClause (tableAlias: String) extends BaseSelectClause {
+
+  val exprs = List.empty
+
+  val validate = {}
+
+  val sql = s"SELECT      $tableAlias.*\n"
+}
+
 case class SelectDistinctClause (exprs: List[Expression]) extends BaseSelectClause {
 
   val validate = {}
@@ -25,6 +35,15 @@ case class SelectDistinctClause (exprs: List[Expression]) extends BaseSelectClau
   val sql = exprs
             .map(_.sql)
             .mkString("SELECT      DISTINCT ", ", ", "\n")
+}
+
+case class SelectDistinctAllClause (tableAlias: String) extends BaseSelectClause {
+
+  val exprs = List.empty
+
+  val validate = {}
+
+  val sql = s"SELECT      DISTINCT $tableAlias.*\n"
 }
 
 case class FromClause (tableAliases: Map[String, String]) extends SQLClause {
@@ -147,6 +166,10 @@ case class QueryClause (select: Option[BaseSelectClause] = None, from: Option[Fr
 
   val validate = {
 
+    if (select.isEmpty) {
+      throw new Exception("No Select Clause was found for the current query")
+    }
+
     val overlappedFields = aggFields intersect nonAggFields
 
     if (overlappedFields.nonEmpty) {
@@ -158,7 +181,8 @@ case class QueryClause (select: Option[BaseSelectClause] = None, from: Option[Fr
     val orderByExprs = orderBy.fold (List.empty[Expression]) (_.exprs) diff
                        select.fold  (List.empty[Expression]) (_.exprs)
 
-    if ((groupBy.isDefined || select.fold(false)(_.isInstanceOf[SelectDistinct[_]])) &&
+      if ((groupBy.isDefined || select.fold(false)(_.isInstanceOf[SelectDistinct[_]] ||
+                                                   _.isInstanceOf[SelectDistinctAll[_]])) &&
          orderByExprs.nonEmpty) {
       throw new Exception(s"""|\nThere are some expressions used in the Order By Clause, which were not
                               |included in the Select Clause:\n${pprint(orderByExprs)}

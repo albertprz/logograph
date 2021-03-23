@@ -44,6 +44,8 @@ class TreeOps [C <: blackbox.Context] (val c: C) {
   def findCtorArgs (tree: Tree, className: String) = {
 
     val ctor = find(tree, t ⇒ t match {
+        case Apply(Apply(TypeApply(Select(x, _), _), _), _) ⇒ x.toString.contains(s".$className")
+        case Apply(TypeApply(Select(x, _), _), _) ⇒ x.toString.contains(s".$className")
         case Apply(Apply(Select(x, _), _), _) ⇒ x.toString.contains(s".$className")
         case Apply(Select(x, _), _) ⇒ x.toString.contains(s".$className")
         case _ ⇒ false

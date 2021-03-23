@@ -80,24 +80,29 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
   private def getSelectClause (tree: Tree) = {
 
-    val args = ops.findTypedCtorArgs(tree, "Select")
-                  .flatten
+    val args = ops.findTypedCtorArgs(tree, "Select").flatten
                   .flatMap(getExpression)
 
-    val distinctArgs =  ops.findTypedCtorArgs(tree, "SelectDistinct")
-                           .flatten
+    val distinctArgs =  ops.findTypedCtorArgs(tree, "SelectDistinct").flatten
                            .flatMap(getExpression)
 
+    val allArgs =  ops.findCtorArgs(tree, "SelectAll").flatten
+                      .flatMap(getTableAlias)
 
-    if      (distinctArgs.nonEmpty)  Some(SelectDistinctClause(args))
-    else if (args.nonEmpty)          Some(SelectClause(args))
-      else                           None
+    val distinctAllArgs =  ops.findCtorArgs(tree, "SelectDistinctAll").flatten
+                              .flatMap(getTableAlias)
+
+    if      (distinctAllArgs.nonEmpty)  Some(SelectDistinctAllClause(distinctAllArgs.head))
+    else if (distinctArgs.nonEmpty)     Some(SelectDistinctClause(distinctArgs))
+    else if (allArgs.nonEmpty)          Some(SelectAllClause(allArgs.head))
+    else if (args.nonEmpty)             Some(SelectClause(args))
+    else                                None
   }
 
   private def getWhereClause (tree: Tree) = {
 
     val args = ops.findCtorArgs(tree, "Where").flatten
-                .flatMap(getExpression)
+                  .flatMap(getExpression)
 
     if (args.nonEmpty)  Some(WhereClause(args))
     else                None
@@ -106,7 +111,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
   private def getOrderByClause (tree: Tree) = {
 
     val args = ops.findCtorArgs (tree, "OrderBy").flatten
-                .flatMap(getExpression)
+                  .flatMap(getExpression)
 
     if (args.nonEmpty)  Some(OrderByClause(args))
     else                None

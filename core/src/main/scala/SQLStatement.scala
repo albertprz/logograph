@@ -31,6 +31,19 @@ case class SelectStatement [T <: DbDataSet] (private val sqlTemplate: String,
   def tryRun () (implicit context: ScalaQLContext) =
     context.tryRun(this)
 
+  def union (select: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
+    SelectStatement.union(Seq(this, select))
+
+  def unionAll (select: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
+    SelectStatement.unionAll(Seq(this, select))
+
+  def intersect (select: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
+    SelectStatement.intersect(Seq(this, select))
+
+  def except (select: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
+    SelectStatement.except(Seq(this, select))
+
+
   override def toString () =
     s"Query: \n\n$sqlTemplate \n\nParams:  \n\n${pprint(params)}\n\n"
 }

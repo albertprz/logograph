@@ -1,9 +1,11 @@
 package com.albertoperez1994.scalaql
 
 
-sealed trait SelectBase [T]
+sealed trait SelectBase [T <: DbDataSet]
 case class Select [T <: DbDataSet] (select: T) extends SelectBase[T]
+case class SelectAll [T <: DbTable] (select: T) extends SelectBase[T]
 case class SelectDistinct [T <: DbDataSet] (select: T) extends SelectBase[T]
+case class SelectDistinctAll [T <: DbTable] (select: T) extends SelectBase[T]
 case class Where (where: Boolean*)
 case class OrderBy  (orderBy: Any*)
 
