@@ -27,9 +27,10 @@ to the most common business use cases, following the convention over configurati
 ## Usage
 
 In order to use this library, you would need to add it to the dependencies in build.sbt:<br>
+At the moment it is only available for scala 2.13.*
 
 ```scala
-libraryDependencies += "com.albertoperez1994" %% "scalaql" % "1.0.0"
+libraryDependencies += "com.alberto-perez-1994" % "scalaql_2.13" % "1.0.0"
 ```
 
 ScalaQL DSL aim is to reflect as closely as possible the underlying SQL representation,<br>
