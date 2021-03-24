@@ -30,7 +30,7 @@ In order to use this library, you would need to add it to the dependencies in bu
 At the moment it is only available for scala 2.13.*
 
 ```scala
-libraryDependencies += "com.alberto-perez-1994" % "scalaql_2.13" % "1.0.0"
+libraryDependencies += "io.github.alberto-perez-1994" % "scalaql_2.13" % "1.0.0")
 ```
 
 ScalaQL DSL aim is to reflect as closely as possible the underlying SQL representation,<br>
