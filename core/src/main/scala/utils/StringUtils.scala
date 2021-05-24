@@ -1,6 +1,7 @@
 package com.albertoperez1994.scalaql.utils
 
 import com.albertoperez1994.scalaql.core.Identity
+import scala.collection.StringOps
 
 object StringUtils {
 
@@ -93,7 +94,7 @@ object StringUtils {
 
       val str = if (!className.contains("Tuple")) s"$className ($iter)"
               else iter
-      val indentation = " ".repeat(depth)
+      val indentation = " " * depth
 
       if (str.size < 25) str else s"\n$indentation$str"
     }

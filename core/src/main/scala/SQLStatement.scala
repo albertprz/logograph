@@ -10,8 +10,7 @@ import utils.StringUtils._
 sealed trait SQLStatement {
   val sql: String
   val paramList: List[Any]
-  def run () (implicit context: ScalaQLContext): Any
-  def tryRun () (implicit context: ScalaQLContext): Any
+  def run [F[+_]] () (implicit context: ScalaQLContext[F]): F[Any]
 }
 
 sealed trait SQLStatefulStatement extends SQLStatement
@@ -25,11 +24,8 @@ case class SelectStatement [T <: DbDataSet] (private val sqlTemplate: String,
   val sql = getSQL(sqlTemplate, params)
   val paramList = getParamList(params)
 
-  def run () (implicit context: ScalaQLContext) =
+  def run [F[+_]] () (implicit context: ScalaQLContext[F]) =
     context.run(this)
-
-  def tryRun () (implicit context: ScalaQLContext) =
-    context.tryRun(this)
 
   def union (select: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
     SelectStatement.union(Seq(this, select))
@@ -85,11 +81,8 @@ case class InsertStatement [T <: DbTable] (private val data: Either[Seq[T], Sele
     case Right(query) => getSQL(query)
   }
 
-  def run () (implicit context: ScalaQLContext) =
+  def run [F[+_]] () (implicit context: ScalaQLContext[F]) =
     context.run(this)
-
-  def tryRun () (implicit context: ScalaQLContext) =
-    context.tryRun(this)
 
 
   private def getSQL [T <: DbTable] (data: Seq[T]) (implicit tag: ru.TypeTag[T]) = {
@@ -136,11 +129,8 @@ case class DeleteStatement [T <: DbTable]  (private val sqlTemplate: String,
   val sql = getSQL(sqlTemplate, params)
   val paramList = getParamList(params)
 
-  def run () (implicit context: ScalaQLContext) =
+  def run [F[+_]] () (implicit context: ScalaQLContext[F]) =
     context.run(this)
-
-  def tryRun () (implicit context: ScalaQLContext) =
-    context.tryRun(this)
 
   override def toString () =
     s"Delete Statement: \n\n$sqlTemplate \n\nParams:  \n\n${pprint(params)}\n\n"
@@ -155,11 +145,8 @@ case class UpdateStatement [T <: DbTable] (private val sqlTemplate: String,
   val sql = getSQL(sqlTemplate, params)
   val paramList = getParamList(params)
 
-  def run () (implicit context: ScalaQLContext) =
+  def run [F[+_]] () (implicit context: ScalaQLContext[F]) =
     context.run(this)
-
-  def tryRun () (implicit context: ScalaQLContext) =
-    context.tryRun(this)
 
   override def toString () =
     s"Update Statement: \n\n$sqlTemplate \n\nParams:  \n\n${pprint(params)}\n\n"

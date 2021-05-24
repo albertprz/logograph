@@ -5,65 +5,66 @@ import java.math.BigDecimal
 import scala.util.{Try, Success, Failure}
 import scala.collection.mutable.ListBuffer
 import scala.reflect.runtime.{universe => ru}
+import cats.Monad
+import cats.implicits._
+import cats.effect._
 
 import com.albertoperez1994.scalaql.{utils => utils}
 import utils.ReflectionUtils._
 import utils.StringUtils._
 
-class ScalaQLContext (conn: Connection) {
+class ScalaQLContext [F[_] : Sync : Monad] (conn: Connection) {
 
   import ScalaQLContext._
 
   conn.setAutoCommit(false)
 
-  def run [T <: DbDataSet] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
-    tryRun(query).get
+  def run [T <: DbDataSet] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T]): F[List[T]]  =
+    runQuery (query)
 
-  def tryRun [T <: DbDataSet] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T])  =
-    runQuery(query)
-
-  def run (stmts: SQLStatefulStatement*) =
-    tryRun(stmts:_*).get
-
-  def tryRun (stmts: SQLStatefulStatement*) =
-    runStatefulStatement(stmts)
+  def run (stmts: SQLStatefulStatement*): F[Unit] =
+    runStatefulStatement (stmts)
 
 
-  private def runQuery [T <: DbDataSet] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) = Try {
+  private def runQuery [T <: DbDataSet] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
+    prepareStatement(query.sql, query.paramList).use { stmt =>
 
+      for (resultSet <- Sync[F].blocking { stmt.executeQuery() })
+        yield extractResults(resultSet)
+    }
+
+  private def runStatefulStatement  (stmts: Seq[SQLStatefulStatement]) = {
+
+    val preparedStmts = for ((sql, paramList) <- stmts.map(x => (x.sql, x.paramList)))
+                        yield prepareStatement(sql, paramList)
+                                .use { stmt => Sync[F].blocking { stmt.executeUpdate() } }
+
+    preparedStmts.fold (Sync[F].pure(0)) { case (acc, curr) => acc >> curr } >>
+    Sync[F].blocking { conn.commit() }
+  }
+
+  private def prepareStatement (querySql: String, paramList: List[Any]) =
+    Resource.make { Sync[F].blocking { conn.prepareStatement(querySql) } }
+                  { stmt => Sync[F].blocking { stmt.close() } }
+            .map  { stmt => parameteriseStatement(stmt, paramList) }
+}
+
+object ScalaQLContext {
+
+  private def extractResults [T <: DbDataSet] (resultSet: ResultSet) (implicit tag: ru.TypeTag[T]) = {
+
+    val results = ListBuffer[T]()
     val companion = companionOf[T]
 
-    val stmt = conn.prepareStatement(query.sql)
-    parameteriseStatement(stmt, query.paramList)
-
-    val resultSet = stmt.executeQuery()
-    val results = ListBuffer[T]()
-
     while (resultSet.next()) {
-      val ctorArgs = getCtorArgs(resultSet, companion.paramTypes)
-      results += companion.apply(ctorArgs).asInstanceOf[T]
+        val ctorArgs = getCtorArgs(resultSet, companion.paramTypes)
+        results += companion.apply(ctorArgs).asInstanceOf[T]
     }
 
     results.toList
   }
 
-  private def runStatefulStatement  (stmts: Seq[SQLStatefulStatement], commit: Boolean = false) = Try {
-
-    for ((sql, paramList) <- stmts.map(x => (x.sql, x.paramList))) {
-      val stmt = conn.prepareStatement(sql)
-      parameteriseStatement(stmt, paramList)
-      stmt.execute()
-    }
-
-    if (commit) {
-      conn.commit()
-    }
-  }
-}
-
-object ScalaQLContext {
-
-  private def parameteriseStatement (stmt: PreparedStatement, params: List[Any]) =
+  private def parameteriseStatement (stmt: PreparedStatement, params: List[Any]) = {
     for (i <- 0 to params.size - 1) {
       params(i) match {
         case int: Int        => stmt.setInt(i + 1, int)
@@ -81,6 +82,8 @@ object ScalaQLContext {
                                                         |Value: $other""".stripMargin)
       }
     }
+    stmt
+  }
 
   private def getCtorArgs (resultSet: ResultSet, paramTypes: List[String]) =
     for (i <- 0 to paramTypes.size - 1)

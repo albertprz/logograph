@@ -181,8 +181,8 @@ case class QueryClause (select: Option[BaseSelectClause] = None, from: Option[Fr
     val orderByExprs = orderBy.fold (List.empty[Expression]) (_.exprs) diff
                        select.fold  (List.empty[Expression]) (_.exprs)
 
-      if ((groupBy.isDefined || select.fold(false)(_.isInstanceOf[SelectDistinct[_]] ||
-                                                   _.isInstanceOf[SelectDistinctAll[_]])) &&
+      if ((groupBy.isDefined || select.fold(false)(x => x.isInstanceOf[SelectDistinct[_]] ||
+                                                        x.isInstanceOf[SelectDistinctAll[_]])) &&
          orderByExprs.nonEmpty) {
       throw new Exception(s"""|\nThere are some expressions used in the Order By Clause, which were not
                               |included in the Select Clause:\n${pprint(orderByExprs)}
@@ -221,8 +221,7 @@ case class UpdateClause (tableName: String, setClause: SetClause,
   val validate = {}
 
   private val setClauseSql = setClause.sql
-  private val whereClauseSql = whereClause
-                                          .fold ("") (ExpressionClause.removeAliases)
+  private val whereClauseSql = whereClause.fold ("") (ExpressionClause.removeAliases)
 
   val sql = s"""|UPDATE      [$tableName]
                 |$setClauseSql
