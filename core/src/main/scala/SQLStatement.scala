@@ -6,86 +6,97 @@ import com.albertoperez1994.scalaql.{utils => utils}
 import utils.QueryUtils
 import utils.ReflectionUtils._
 import utils.StringUtils._
+import com.albertoperez1994.scalaql.core.QueryClause
+import com.albertoperez1994.scalaql.core.UpdateClause
+import com.albertoperez1994.scalaql.core.DeleteClause
 
 sealed trait SQLStatement {
-  val sql: String
-  val paramList: List[Any]
+  def sql() (implicit cfg: DbConfig): String
+  def paramList(): List[Any]
   def run [F[+_]] () (implicit context: ScalaQLContext[F]): F[Any]
 }
 
 sealed trait SQLStatefulStatement extends SQLStatement
 
-case class SelectStatement [T <: DbDataSet] (private val sqlTemplate: String,
+case class SelectStatement [T <: DbDataSet] (private val clause: QueryClause,
                                              private val params: Map[String, Any])
-                                            (implicit tag: ru.TypeTag[T]) extends SQLStatement {
+                           (implicit tag: ru.TypeTag[T]) extends SQLStatement {
 
   import SQLStatement._
 
-  val sql = getSQL(sqlTemplate, params)
-  val paramList = getParamList(params)
+  def sql() (implicit cfg: DbConfig): String = getSQL(clause.sql, params)
+  def paramList() = getParamList(params)
 
   def run [F[+_]] () (implicit context: ScalaQLContext[F]) =
     context.run(this)
 
-  def union (select: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
-    SelectStatement.union(Seq(this, select))
+  // def union (select: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
+  //   SelectStatement.union(Seq(this, select))
 
-  def unionAll (select: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
-    SelectStatement.unionAll(Seq(this, select))
+  // def unionAll (select: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
+  //   SelectStatement.unionAll(Seq(this, select))
 
-  def intersect (select: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
-    SelectStatement.intersect(Seq(this, select))
+  // def intersect (select: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
+  //   SelectStatement.intersect(Seq(this, select))
 
-  def except (select: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
-    SelectStatement.except(Seq(this, select))
+  // def except (select: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
+  //   SelectStatement.except(Seq(this, select))
 
 
-  override def toString () =
-    s"Query: \n\n$sqlTemplate \n\nParams:  \n\n${pprint(params)}\n\n"
+  // override def toString () =
+  //   s"Query: \n\n$sqlTemplate \n\nParams:  \n\n${pprint(params)}\n\n"
 }
 
-object SelectStatement {
+// object SelectStatement {
 
-  def union[T <: DbDataSet] (selects: Seq[SelectStatement[T]]) (implicit tag: ru.TypeTag[T]) =
-    concat(selects, "UNION")
+//   def union[T <: DbDataSet] (selects: Seq[SelectStatement[T]]) (implicit tag: ru.TypeTag[T]) =
+//     concat(selects, "UNION")
 
-  def unionAll[T <: DbDataSet] (selects: Seq[SelectStatement[T]]) (implicit tag: ru.TypeTag[T]) =
-    concat(selects, "UNION ALL")
+//   def unionAll[T <: DbDataSet] (selects: Seq[SelectStatement[T]]) (implicit tag: ru.TypeTag[T]) =
+//     concat(selects, "UNION ALL")
 
-  def intersect[T <: DbDataSet] (selects: Seq[SelectStatement[T]]) (implicit tag: ru.TypeTag[T]) =
-    concat(selects, "INTERSECT")
+//   def intersect[T <: DbDataSet] (selects: Seq[SelectStatement[T]]) (implicit tag: ru.TypeTag[T]) =
+//     concat(selects, "INTERSECT")
 
-  def except[T <: DbDataSet] (selects: Seq[SelectStatement[T]]) (implicit tag: ru.TypeTag[T]) =
-    concat(selects, "EXCEPT")
+//   def except[T <: DbDataSet] (selects: Seq[SelectStatement[T]]) (implicit tag: ru.TypeTag[T]) =
+//     concat(selects, "EXCEPT")
 
 
-  private def concat[T <: DbDataSet] (selects: Seq[SelectStatement[T]], separator: String)
-                                     (implicit tag: ru.TypeTag[T]) = {
+//   private def concat[T <: DbDataSet] (selects: Seq[SelectStatement[T]], separator: String)
+//                     (implicit tag: ru.TypeTag[T],
+//                     cfg: DbConfig) = {
 
-    val sqlTemplate = selects.map(_.sqlTemplate)
-                             .mkString("\n" + separator + "\n\n")
-    val params = selects.map(_.params)
-                        .fold(Map.empty)(_++_)
+//     val sqlTemplate = selects.map(_.sql)
+//                              .mkString("\n" + separator + "\n\n")
+//     val params = selects.map(_.params)
+//                         .fold(Map.empty)(_++_)
 
-    SelectStatement[T](sqlTemplate, params)
-  }
+//     SelectStatement[T](sqlTemplate, params)
+//   }
 
-}
+// }
 
 case class InsertStatement [T <: DbTable] (private val data: Either[Seq[T], SelectStatement[T]])
                                             (implicit tag: ru.TypeTag[T])
                                             extends SQLStatefulStatement {
 
-  val (sql, paramList) = data match {
+  def sql()(implicit cfg: DbConfig) = data match {
     case Left(data) => getSQL(data)
     case Right(query) => getSQL(query)
   }
+
+  def paramList() = data match {
+    case Left(data) => data.flatMap(_.productIterator).toList
+    case Right(query) => query.paramList
+  }
+
 
   def run [F[+_]] () (implicit context: ScalaQLContext[F]) =
     context.run(this)
 
 
-  private def getSQL [T <: DbTable] (data: Seq[T]) (implicit tag: ru.TypeTag[T]) = {
+  private def getSQL [T <: DbTable] (data: Seq[T]) (implicit tag: ru.TypeTag[T],
+  cfg: DbConfig) = {
 
     val tableName = className[T]
     val companion = companionOf[T]
@@ -94,62 +105,57 @@ case class InsertStatement [T <: DbTable] (private val data: Either[Seq[T], Sele
                                                 .map(stringify)
                                                 .mkString(", \n")
 
-    val sql = s"""|INSERT INTO [$tableName] ${stringify(paramNames)}
-                  |VALUES      $paramPlaceholders """.stripMargin
-
-    val paramList = data.flatMap(_.productIterator).toList
-
-    (sql, paramList)
+     s"""|INSERT INTO [$tableName] ${stringify(paramNames)}
+         |VALUES      $paramPlaceholders """.stripMargin
   }
 
-  private def getSQL [T <: DbTable] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) = {
+  private def getSQL [T <: DbTable] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T],
+  cfg: DbConfig) = {
 
     val tableName = className[T]
     val companion = companionOf[T]
     val paramNames = companion.paramNames.map(x => s"[$x]")
 
-    val sql = s"""|INSERT INTO [$tableName] ${stringify(paramNames)}
-                  |${query.sql} """.stripMargin
-
-    (sql, query.paramList)
+    s"""|INSERT INTO [$tableName] ${stringify(paramNames)}
+        |${query.sql} """.stripMargin
   }
 
-  override def toString () =
-    data match {
-      case Left(data)   => s"""Insert Statement: \n\n${sql.substring(0, sql.indexOf("?)")) + "?)"}\n\n"""
-      case Right(query) => s"""Insert Statement: \n\n$sql \n\nParams: \n\n${pprint(query.paramList)}\n\n"""
-    }
+  // override def toString () (implicit cfg: DbConfig) =
+  //   data match {
+  //     case Left(data)   => s"""Insert Statement: \n\n${sql.substring(0, sql.indexOf("?)")) + "?)"}\n\n"""
+  //     case Right(query) => s"""Insert Statement: \n\n$sql \n\nParams: \n\n${pprint(query.paramList)}\n\n"""
+  //   }
 }
 
-case class DeleteStatement [T <: DbTable]  (private val sqlTemplate: String,
+case class DeleteStatement [T <: DbTable]  (private val clause: DeleteClause,
                                             private val params: Map[String, Any] = Map.empty)
                                            extends SQLStatefulStatement {
   import SQLStatement._
 
-  val sql = getSQL(sqlTemplate, params)
-  val paramList = getParamList(params)
+  def sql() (implicit cfg: DbConfig) = getSQL(clause.sql, params)
+  def paramList() = getParamList(params)
 
   def run [F[+_]] () (implicit context: ScalaQLContext[F]) =
     context.run(this)
 
-  override def toString () =
-    s"Delete Statement: \n\n$sqlTemplate \n\nParams:  \n\n${pprint(params)}\n\n"
+  // override def toString () =
+  //   s"Delete Statement: \n\n$sqlTemplate \n\nParams:  \n\n${pprint(params)}\n\n"
 }
 
-case class UpdateStatement [T <: DbTable] (private val sqlTemplate: String,
+case class UpdateStatement [T <: DbTable] (private val clause: UpdateClause,
                                            private val params: Map[String, Any] = Map.empty)
                                           extends SQLStatefulStatement {
 
   import SQLStatement._
 
-  val sql = getSQL(sqlTemplate, params)
-  val paramList = getParamList(params)
+  def sql() (implicit cfg: DbConfig) = getSQL(clause.sql, params)
+  def paramList() = getParamList(params)
 
   def run [F[+_]] () (implicit context: ScalaQLContext[F]) =
     context.run(this)
 
-  override def toString () =
-    s"Update Statement: \n\n$sqlTemplate \n\nParams:  \n\n${pprint(params)}\n\n"
+  // override def toString () =
+  //   s"Update Statement: \n\n$sqlTemplate \n\nParams:  \n\n${pprint(params)}\n\n"
 }
 
 object SQLStatement {
@@ -162,7 +168,7 @@ object SQLStatement {
     }).toList
 
 
-  def getSQL (sqlTemplate: String, params: Map[String, Any]) =
+  def getSQL (sqlTemplate: String, params: Map[String, Any]) (implicit cfg: DbConfig) =
     params.values
           .filter (_.isInstanceOf[List[Any]])
           .foldLeft (sqlTemplate) {

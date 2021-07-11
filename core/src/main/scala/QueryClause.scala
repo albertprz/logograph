@@ -1,8 +1,7 @@
 package com.albertoperez1994.scalaql.core
 
-import com.albertoperez1994.scalaql.SelectDistinct
 import com.albertoperez1994.scalaql.utils.StringUtils._
-import com.albertoperez1994.scalaql.SelectDistinctAll
+import com.albertoperez1994.scalaql.{SelectDistinct, SelectDistinctAll, DbConfig}
 
 trait ExpressionClause extends SQLClause {
   val exprs: List[Expression]
@@ -14,9 +13,10 @@ case class SelectClause (exprs: List[Expression]) extends BaseSelectClause {
 
   val validate = {}
 
-  val sql = exprs
-            .map(_.sql)
-            .mkString("SELECT      ", ", ", "\n")
+  def sql() (implicit cfg: DbConfig) =
+    exprs
+    .map(_.sql)
+    .mkString("SELECT      ", ", ", "\n")
 }
 
 case class SelectAllClause (tableAlias: String) extends BaseSelectClause {
@@ -25,16 +25,18 @@ case class SelectAllClause (tableAlias: String) extends BaseSelectClause {
 
   val validate = {}
 
-  val sql = s"SELECT      $tableAlias.*\n"
+  def sql() (implicit cfg: DbConfig) =
+    s"SELECT      $tableAlias.*\n"
 }
 
 case class SelectDistinctClause (exprs: List[Expression]) extends BaseSelectClause {
 
   val validate = {}
 
-  val sql = exprs
-            .map(_.sql)
-            .mkString("SELECT      DISTINCT ", ", ", "\n")
+  def sql() (implicit cfg: DbConfig) =
+    exprs
+      .map(_.sql)
+      .mkString("SELECT      DISTINCT ", ", ", "\n")
 }
 
 case class SelectDistinctAllClause (tableAlias: String) extends BaseSelectClause {
@@ -43,45 +45,51 @@ case class SelectDistinctAllClause (tableAlias: String) extends BaseSelectClause
 
   val validate = {}
 
-  val sql = s"SELECT      DISTINCT $tableAlias.*\n"
+  def sql() (implicit cfg: DbConfig) =
+    s"SELECT      DISTINCT $tableAlias.*\n"
 }
 
 case class FromClause (tableAliases: Map[String, String]) extends SQLClause {
 
   val validate = {}
 
-  val sql = tableAliases
-              .map { case (tableAlias, tableName) => s"[$tableName] AS $tableAlias" }
-              .mkString("FROM        ", ", ", "\n")
+  def sql() (implicit cfg: DbConfig) =
+    tableAliases
+      .map { case (tableAlias, tableName) =>
+          s"[${Table(tableName).sql}] AS $tableAlias" }
+      .mkString("FROM        ", ", ", "\n")
 }
 
 case class WhereClause (exprs: List[Expression]) extends ExpressionClause {
 
   val validate = {}
 
-  val sql = exprs
-            .map(Predicate.adaptSql)
-            .map(str => if (exprs.size > 1) s"($str)" else str)
-            .mkString("WHERE       ", " AND \n            ", "\n")
+  def sql() (implicit cfg: DbConfig) =
+    exprs
+      .map(Predicate.adaptSql)
+      .map(str => if (exprs.size > 1) s"($str)" else str)
+      .mkString("WHERE       ", " AND \n            ", "\n")
 }
 
 case class GroupByClause (fields: List[Field]) extends SQLClause {
 
   val validate = {}
 
-  val sql = fields
-            .map(_.sql)
-            .mkString("GROUP BY    ", ", ", "\n")
+  def sql() (implicit cfg: DbConfig) =
+    fields
+      .map(_.sql)
+      .mkString("GROUP BY    ", ", ", "\n")
 }
 
 case class HavingClause (exprs: List[Expression]) extends ExpressionClause {
 
   val validate = {}
 
-  val sql = exprs
-            .map(Predicate.adaptSql)
-            .map(str => if (exprs.size > 1) s"($str)" else str)
-            .mkString("HAVING      ", " AND \n            ", "\n")
+  def sql() (implicit cfg: DbConfig) =
+    exprs
+      .map(Predicate.adaptSql)
+      .map(str => if (exprs.size > 1) s"($str)" else str)
+      .mkString("HAVING      ", " AND \n            ", "\n")
 }
 
 case class OrderByClause (exprs: List[Expression]) extends ExpressionClause {
@@ -96,9 +104,10 @@ case class OrderByClause (exprs: List[Expression]) extends ExpressionClause {
       }
   }
 
-  val sql = exprs
-            .map(_.sql)
-            .mkString("ORDER BY    ", ", ", "\n")
+  def sql() (implicit cfg: DbConfig) =
+    exprs
+      .map(_.sql)
+      .mkString("ORDER BY    ", ", ", "\n")
 }
 
 sealed abstract class BaseJoinClause extends ExpressionClause {
@@ -115,10 +124,11 @@ sealed abstract class BaseJoinClause extends ExpressionClause {
 
   val validate = {}
 
-  val sql = exprs
-            .map(Predicate.adaptSql)
-            .map(str => if (exprs.size > 1) s"($str)" else str)
-            .mkString(s"$joinType  [$tableName] AS $tableAlias ON ", " AND \n            ", "\n")
+  def sql() (implicit cfg: DbConfig) =
+    exprs
+      .map(Predicate.adaptSql)
+      .map(str => if (exprs.size > 1) s"($str)" else str)
+      .mkString(s"$joinType  [$tableName] AS $tableAlias ON ", " AND \n            ", "\n")
 }
 
 case class InnerJoinClause (tableName: String, tableAlias: String, exprs: List[Expression])
@@ -192,12 +202,11 @@ case class QueryClause (select: Option[BaseSelectClause] = None, from: Option[Fr
     }
   }
 
-  val sql = {
+  def sql() (implicit cfg: DbConfig = DbConfig()) = {
 
       select.fold("")(_.sql)           +
       from.fold("")(_.sql)             +
-      joins.map(_.sql)
-           .mkString("")               +
+      joins.map(_.sql).mkString("")    +
       where.fold("")(_.sql)            +
       groupBy.fold("")(_.sql)          +
       having.fold("")(_.sql)           +
@@ -211,8 +220,9 @@ case class SetClause (setMap: Map[Field, Expression]) extends ExpressionClause {
 
   val validate = {}
 
-  val sql = setMap.map { case (key, value) => s"[${key.column}] = ${value.sql}" }
-                  .mkString("SET         ", ",\n            ", "")
+  def sql() (implicit cfg: DbConfig) =
+    setMap.map { case (key, value) => s"[${Column(key.column).sql}] = ${value.sql}" }
+          .mkString("SET         ", ",\n            ", "")
 }
 
 case class UpdateClause (tableName: String, setClause: SetClause,
@@ -220,22 +230,28 @@ case class UpdateClause (tableName: String, setClause: SetClause,
 
   val validate = {}
 
-  private val setClauseSql = setClause.sql
-  private val whereClauseSql = whereClause.fold ("") (ExpressionClause.removeAliases)
+  def sql() (implicit cfg: DbConfig = DbConfig()) = {
 
-  val sql = s"""|UPDATE      [$tableName]
-                |$setClauseSql
-                |$whereClauseSql""".stripMargin
+    val setClauseSql = setClause.sql
+    val whereClauseSql = whereClause.fold ("") (ExpressionClause.removeAliases)
+
+   s"""|UPDATE      [${Table(tableName).sql}]
+       |$setClauseSql
+       |$whereClauseSql""".stripMargin
+  }
 }
 
 case class DeleteClause (tableName: String, whereClause: Option[WhereClause]) extends SQLClause {
 
   val validate = {}
 
-  private val whereClauseSql = whereClause.fold ("") (ExpressionClause.removeAliases)
+  def sql() (implicit cfg: DbConfig = DbConfig()) = {
 
-  val sql = s"""|DELETE FROM [$tableName]
-                |$whereClauseSql""".stripMargin
+   val whereClauseSql = whereClause.fold ("") (ExpressionClause.removeAliases)
+
+    s"""|DELETE FROM [${Table(tableName).sql}]
+        |$whereClauseSql""".stripMargin
+  }
 }
 
 
@@ -268,6 +284,6 @@ object ExpressionClause {
   def getNonAggFields(clause: List[ExpressionClause]) =
       clause.flatMap (_.exprs.flatMap(_.nonAggFields))
 
-  def removeAliases (exprClause: ExpressionClause) =
+  def removeAliases (exprClause: ExpressionClause) (implicit cfg: DbConfig) =
     exprClause.sql.replaceAll("[a-zA-Z]\\.\\[", "[")
 }

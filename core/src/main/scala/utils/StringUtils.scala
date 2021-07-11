@@ -2,31 +2,27 @@ package com.albertoperez1994.scalaql.utils
 
 import com.albertoperez1994.scalaql.core.Identity
 import scala.collection.StringOps
+import com.albertoperez1994.scalaql.DbConfig
+
 
 object StringUtils {
 
-  case class CamelCase(str: String) extends StringCase
-  case class PascalCase (str: String) extends StringCase
-  case class SnakeCase(str: String) extends StringCase
-  case class SnakeUpperCase(str: String) extends StringCase
-  case class KebabCase(str: String) extends StringCase
-  case class KebabUpperCase(str: String) extends StringCase
+  sealed trait StringCase
+  case class CamelCase()      extends StringCase
+  case class PascalCase()     extends StringCase
+  case class SnakeCase()      extends StringCase
+  case class SnakeUpperCase() extends StringCase
+  case class KebabCase()      extends StringCase
+  case class KebabUpperCase() extends StringCase
 
-  sealed trait StringCase {
 
-    val str: String
+  def convertCase (caseConverter: Option[CaseConverter[_, _]], str: String) =
+    caseConverter.fold(str)(_.convertCase(str))
 
-    val splitString = this match {
-      case CamelCase(str)      => splitWhere(str, _.isUpper)
-      case PascalCase(str)     => splitWhere(str, _.isUpper)
-      case SnakeCase(str)      => str.split("_")
-      case SnakeUpperCase(str) => str.split("_")
-      case KebabCase(str)      => str.split("-")
-      case KebabUpperCase(str) => str.split("-")
-    }
+  case class CaseConverter[T <: StringCase : FromStringCase, S <: StringCase : ToStringCase] () {
 
-    def toCase [T <: StringCase] (implicit converter: ToStringCase[T]) =
-      converter.toCase(splitString)
+    def convertCase(str: String) =
+      (FromStringCase[T].fromCase _).andThen(ToStringCase[S].toCase _)(str)
   }
 
   def pprint (value: Any): String = value match {
@@ -69,26 +65,26 @@ object StringUtils {
 
   trait PrettyPrintTree {
 
-    override def toString() = str(this, 0)
+    override def toString() = show(this, 0)
 
-    private def str(value: Any, depth: Int): String = {
+    private def show(value: Any, depth: Int): String = {
 
       val result = value match {
-        case opt: Option[_] => opt.fold("") (str(_, depth + 1))
-        case dict: Map[_, _] => strMap(dict, depth + 1)
-        case seq: Seq[_]   => strSeq(seq, depth + 1)
-        case prod: Product  => strProduct(prod, depth + 1)
+        case opt: Option[_] => opt.fold("") (show(_, depth + 1))
+        case dict: Map[_, _] => showMap(dict, depth + 1)
+        case seq: Seq[_]   => showSeq(seq, depth + 1)
+        case prod: Product  => showProduct(prod, depth + 1)
         case other @ _ => other.toString
       }
 
       result.replace(", ,", ",")
     }
 
-    private def strProduct (prod: Product, depth: Int) = {
+    private def showProduct (prod: Product, depth: Int) = {
 
       val className = prod.getClass.getSimpleName
       val iter = prod match {
-        case ident: Identity => ident.sql
+        case ident: Identity => ident.sql()(DbConfig())
         case _ =>  concatStr(prod.productIterator, depth)
       }
 
@@ -99,32 +95,73 @@ object StringUtils {
       if (str.size < 25) str else s"\n$indentation$str"
     }
 
-    private def strMap (dict: Map[_, _], depth: Int) = {
+    private def showMap (dict: Map[_, _], depth: Int) = {
       val dictString = dict.asInstanceOf[Map[Any, Any]]
-                           .map { case (k, v) => (str(k, depth), str(v, depth)) }
+                           .map { case (k, v) => (show(k, depth), show(v, depth)) }
                            .map { case (k, v) => s"$k -> $v" }
                            .mkString(", ")
       s"{$dictString}"
     }
 
-    private def strSeq (seq: Seq[_], depth: Int) = {
+    private def showSeq (seq: Seq[_], depth: Int) = {
       val seqString = concatStr(seq.iterator, depth)
       s"[$seqString]"
     }
 
     private def concatStr(iter: Iterator[_], depth: Int) =
-      iter.map (str(_, depth))
+      iter.map (show(_, depth))
           .mkString(", ")
   }
 }
 
 import StringUtils._
 
+trait FromStringCase[T <: StringCase] {
+  def fromCase (str: String): Array[String]
+}
+
+object FromStringCase {
+
+  def apply[T <: StringCase : FromStringCase] = implicitly[FromStringCase[T]]
+
+  implicit object FromCamelCase extends FromStringCase[CamelCase] {
+
+    def fromCase (str: String) = splitWhere(str, _.isUpper)
+  }
+
+  implicit object ToPascalCase extends FromStringCase[PascalCase] {
+
+    def fromCase (str: String) = splitWhere(str, _.isUpper)
+  }
+
+  implicit object ToSnakeCase extends FromStringCase[SnakeCase] {
+
+    def fromCase (str: String) = str.split("_")
+
+  implicit object ToUpperSnakeCase extends FromStringCase[SnakeUpperCase] {
+
+    def fromCase (str: String) = str.split("_")
+  }
+
+  implicit object ToKebabCase extends FromStringCase[KebabCase] {
+
+    def fromCase (str: String) = str.split("-")
+  }
+
+  implicit object ToUpperKebabCase extends FromStringCase[KebabUpperCase] {
+
+    def fromCase (str: String) = str.split("-")  }
+  }
+}
+
 trait ToStringCase[T <: StringCase] {
   def toCase (splitString: Array[String]): String
 }
 
+
 object ToStringCase {
+
+  def apply[T <: StringCase : ToStringCase] = implicitly[ToStringCase[T]]
 
   implicit object ToCamelCase extends ToStringCase[CamelCase] {
 

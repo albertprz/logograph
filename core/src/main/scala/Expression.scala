@@ -1,14 +1,15 @@
 package com.albertoperez1994.scalaql.core
 
 import com.albertoperez1994.scalaql.utils.StringUtils._
+import com.albertoperez1994.scalaql.DbConfig
 
 trait SQLClause extends PrettyPrintTree {
 
   val validate: Unit
-  val sql: String
+  def sql() (implicit cfg: DbConfig): String
 }
 
-sealed abstract class Expression extends SQLClause {
+sealed trait Expression extends SQLClause {
 
   val fields = Expression.findFields(this)
   val aggFields = Expression.findAggFields(this)
@@ -19,26 +20,27 @@ sealed abstract class Expression extends SQLClause {
 case class LiteralVal (value: String) extends Expression {
 
   val validate = {}
-  val sql = value
+  def sql() (implicit cfg: DbConfig) = value
 }
 
 case class Field (tableAlias: String, column: String) extends Expression {
 
   val validate = {}
-  val sql = s"$tableAlias." + (if (column != "*") s"[$column]" else column)
+  def sql() (implicit cfg: DbConfig) =
+     s"$tableAlias." + (if (column != "*") s"[${Column(column).sql}]" else column)
 }
 
 case class Identity (name: String, tree: Any) extends Expression {
 
   val validate = {}
-  val sql = "?"
+  def sql() (implicit cfg: DbConfig) = "?"
 
   private val paramName = name.replace("this.", "")
   val parameter = Map(s"@$paramName" -> tree)
 }
 
 
-sealed abstract class OpType
+sealed trait OpType
 case object Infix  extends OpType
 case object Prefix  extends OpType
 case object Postfix  extends OpType
@@ -59,19 +61,36 @@ case class Operation (operator: String, operands: List[Expression]) extends Expr
         throw new Exception(s"Operator $operator is not valid in a query \n")
   }
 
-  val sql = {
+  def sql() (implicit cfg: DbConfig) = {
 
-    val newOperator = CamelCase(opsConversion.getOrElse(operator, operator))
-                        .toCase[SnakeCase]
+    val convOperator = Operator(opsConversion.getOrElse(operator, operator)).sql
 
     opType match {
-      case Infix ⇒ operands.map(_.sql).mkString(s" $newOperator ")
-      case Postfix ⇒ s"${operands.head.sql} $newOperator"
-      case Prefix ⇒  s"$newOperator (${operands.map(_.sql).mkString(", ")})"
+      case Infix ⇒ operands.map(_.sql).mkString(s" $convOperator ")
+      case Postfix ⇒ s"${operands.head.sql} $convOperator"
+      case Prefix ⇒  s"$convOperator (${operands.map(_.sql).mkString(", ")})"
     }
   }
 }
 
+
+case class Operator(str: String) extends SQLClause {
+
+  val validate = {}
+  def sql() (implicit cfg: DbConfig) = convertCase(cfg.operatorConverter, str)
+}
+
+case class Column(str: String) extends SQLClause {
+
+  val validate = {}
+  def sql() (implicit cfg: DbConfig) = convertCase(cfg.columnConverter, str)
+}
+
+case class Table(str: String) extends SQLClause {
+
+  val validate = {}
+  def sql() (implicit cfg: DbConfig) = convertCase(cfg.tableConverter, str)
+}
 
 private object Expression {
 
@@ -94,7 +113,7 @@ private object Expression {
 
 private object Predicate {
 
-  def adaptSql (exp: Expression) = exp match {
+  def adaptSql (exp: Expression) (implicit cfg: DbConfig) = exp match {
       case op: Operation => op.sql
       case _ => s"${exp.sql} = 1"
   }

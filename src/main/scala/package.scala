@@ -4,11 +4,11 @@ import scala.reflect.runtime.{universe => ru}
 
 import com.albertoperez1994.scalaql.core._
 import com.albertoperez1994.scalaql.macros.QueryImpl
+import com.albertoperez1994.scalaql.utils.StringUtils.CaseConverter
 
 package object scalaql {
 
   import scala.language.experimental.macros
-
 
   // Statement factory functions
   def query[T] = QueryBuilder[T]()
@@ -56,17 +56,17 @@ package object scalaql {
 
 
   // Query Set Operations
-  def union[T <: DbDataSet] (selects: SelectStatement[T]*) (implicit tag: ru.TypeTag[T]) =
-    SelectStatement.union(selects)
+  // def union[T <: DbDataSet] (selects: SelectStatement[T]*) (implicit tag: ru.TypeTag[T]) =
+  //   SelectStatement.union(selects)
 
-  def unionAll[T <: DbDataSet] (selects: SelectStatement[T]*) (implicit tag: ru.TypeTag[T]) =
-    SelectStatement.unionAll(selects)
+  // def unionAll[T <: DbDataSet] (selects: SelectStatement[T]*) (implicit tag: ru.TypeTag[T]) =
+  //   SelectStatement.unionAll(selects)
 
-  def intersect[T <: DbDataSet] (selects: SelectStatement[T]*) (implicit tag: ru.TypeTag[T]) =
-    SelectStatement.intersect(selects)
+  // def intersect[T <: DbDataSet] (selects: SelectStatement[T]*) (implicit tag: ru.TypeTag[T]) =
+  //   SelectStatement.intersect(selects)
 
-  def except[T <: DbDataSet] (selects: SelectStatement[T]*) (implicit tag: ru.TypeTag[T]) =
-    SelectStatement.except(selects)
+  // def except[T <: DbDataSet] (selects: SelectStatement[T]*) (implicit tag: ru.TypeTag[T]) =
+  //   SelectStatement.except(selects)
 
 
   /*

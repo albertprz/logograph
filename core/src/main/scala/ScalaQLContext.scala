@@ -6,16 +6,20 @@ import scala.util.{Try, Success, Failure}
 import scala.collection.mutable.ListBuffer
 import scala.reflect.runtime.{universe => ru}
 import cats.Monad
-import cats.implicits._
-import cats.effect._
+import cats.syntax.monad._
+import cats.syntax.apply._
+import cats.syntax.functor._
+import cats.effect.{Sync, Resource}
 
 import com.albertoperez1994.scalaql.{utils => utils}
 import utils.ReflectionUtils._
 import utils.StringUtils._
 
-class ScalaQLContext [F[_] : Sync : Monad] (conn: Connection) {
+class ScalaQLContext [F[_] : Sync : Monad] (conn: Connection, config: DbConfig = DbConfig()) {
 
   import ScalaQLContext._
+
+  implicit val cfg: DbConfig = config
 
   conn.setAutoCommit(false)
 
@@ -39,7 +43,7 @@ class ScalaQLContext [F[_] : Sync : Monad] (conn: Connection) {
                         yield prepareStatement(sql, paramList)
                                 .use { stmt => Sync[F].blocking { stmt.executeUpdate() } }
 
-    preparedStmts.fold (Sync[F].pure(0)) { case (acc, curr) => acc >> curr } >>
+    preparedStmts.fold (Sync[F].pure(0)) { case (acc, curr) => acc *> curr } *>
     Sync[F].blocking { conn.commit() }
   }
 
