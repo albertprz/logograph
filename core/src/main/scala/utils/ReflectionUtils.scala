@@ -1,8 +1,9 @@
 package com.albertoperez1994.scalaql.utils
 
+import scala.reflect.runtime.universe._
+
 object ReflectionUtils {
 
-  import scala.reflect.runtime.universe._
   private lazy val universeMirror = runtimeMirror(getClass.getClassLoader)
 
   def companionOf[T: TypeTag] = {

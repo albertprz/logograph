@@ -5,10 +5,14 @@ ThisBuild / version      := "1.0.0"
 lazy val settings = Seq(
 
   scalaVersion := "2.13.5",
-  libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-  libraryDependencies += "org.typelevel" %% "cats-effect" % "3.1.1",
-  libraryDependencies += "org.typelevel" %% "cats-core" % "2.6.0",
-  libraryDependencies += "org.typelevel" %% "cats-kernel" % "2.6.0"
+  libraryDependencies ++= Seq ("org.scala-lang" % "scala-reflect"      % scalaVersion.value,
+                               "org.typelevel" %% "cats-effect"        % "3.1.1",
+                               "org.typelevel" %% "cats-core"          % "2.6.0",
+                               "org.typelevel" %% "cats-kernel"        % "2.6.0",
+                               "io.circe" %% "circe-core"              % "0.14.1",
+                               "io.circe" %% "circe-generic"           % "0.14.1",
+                               "io.circe" %% "circe-parser"            % "0.14.1",
+                               "com.github.pureconfig" %% "pureconfig" % "0.16.0")
 )
 
 

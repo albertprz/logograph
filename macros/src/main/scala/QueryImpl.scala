@@ -4,8 +4,6 @@ import scala.reflect.macros.blackbox
 
 import com.albertoperez1994.scalaql._
 import com.albertoperez1994.scalaql.core._
-import com.albertoperez1994.scalaql.utils
-import utils.StringUtils.CaseConverter
 
 class QueryImpl(val c: blackbox.Context) {
 

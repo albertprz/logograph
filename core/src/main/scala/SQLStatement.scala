@@ -2,16 +2,15 @@ package com.albertoperez1994.scalaql
 
 import scala.reflect.runtime.{universe => ru}
 
-import com.albertoperez1994.scalaql.{utils => utils}
+import com.albertoperez1994.scalaql.utils
+import com.albertoperez1994.scalaql.config.ScalaQLConfig
 import utils.QueryUtils
 import utils.ReflectionUtils._
 import utils.StringUtils._
-import com.albertoperez1994.scalaql.core.QueryClause
-import com.albertoperez1994.scalaql.core.UpdateClause
-import com.albertoperez1994.scalaql.core.DeleteClause
+import com.albertoperez1994.scalaql.core.{QueryClause, UpdateClause, DeleteClause}
 
 sealed trait SQLStatement {
-  def sql() (implicit cfg: DbConfig): String
+  def sql() (implicit cfg: ScalaQLConfig): String
   def paramList(): List[Any]
   def run [F[+_]] () (implicit context: ScalaQLContext[F]): F[Any]
 }
@@ -24,7 +23,7 @@ case class SelectStatement [T <: DbDataSet] (private val clause: QueryClause,
 
   import SQLStatement._
 
-  def sql() (implicit cfg: DbConfig): String = getSQL(clause.sql, params)
+  def sql() (implicit cfg: ScalaQLConfig): String = getSQL(clause.sql, params)
   def paramList() = getParamList(params)
 
   def run [F[+_]] () (implicit context: ScalaQLContext[F]) =
@@ -64,7 +63,7 @@ case class SelectStatement [T <: DbDataSet] (private val clause: QueryClause,
 
 //   private def concat[T <: DbDataSet] (selects: Seq[SelectStatement[T]], separator: String)
 //                     (implicit tag: ru.TypeTag[T],
-//                     cfg: DbConfig) = {
+//                     cfg: ScalaQLConfig) = {
 
 //     val sqlTemplate = selects.map(_.sql)
 //                              .mkString("\n" + separator + "\n\n")
@@ -80,7 +79,7 @@ case class InsertStatement [T <: DbTable] (private val data: Either[Seq[T], Sele
                                             (implicit tag: ru.TypeTag[T])
                                             extends SQLStatefulStatement {
 
-  def sql()(implicit cfg: DbConfig) = data match {
+  def sql()(implicit cfg: ScalaQLConfig) = data match {
     case Left(data) => getSQL(data)
     case Right(query) => getSQL(query)
   }
@@ -96,7 +95,7 @@ case class InsertStatement [T <: DbTable] (private val data: Either[Seq[T], Sele
 
 
   private def getSQL [T <: DbTable] (data: Seq[T]) (implicit tag: ru.TypeTag[T],
-  cfg: DbConfig) = {
+  cfg: ScalaQLConfig) = {
 
     val tableName = className[T]
     val companion = companionOf[T]
@@ -110,7 +109,7 @@ case class InsertStatement [T <: DbTable] (private val data: Either[Seq[T], Sele
   }
 
   private def getSQL [T <: DbTable] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T],
-  cfg: DbConfig) = {
+  cfg: ScalaQLConfig) = {
 
     val tableName = className[T]
     val companion = companionOf[T]
@@ -120,7 +119,7 @@ case class InsertStatement [T <: DbTable] (private val data: Either[Seq[T], Sele
         |${query.sql} """.stripMargin
   }
 
-  // override def toString () (implicit cfg: DbConfig) =
+  // override def toString () (implicit cfg: ScalaQLConfig) =
   //   data match {
   //     case Left(data)   => s"""Insert Statement: \n\n${sql.substring(0, sql.indexOf("?)")) + "?)"}\n\n"""
   //     case Right(query) => s"""Insert Statement: \n\n$sql \n\nParams: \n\n${pprint(query.paramList)}\n\n"""
@@ -132,7 +131,7 @@ case class DeleteStatement [T <: DbTable]  (private val clause: DeleteClause,
                                            extends SQLStatefulStatement {
   import SQLStatement._
 
-  def sql() (implicit cfg: DbConfig) = getSQL(clause.sql, params)
+  def sql() (implicit cfg: ScalaQLConfig) = getSQL(clause.sql, params)
   def paramList() = getParamList(params)
 
   def run [F[+_]] () (implicit context: ScalaQLContext[F]) =
@@ -148,7 +147,7 @@ case class UpdateStatement [T <: DbTable] (private val clause: UpdateClause,
 
   import SQLStatement._
 
-  def sql() (implicit cfg: DbConfig) = getSQL(clause.sql, params)
+  def sql() (implicit cfg: ScalaQLConfig) = getSQL(clause.sql, params)
   def paramList() = getParamList(params)
 
   def run [F[+_]] () (implicit context: ScalaQLContext[F]) =
@@ -168,7 +167,7 @@ object SQLStatement {
     }).toList
 
 
-  def getSQL (sqlTemplate: String, params: Map[String, Any]) (implicit cfg: DbConfig) =
+  def getSQL (sqlTemplate: String, params: Map[String, Any]) (implicit cfg: ScalaQLConfig) =
     params.values
           .filter (_.isInstanceOf[List[Any]])
           .foldLeft (sqlTemplate) {

@@ -1,12 +1,13 @@
 package com.albertoperez1994.scalaql.core
 
 import com.albertoperez1994.scalaql.utils.StringUtils._
-import com.albertoperez1994.scalaql.DbConfig
+import com.albertoperez1994.scalaql.utils.PrettyPrintTree
+import com.albertoperez1994.scalaql.config.ScalaQLConfig
 
 trait SQLClause extends PrettyPrintTree {
 
   val validate: Unit
-  def sql() (implicit cfg: DbConfig): String
+  def sql() (implicit cfg: ScalaQLConfig): String
 }
 
 sealed trait Expression extends SQLClause {
@@ -20,20 +21,20 @@ sealed trait Expression extends SQLClause {
 case class LiteralVal (value: String) extends Expression {
 
   val validate = {}
-  def sql() (implicit cfg: DbConfig) = value
+  def sql() (implicit cfg: ScalaQLConfig) = value
 }
 
 case class Field (tableAlias: String, column: String) extends Expression {
 
   val validate = {}
-  def sql() (implicit cfg: DbConfig) =
+  def sql() (implicit cfg: ScalaQLConfig) =
      s"$tableAlias." + (if (column != "*") s"[${Column(column).sql}]" else column)
 }
 
 case class Identity (name: String, tree: Any) extends Expression {
 
   val validate = {}
-  def sql() (implicit cfg: DbConfig) = "?"
+  def sql() (implicit cfg: ScalaQLConfig) = "?"
 
   private val paramName = name.replace("this.", "")
   val parameter = Map(s"@$paramName" -> tree)
@@ -61,7 +62,7 @@ case class Operation (operator: String, operands: List[Expression]) extends Expr
         throw new Exception(s"Operator $operator is not valid in a query \n")
   }
 
-  def sql() (implicit cfg: DbConfig) = {
+  def sql() (implicit cfg: ScalaQLConfig) = {
 
     val convOperator = Operator(opsConversion.getOrElse(operator, operator)).sql
 
@@ -77,19 +78,19 @@ case class Operation (operator: String, operands: List[Expression]) extends Expr
 case class Operator(str: String) extends SQLClause {
 
   val validate = {}
-  def sql() (implicit cfg: DbConfig) = convertCase(cfg.operatorConverter, str)
+  def sql() (implicit cfg: ScalaQLConfig) = convertCase(cfg.operatorConverter, str)
 }
 
 case class Column(str: String) extends SQLClause {
 
   val validate = {}
-  def sql() (implicit cfg: DbConfig) = convertCase(cfg.columnConverter, str)
+  def sql() (implicit cfg: ScalaQLConfig) = convertCase(cfg.columnConverter, str)
 }
 
 case class Table(str: String) extends SQLClause {
 
   val validate = {}
-  def sql() (implicit cfg: DbConfig) = convertCase(cfg.tableConverter, str)
+  def sql() (implicit cfg: ScalaQLConfig) = convertCase(cfg.tableConverter, str)
 }
 
 private object Expression {
@@ -113,7 +114,7 @@ private object Expression {
 
 private object Predicate {
 
-  def adaptSql (exp: Expression) (implicit cfg: DbConfig) = exp match {
+  def adaptSql (exp: Expression) (implicit cfg: ScalaQLConfig) = exp match {
       case op: Operation => op.sql
       case _ => s"${exp.sql} = 1"
   }

@@ -4,7 +4,6 @@ import scala.reflect.runtime.{universe => ru}
 
 import com.albertoperez1994.scalaql.core._
 import com.albertoperez1994.scalaql.macros.QueryImpl
-import com.albertoperez1994.scalaql.utils.StringUtils.CaseConverter
 
 package object scalaql {
 

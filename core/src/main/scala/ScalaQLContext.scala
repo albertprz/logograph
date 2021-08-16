@@ -6,20 +6,19 @@ import scala.util.{Try, Success, Failure}
 import scala.collection.mutable.ListBuffer
 import scala.reflect.runtime.{universe => ru}
 import cats.Monad
-import cats.syntax.monad._
-import cats.syntax.apply._
-import cats.syntax.functor._
+import cats.syntax.all._
 import cats.effect.{Sync, Resource}
 
-import com.albertoperez1994.scalaql.{utils => utils}
+import com.albertoperez1994.scalaql.utils
+import com.albertoperez1994.scalaql.config.ScalaQLConfig
 import utils.ReflectionUtils._
 import utils.StringUtils._
 
-class ScalaQLContext [F[_] : Sync : Monad] (conn: Connection, config: DbConfig = DbConfig()) {
+class ScalaQLContext [F[_] : Sync : Monad] (conn: Connection, config: ScalaQLConfig = ScalaQLConfig()) {
 
   import ScalaQLContext._
 
-  implicit val cfg: DbConfig = config
+  implicit val cfg: ScalaQLConfig = config
 
   conn.setAutoCommit(false)
 
