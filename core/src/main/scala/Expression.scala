@@ -7,7 +7,7 @@ import com.albertoperez1994.scalaql.config.ScalaQLConfig
 trait SQLClause extends PrettyPrintTree {
 
   val validate: Unit
-  def sql() (implicit cfg: ScalaQLConfig): String
+  val sql: String
 }
 
 sealed trait Expression extends SQLClause {
@@ -18,23 +18,25 @@ sealed trait Expression extends SQLClause {
 }
 
 
-case class LiteralVal (value: String) extends Expression {
+case class LiteralVal (value: String) (implicit cfg: ScalaQLConfig)
+    extends Expression {
 
   val validate = {}
-  def sql() (implicit cfg: ScalaQLConfig) = value
+  val sql = value
 }
 
-case class Field (tableAlias: String, column: String) extends Expression {
+case class Field (tableAlias: String, column: String) (implicit cfg: ScalaQLConfig)
+    extends Expression {
 
   val validate = {}
-  def sql() (implicit cfg: ScalaQLConfig) =
-     s"$tableAlias." + (if (column != "*") s"[${Column(column).sql}]" else column)
+  val sql = s"$tableAlias." + (if (column != "*") s"[${Column(column).sql}]" else column)
 }
 
-case class Identity (name: String, tree: Any) extends Expression {
+case class Identity (name: String, tree: Any) (implicit cfg: ScalaQLConfig)
+    extends Expression {
 
   val validate = {}
-  def sql() (implicit cfg: ScalaQLConfig) = "?"
+  val sql = "?"
 
   private val paramName = name.replace("this.", "")
   val parameter = Map(s"@$paramName" -> tree)
@@ -47,7 +49,8 @@ case object Prefix  extends OpType
 case object Postfix  extends OpType
 
 
-case class Operation (operator: String, operands: List[Expression]) extends Expression {
+case class Operation (operator: String, operands: List[Expression]) (implicit cfg: ScalaQLConfig)
+    extends Expression {
 
   import QueryOps._
 
@@ -62,7 +65,7 @@ case class Operation (operator: String, operands: List[Expression]) extends Expr
         throw new Exception(s"Operator $operator is not valid in a query \n")
   }
 
-  def sql() (implicit cfg: ScalaQLConfig) = {
+  val sql = {
 
     val convOperator = Operator(opsConversion.getOrElse(operator, operator)).sql
 
@@ -75,22 +78,25 @@ case class Operation (operator: String, operands: List[Expression]) extends Expr
 }
 
 
-case class Operator(str: String) extends SQLClause {
+case class Operator(str: String) (implicit cfg: ScalaQLConfig)
+    extends SQLClause {
 
   val validate = {}
-  def sql() (implicit cfg: ScalaQLConfig) = convertCase(cfg.operatorConverter, str)
+  val sql = convertCase(cfg.operatorCaseConverter, str)
 }
 
-case class Column(str: String) extends SQLClause {
+case class Column(str: String) (implicit cfg: ScalaQLConfig)
+    extends SQLClause {
 
   val validate = {}
-  def sql() (implicit cfg: ScalaQLConfig) = convertCase(cfg.columnConverter, str)
+  val sql = convertCase(cfg.columnCaseConverter, str)
 }
 
-case class Table(str: String) extends SQLClause {
+case class Table(str: String) (implicit cfg: ScalaQLConfig)
+    extends SQLClause {
 
   val validate = {}
-  def sql() (implicit cfg: ScalaQLConfig) = convertCase(cfg.tableConverter, str)
+  val sql = convertCase(cfg.tableCaseConverter, str)
 }
 
 private object Expression {

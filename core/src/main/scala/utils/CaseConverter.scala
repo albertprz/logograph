@@ -1,10 +1,6 @@
 package com.albertoperez1994.scalaql.utils
 
-import io.circe.{Decoder, Encoder, HCursor, Json}
-import io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
-import pureconfig.ConfigReader
 import Error.CaseNotAllowed
-
 
 case class BiCaseConverter (from: StringCase, to: StringCase) {
 
@@ -24,24 +20,6 @@ case class CaseConverter(to: StringCase) {
     to.toCase(splitString)
   }
 }
-
-object CaseConverter {
-
-  private implicit val configReader: ConfigReader[CaseConverter] =
-    ConfigReader.fromNonEmptyStringTry(caseName => StringCase(caseName).map(CaseConverter.apply).toTry)
-
-  private implicit val encoder: Encoder[CaseConverter] = new Encoder[CaseConverter] {
-    def apply(caseConverter: CaseConverter): Json =
-      Json.fromString(caseConverter.to.caseName)
-  }
-
-  private implicit val decoder: Decoder[CaseConverter] = new Decoder[CaseConverter] {
-    def apply(c: HCursor): Decoder.Result[CaseConverter] =
-      for (toCase   <- c.as[String])
-        yield CaseConverter(StringCase(toCase).toTry.get)
-  }
-}
-
 
 sealed abstract class StringCase (val caseName: String) {
   def fromCase (str: String): Array[String]
@@ -83,9 +61,6 @@ object StringCase {
              .map(x => str.slice(x(0), x(1)))
              .toArray
   }
-
-  private implicit val configReader: ConfigReader[StringCase] =
-    ConfigReader.fromNonEmptyStringTry(caseName => StringCase.apply(caseName).toTry)
 }
 
 import StringCase._

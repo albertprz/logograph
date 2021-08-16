@@ -15,7 +15,6 @@ object FileUtils {
           .map(_.toFile())
 
   implicit class RichOptional[T] (opt: Optional[T]) {
-
     def toOption [T] () =
       if (opt.isPresent) Some(opt.get())
       else               None

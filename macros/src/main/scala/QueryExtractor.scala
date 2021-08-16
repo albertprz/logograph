@@ -5,6 +5,7 @@ import com.albertoperez1994.scalaql.{utils => utils}
 import utils.QueryUtils
 import scala.reflect.macros.blackbox
 import utils.StringUtils
+import com.albertoperez1994.scalaql.config.ScalaQLConfig
 
 class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
@@ -12,16 +13,15 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
   private val ops = new TreeOps[c.type](c)
   private var tableAliasMap: Map[String, String] = null
+  private implicit val config: ScalaQLConfig = ScalaQLConfig.get
 
-  private def init (tree: Tree, fromTypeName: String) = {
-    tableAliasMap = getTableAliasMap(tree, fromTypeName)
-  }
+  import ops._
 
   def getUpdateClause (updateTree: Tree, typeName: String) = {
 
     init(updateTree, typeName)
 
-    val mapArgs = ops.findMapArgs(updateTree)
+    val mapArgs = findMapArgs(updateTree)
     val setMap = mapArgs.map { case (key, value) => (getField(key).get, getExpression(value).get)  }
                         .toMap
 
@@ -80,16 +80,16 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
   private def getSelectClause (tree: Tree) = {
 
-    val args = ops.findTypedCtorArgs(tree, "Select").flatten
+    val args = findTypedCtorArgs(tree, "Select").flatten
                   .flatMap(getExpression)
 
-    val distinctArgs =  ops.findTypedCtorArgs(tree, "SelectDistinct").flatten
+    val distinctArgs =  findTypedCtorArgs(tree, "SelectDistinct").flatten
                            .flatMap(getExpression)
 
-    val allArgs =  ops.findCtorArgs(tree, "SelectAll").flatten
+    val allArgs =  findCtorArgs(tree, "SelectAll").flatten
                       .flatMap(getTableAlias)
 
-    val distinctAllArgs =  ops.findCtorArgs(tree, "SelectDistinctAll").flatten
+    val distinctAllArgs =  findCtorArgs(tree, "SelectDistinctAll").flatten
                               .flatMap(getTableAlias)
 
     if      (distinctAllArgs.nonEmpty)  Some(SelectDistinctAllClause(distinctAllArgs.head))
@@ -101,7 +101,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
   private def getWhereClause (tree: Tree) = {
 
-    val args = ops.findCtorArgs(tree, "Where").flatten
+    val args = findCtorArgs(tree, "Where").flatten
                   .flatMap(getExpression)
 
     if (args.nonEmpty)  Some(WhereClause(args))
@@ -110,7 +110,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
   private def getOrderByClause (tree: Tree) = {
 
-    val args = ops.findCtorArgs (tree, "OrderBy").flatten
+    val args = findCtorArgs (tree, "OrderBy").flatten
                   .flatMap(getExpression)
 
     if (args.nonEmpty)  Some(OrderByClause(args))
@@ -130,7 +130,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
   private def getJoinClauses (tree: Tree) = {
 
     val joinTypes = List("InnerJoin", "LeftJoin", "RightJoin")
-    val argListsMap = (joinTypes zip joinTypes.map(ops.findCtorArgs(tree, _)))
+    val argListsMap = (joinTypes zip joinTypes.map(findCtorArgs(tree, _)))
                         .filter { case (_, argsLists) => argsLists.nonEmpty }
                         .toMap
 
@@ -142,9 +142,9 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
         val tableName = tableAliasMap(tableAlias)
         val joinCtor = joinType match {
-                  case "InnerJoin" => InnerJoinClause
-                  case "RightJoin" => RightJoinClause
-                  case "LeftJoin"  => LeftJoinClause
+            case "InnerJoin" => InnerJoinClause.apply _
+            case "RightJoin" => RightJoinClause.apply _
+            case "LeftJoin"  => LeftJoinClause.apply _
         }
 
       joinCtor(tableName, tableAlias, exps)
@@ -219,11 +219,15 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
   private def getTableAliasMap (tree: Tree, typeName: String) = {
 
-    val tableAliases = ops.findLambdaFnArgs(tree)
+    val tableAliases = findLambdaFnArgs(tree)
                      .map(_.toString)
 
     val tableNames = QueryUtils.splitTupledTypeTag(typeName)
 
     (tableAliases zip tableNames).toMap
+  }
+
+  private def init (tree: Tree, fromTypeName: String) = {
+    tableAliasMap = getTableAliasMap(tree, fromTypeName)
   }
 }

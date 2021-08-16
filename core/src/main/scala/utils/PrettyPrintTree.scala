@@ -24,7 +24,7 @@ import com.albertoperez1994.scalaql.config.ScalaQLConfig
 
       val className = prod.getClass.getSimpleName
       val iter = prod match {
-        case ident: Identity => ident.sql()(ScalaQLConfig())
+        case ident: Identity => ident.sql
         case _ =>  concatStr(prod.productIterator, depth)
       }
 

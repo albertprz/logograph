@@ -55,17 +55,17 @@ package object scalaql {
 
 
   // Query Set Operations
-  // def union[T <: DbDataSet] (selects: SelectStatement[T]*) (implicit tag: ru.TypeTag[T]) =
-  //   SelectStatement.union(selects)
+  def union[T <: DbDataSet] (selects: SelectStatement[T]*) (implicit tag: ru.TypeTag[T]) =
+    SelectStatement.union(selects)
 
-  // def unionAll[T <: DbDataSet] (selects: SelectStatement[T]*) (implicit tag: ru.TypeTag[T]) =
-  //   SelectStatement.unionAll(selects)
+  def unionAll[T <: DbDataSet] (selects: SelectStatement[T]*) (implicit tag: ru.TypeTag[T]) =
+    SelectStatement.unionAll(selects)
 
-  // def intersect[T <: DbDataSet] (selects: SelectStatement[T]*) (implicit tag: ru.TypeTag[T]) =
-  //   SelectStatement.intersect(selects)
+  def intersect[T <: DbDataSet] (selects: SelectStatement[T]*) (implicit tag: ru.TypeTag[T]) =
+    SelectStatement.intersect(selects)
 
-  // def except[T <: DbDataSet] (selects: SelectStatement[T]*) (implicit tag: ru.TypeTag[T]) =
-  //   SelectStatement.except(selects)
+  def except[T <: DbDataSet] (selects: SelectStatement[T]*) (implicit tag: ru.TypeTag[T]) =
+    SelectStatement.except(selects)
 
 
   /*

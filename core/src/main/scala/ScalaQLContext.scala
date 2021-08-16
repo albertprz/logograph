@@ -14,11 +14,9 @@ import com.albertoperez1994.scalaql.config.ScalaQLConfig
 import utils.ReflectionUtils._
 import utils.StringUtils._
 
-class ScalaQLContext [F[_] : Sync : Monad] (conn: Connection, config: ScalaQLConfig = ScalaQLConfig()) {
+class ScalaQLContext [F[_] : Sync : Monad] (conn: Connection) {
 
   import ScalaQLContext._
-
-  implicit val cfg: ScalaQLConfig = config
 
   conn.setAutoCommit(false)
 
