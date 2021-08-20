@@ -46,10 +46,10 @@ package object scalaql {
   // Query factory functions
   case class QueryBuilder[T]() {
 
-    def select[R <: DbDataSet](query: T ⇒ Query[R]): SelectStatement[R] =
+    def select[R <: DbDataSet](query: T => Query[R]): SelectStatement[R] =
       macro QueryImpl.select[T, R]
 
-    def selectDebug[R <: DbDataSet](query: T ⇒ Query[R]): SelectStatement[R] =
+    def selectDebug[R <: DbDataSet](query: T => Query[R]): SelectStatement[R] =
       macro QueryImpl.selectDebug[T, R]
   }
 

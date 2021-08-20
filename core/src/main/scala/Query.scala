@@ -17,7 +17,7 @@ case class RightJoin (table: DbDataSet) (join: Boolean*) extends BaseJoin
 
 class Query[T <: DbDataSet] {
 
-  def where (filterFns: Seq[T ⇒ Boolean]) = ???
+  def where (filterFns: Seq[T => Boolean]) = ???
 }
 
 object Query {

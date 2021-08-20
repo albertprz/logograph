@@ -70,9 +70,9 @@ case class Operation (operator: String, operands: List[Expression]) (implicit cf
     val convOperator = Operator(opsConversion.getOrElse(operator, operator)).sql
 
     opType match {
-      case Infix ⇒ operands.map(_.sql).mkString(s" $convOperator ")
-      case Postfix ⇒ s"${operands.head.sql} $convOperator"
-      case Prefix ⇒  s"$convOperator (${operands.map(_.sql).mkString(", ")})"
+      case Infix => operands.map(_.sql).mkString(s" $convOperator ")
+      case Postfix => s"${operands.head.sql} $convOperator"
+      case Prefix =>  s"$convOperator (${operands.map(_.sql).mkString(", ")})"
     }
   }
 }

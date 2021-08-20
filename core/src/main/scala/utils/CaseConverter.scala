@@ -71,7 +71,7 @@ case object CamelCase extends StringCase("CamelCase") {
 
   def toCase (splitString: Array[String]) = {
     val lower = splitString.map(_.toLowerCase)
-    val adaptedList = lower.head +: lower.tail.map(x => x(0).toUpper + x.substring(1))
+    val adaptedList = lower.head +: lower.tail.map(x => s"${x(0).toUpper}${x.substring(1)}")
 
     adaptedList.mkString("")
   }
@@ -83,7 +83,7 @@ case object PascalCase extends StringCase("PascalCase") {
 
   def toCase (splitString: Array[String]) =
     splitString.map(_.toLowerCase)
-                .map(x => x(0).toUpper + x.substring(1))
+                .map(x => s"${x(0).toUpper}${x.substring(1)}")
                 .mkString("")
 }
 

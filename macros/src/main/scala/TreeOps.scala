@@ -23,10 +23,10 @@ class TreeOps [C <: blackbox.Context] (val c: C) {
 
   def findTypedCtorArgs (tree: Tree, className: String) = {
 
-    val ctor = find(tree, t ⇒ t match {
-        case Apply(Apply(TypeApply(Select(x, _), _), _), _) ⇒ x.toString.contains(s".$className")
-        case Apply(TypeApply(Select(x, _), _), _) ⇒ x.toString.contains(s".$className")
-        case _ ⇒ false
+    val ctor = find(tree, t => t match {
+        case Apply(Apply(TypeApply(Select(x, _), _), _), _) => x.toString.contains(s".$className")
+        case Apply(TypeApply(Select(x, _), _), _) => x.toString.contains(s".$className")
+        case _ => false
       })
 
     val ctorArgs = ctor flatMap extractFnArgs
@@ -43,12 +43,12 @@ class TreeOps [C <: blackbox.Context] (val c: C) {
 
   def findCtorArgs (tree: Tree, className: String) = {
 
-    val ctor = find(tree, t ⇒ t match {
-        case Apply(Apply(TypeApply(Select(x, _), _), _), _) ⇒ x.toString.contains(s".$className")
-        case Apply(TypeApply(Select(x, _), _), _) ⇒ x.toString.contains(s".$className")
-        case Apply(Apply(Select(x, _), _), _) ⇒ x.toString.contains(s".$className")
-        case Apply(Select(x, _), _) ⇒ x.toString.contains(s".$className")
-        case _ ⇒ false
+    val ctor = find(tree, t => t match {
+        case Apply(Apply(TypeApply(Select(x, _), _), _), _) => x.toString.contains(s".$className")
+        case Apply(TypeApply(Select(x, _), _), _) => x.toString.contains(s".$className")
+        case Apply(Apply(Select(x, _), _), _) => x.toString.contains(s".$className")
+        case Apply(Select(x, _), _) => x.toString.contains(s".$className")
+        case _ => false
       })
 
     ctor flatMap extractFnArgs
@@ -56,10 +56,10 @@ class TreeOps [C <: blackbox.Context] (val c: C) {
 
   def findLambdaFnArgs (tree: Tree) = {
 
-    val lambdaFn = find(tree, t ⇒ t match {
-        case CaseDef(x) ⇒ true
-        case ValDef(x) ⇒ true
-        case _ ⇒ false
+    val lambdaFn = find(tree, t => t match {
+        case CaseDef(x) => true
+        case ValDef(x) => true
+        case _ => false
       })
 
     (lambdaFn flatMap extractCaseDefArgs) ++
@@ -69,31 +69,31 @@ class TreeOps [C <: blackbox.Context] (val c: C) {
   private def extractCaseDefArgs (tree: Tree) = {
 
     val args = tree match {
-      case CaseDef(Apply(_, args), _, _) ⇒ args
-      case CaseDef(arg @ Bind(_, _), _, _) ⇒ List(arg)
-      case _ ⇒ List.empty
+      case CaseDef(Apply(_, args), _, _) => args
+      case CaseDef(arg @ Bind(_, _), _, _) => List(arg)
+      case _ => List.empty
     }
 
-    (for (arg ← args)
+    (for (arg <- args)
       yield arg match {
-        case Bind(arg, _) ⇒ Some(arg)
-        case _ ⇒ None
+        case Bind(arg, _) => Some(arg)
+        case _ => None
       }
     ).flatten
   }
 
   private def extractValDefArgs (tree: Tree) = tree match {
-      case ValDef(_, arg, _ , _) ⇒ List(arg)
+      case ValDef(_, arg, _ , _) => List(arg)
       case _ => List.empty
     }
 
   private def extractFnArgs (tree: Tree)  = tree match {
       case Apply(Apply(_, args1), args2) => List(args1, args2)
-      case Apply(_, args) ⇒ List(args)
-      case _ ⇒ List.empty
+      case Apply(_, args) => List(args)
+      case _ => List.empty
     }
 
-  private def find (tree: Tree, filterFn: Tree ⇒ Boolean): List[Tree]  =
+  private def find (tree: Tree, filterFn: Tree => Boolean): List[Tree]  =
 
     if (filterFn(tree))
       List(tree)

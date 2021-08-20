@@ -8,7 +8,7 @@ object ReflectionUtils {
 
   def companionOf[T: TypeTag] = {
 
-    val module = typeOf[T].typeSymbol.companionSymbol.asModule
+    val module = typeOf[T].typeSymbol.companion.asModule
     val companionMirror = universeMirror.reflectModule(module)
     Companion(companionMirror.instance)
   }
