@@ -50,9 +50,9 @@ class ScalaQLContext [F[_] : Sync : Monad] (conn: Connection) {
             .map  { stmt => parameteriseStatement(stmt, paramList) }
 }
 
-object ScalaQLContext {
+private object ScalaQLContext {
 
-  private def extractResults [T <: DbDataSet] (resultSet: ResultSet) (implicit tag: ru.TypeTag[T]) = {
+  def extractResults [T <: DbDataSet] (resultSet: ResultSet) (implicit tag: ru.TypeTag[T]) = {
 
     val results = ListBuffer[T]()
     val companion = companionOf[T]
@@ -65,7 +65,7 @@ object ScalaQLContext {
     results.toList
   }
 
-  private def parameteriseStatement (stmt: PreparedStatement, params: List[Any]) = {
+  def parameteriseStatement (stmt: PreparedStatement, params: List[Any]) = {
     for (i <- 0 to params.size - 1) {
       params(i) match {
         case int: Int        => stmt.setInt(i + 1, int)
@@ -86,7 +86,7 @@ object ScalaQLContext {
     stmt
   }
 
-  private def getCtorArgs (resultSet: ResultSet, paramTypes: List[String]) =
+  def getCtorArgs (resultSet: ResultSet, paramTypes: List[String]) =
     for (i <- 0 to paramTypes.size - 1)
         yield paramTypes(i) match {
           case "int"                  => resultSet.getInt(i + 1)

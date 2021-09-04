@@ -2,9 +2,8 @@ package com.albertoperez1994.scalaql.macros
 
 import com.albertoperez1994.scalaql.core._
 import com.albertoperez1994.scalaql.{utils => utils}
-import utils.QueryUtils
+import utils.QueryUtils._
 import scala.reflect.macros.blackbox
-import utils.StringUtils
 import com.albertoperez1994.scalaql.config.ScalaQLConfig
 
 class QueryExtractor [C <: blackbox.Context] (val c: C) {
@@ -27,7 +26,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
     val setClause = SetClause(setMap)
     val whereClause = getWhereClause(updateTree)
-    val tableName = QueryUtils.splitTupledTypeTag(typeName).head
+    val tableName = splitTupledTypeTag(typeName).head
 
     val updateClause = UpdateClause(tableName, setClause, whereClause)
     val params = ExpressionClause.findParameters(updateClause)
@@ -42,7 +41,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     }
 
     val whereClause = whereTree.flatMap(getWhereClause)
-    val tableName = QueryUtils.splitTupledTypeTag(typeName).head
+    val tableName = splitTupledTypeTag(typeName).head
 
     val deleteClause = DeleteClause(tableName, whereClause)
     val params = ExpressionClause.findParameters(deleteClause)
@@ -63,7 +62,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     val queryClause = QueryClause (selectClause, fromClause, joinClauses, whereClause, orderByClause)
     val params = ExpressionClause.findParameters(queryClause)
 
-    (queryClause, params)
+    (queryClause, params, tableAliasMap.values.toList)
   }
 
   def getQueryClause (typeName: String) = {
@@ -199,7 +198,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
   private def getLiteral(tree: Tree) = tree match {
 
     case Literal(Constant(value)) =>
-      Some(LiteralVal(QueryUtils.convertLiteral(value)))
+      Some(LiteralVal(literaltoSql(value)))
     case _ => None
   }
 
@@ -222,7 +221,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     val tableAliases = findLambdaFnArgs(tree)
                      .map(_.toString)
 
-    val tableNames = QueryUtils.splitTupledTypeTag(typeName)
+    val tableNames = splitTupledTypeTag(typeName)
 
     (tableAliases zip tableNames).toMap
   }

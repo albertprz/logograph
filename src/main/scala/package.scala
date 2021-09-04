@@ -10,28 +10,8 @@ package object scalaql {
   import scala.language.experimental.macros
 
   // Statement factory functions
-  def query[T] = QueryBuilder[T]()
-
   def selectAll[T <: DbDataSet] (): SelectStatement[T] =
     macro QueryImpl.selectAll[T]
-
-  def insert[T <: DbTable] (data: T) (implicit tag: ru.TypeTag[T]) =
-    InsertStatement (Left (Seq(data)))
-
-  def insert[T <: DbTable] (data: Seq[T]) (implicit tag: ru.TypeTag[T]) =
-    InsertStatement (Left (data))
-
-  def insert[T <: DbTable] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
-    InsertStatement (Right (query))
-
-  def delete[T <: DbTable] (where: T => Where): DeleteStatement[T] =
-    macro QueryImpl.delete[T]
-
-  def deleteAll[T <: DbTable]: DeleteStatement[T] =
-    macro QueryImpl.deleteAll[T]
-
-  def deleteDebug[T <: DbTable] (where: T => Where): DeleteStatement[T] =
-    macro QueryImpl.deleteDebug[T]
 
   def update[T <: DbTable] (setMap: T => (Map[Any, Any], Where)): UpdateStatement[T] =
     macro QueryImpl.update[T]
@@ -42,9 +22,62 @@ package object scalaql {
   def updateDebug[T <: DbTable] (setMap: T => (Map[Any, Any], Where)): UpdateStatement[T] =
     macro QueryImpl.updateDebug[T]
 
+  def delete[T <: DbTable] (where: T => Where): DeleteStatement[T] =
+    macro QueryImpl.delete[T]
 
-  // Query factory functions
-  case class QueryBuilder[T]() {
+  def deleteAll[T <: DbTable]: DeleteStatement[T] =
+    macro QueryImpl.deleteAll[T]
+
+  def deleteDebug[T <: DbTable] (where: T => Where): DeleteStatement[T] =
+    macro QueryImpl.deleteDebug[T]
+
+  def insert[T <: DbTable] (data: T) (implicit tag: ru.TypeTag[T]) =
+    InsertStatement (Left (Seq(data)))
+
+  def insert[T <: DbTable] (data: Seq[T]) (implicit tag: ru.TypeTag[T]) =
+    InsertStatement (Left (data))
+
+  def insert[T <: DbTable] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
+    InsertStatement (Right (query))
+
+  def query[T] = QueryBuilder[T]()
+
+  def query[T <: DbDataSet] (fromQuery: SelectStatement[T]) =
+      QueryBuilder[T](subQueries = Seq(fromQuery))
+
+  def query[T <: DbDataSet, R <: DbDataSet]
+    (fromQuery1: SelectStatement[T], fromQuery2: SelectStatement[R]) =
+    QueryBuilder[(T, R)](subQueries = Seq(fromQuery1, fromQuery2))
+
+  def query[T <: DbDataSet, R <: DbDataSet, X <: DbDataSet]
+    (fromQuery1: SelectStatement[T], fromQuery2: SelectStatement[R],
+     fromQuery3: SelectStatement[X]) =
+    QueryBuilder[(T, R, X)](subQueries = Seq(fromQuery1, fromQuery2, fromQuery3))
+
+  def query[T <: DbDataSet, R <: DbDataSet, X <: DbDataSet,
+            S <: DbDataSet]
+    (fromQuery1: SelectStatement[T], fromQuery2: SelectStatement[R],
+     fromQuery3: SelectStatement[X], fromQuery4: SelectStatement[S]) =
+    QueryBuilder[(T, R, X, S)](subQueries = Seq(fromQuery1, fromQuery2, fromQuery3,
+                                                fromQuery4))
+
+  def query[T <: DbDataSet, R <: DbDataSet, X <: DbDataSet,
+            S <: DbDataSet, Q <: DbDataSet]
+     (fromQuery1: SelectStatement[T], fromQuery2: SelectStatement[R],
+      fromQuery3: SelectStatement[X], fromQuery4: SelectStatement[S],
+      fromQuery5: SelectStatement[Q]) =
+    QueryBuilder[(T, R, X, S, Q)](subQueries = Seq(fromQuery1, fromQuery2, fromQuery3,
+                                                   fromQuery4, fromQuery5))
+
+  def query[T <: DbDataSet, R <: DbDataSet, X <: DbDataSet,
+            S <: DbDataSet, Q <: DbDataSet, H <: DbDataSet]
+      (fromQuery1: SelectStatement[T], fromQuery2: SelectStatement[R],
+       fromQuery3: SelectStatement[X], fromQuery4: SelectStatement[S],
+       fromQuery5: SelectStatement[Q], fromQuery6: SelectStatement[H]) =
+    QueryBuilder[(T, R, X, S, Q, H)](subQueries = Seq(fromQuery1, fromQuery2, fromQuery3,
+                                                      fromQuery4, fromQuery5, fromQuery6))
+
+  case class QueryBuilder[T](subQueries: Seq[SelectStatement[_]] = Seq.empty) {
 
     def select[R <: DbDataSet](query: T => Query[R]): SelectStatement[R] =
       macro QueryImpl.select[T, R]

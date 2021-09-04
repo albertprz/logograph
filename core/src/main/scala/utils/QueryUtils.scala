@@ -9,12 +9,12 @@ object QueryUtils {
               .map(_.split('.').last)
               .toList
 
-  def convertLiteral(literal: Any): String =
+  def literaltoSql (literal: Any): String =
     literal match {
       case str: String   => s"'${str.replace("'", "''")}'"
       case num: Number   => num.toString
       case bool: Boolean => if (bool) "1" else "0"
-      case list: List[Any] => list.map(convertLiteral)
+      case list: List[Any] => list.map(literaltoSql)
                                   .mkString("(", ", ", ")")
       case other: Any      => throw new Exception("Unknown types cannot be used in queries " +
                                                    "for constant or runtime parameter values: \n" +
