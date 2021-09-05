@@ -72,9 +72,11 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
     val field = Field (tableAlias, "*")
     val select = SelectClause (List(field))
-    val from = FromClause (Map(tableAlias-> tableName))
+    val from = FromClause (Map(tableAlias -> tableName))
 
-    QueryClause (Some(select), Some(from))
+    val queryClause = QueryClause (Some(select), Some(from))
+
+    (queryClause, tableName)
   }
 
   private def getSelectClause (tree: Tree) = {

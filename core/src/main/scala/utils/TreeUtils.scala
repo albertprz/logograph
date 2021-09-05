@@ -5,14 +5,14 @@ sealed trait Tree [T] {
 
   def map[U] (mapFn: T => U) : Tree[U] = {
     this match {
-      case Leaf(value) => Leaf(mapFn(value))
+      case Leaf(value)           => Leaf(mapFn(value))
       case Node(value, children) => Node(mapFn(value), children map (_ map mapFn))
     }
   }
 
   def foldLeft[U] (init: U) (reduceFn: (U, T) => U): U = {
     this match {
-      case Leaf(value) => reduceFn(init, value)
+      case Leaf(value)           => reduceFn(init, value)
       case Node(value, children) => (children :+ Leaf(value)).foldLeft(init) {
         case (acc, curr) => curr.foldLeft(acc)(reduceFn)
       }
@@ -28,10 +28,8 @@ sealed trait Tree [T] {
   }
 }
 
-case class Leaf [T] (value: T)
-    extends Tree [T]
-case class Node [T] (value: T, children: Seq[Tree[T]])
-    extends Tree [T]
+case class Leaf [T] (value: T)                         extends Tree [T]
+case class Node [T] (value: T, children: Seq[Tree[T]]) extends Tree [T]
 
 object TreeUtils {
 

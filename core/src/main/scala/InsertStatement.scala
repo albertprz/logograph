@@ -10,7 +10,7 @@ case class InsertStatement [T <: DbTable] (data: Either[Seq[T], SelectStatement[
                                             (implicit tag: ru.TypeTag[T])
                                             extends SQLStatefulStatement {
 
-  val (sql, paramList) = InsertStatement.generate(this)
+  lazy val (sql, paramList) = InsertStatement.generate(this)
 
   def run [F[+_]] () (implicit context: ScalaQLContext[F]) =
     context.run(this)

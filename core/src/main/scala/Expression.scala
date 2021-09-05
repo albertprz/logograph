@@ -82,21 +82,21 @@ case class Operator(str: String) (implicit cfg: ScalaQLConfig)
     extends SQLClause {
 
   val validate = {}
-  val sql = convertCase(cfg.operatorCaseConverter, str)
+  val sql = str.convertCase(cfg.operatorCaseConverter)
 }
 
 case class Column(str: String) (implicit cfg: ScalaQLConfig)
     extends SQLClause {
 
   val validate = {}
-  val sql = convertCase(cfg.columnCaseConverter, str)
+  val sql = str.convertCase(cfg.columnCaseConverter)
 }
 
 case class Table(str: String) (implicit cfg: ScalaQLConfig)
     extends SQLClause {
 
   val validate = {}
-  val sql = convertCase(cfg.tableCaseConverter, str)
+  val sql = str.convertCase(cfg.tableCaseConverter)
 }
 
 private object Expression {

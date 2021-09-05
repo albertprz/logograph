@@ -19,17 +19,11 @@ class QueryImpl(val c: blackbox.Context) {
                 (implicit tag1: WeakTypeTag[T], tag2: WeakTypeTag[R]) : Expr[SelectStatement[R]] =
     buildQuery[T, R] (query)
 
-  def selectDebug[T, R <: DbDataSet] (query: Tree) (implicit tag1: WeakTypeTag[T], tag2: WeakTypeTag[R]): Expr[SelectStatement[R]] =
-    buildQuery[T, R] (query, debug = true)
-
   def updateAll[T <: DbTable] (setMap: Tree) (implicit tag: WeakTypeTag[T]): Expr[UpdateStatement[T]] =
     buildUpdate[T] (setMap)
 
   def update[T <: DbTable] (setMap: Tree) (implicit tag: WeakTypeTag[T]): Expr[UpdateStatement[T]] =
     buildUpdate[T] (setMap)
-
-  def updateDebug[T <: DbTable] (setMap: Tree) (implicit tag: WeakTypeTag[T]): Expr[UpdateStatement[T]] =
-    buildUpdate[T] (setMap, debug = true)
 
   def deleteAll[T <: DbTable] (implicit tag: WeakTypeTag[T]): Expr[DeleteStatement[T]]  =
     buildDelete[T] ()
@@ -37,59 +31,61 @@ class QueryImpl(val c: blackbox.Context) {
   def delete[T <: DbTable] (where: Tree)  (implicit tag: WeakTypeTag[T]): Expr[DeleteStatement[T]]  =
     buildDelete[T] (Some(where))
 
-  def deleteDebug[T <: DbTable] (where: Tree)  (implicit tag: WeakTypeTag[T]): Expr[DeleteStatement[T]]  =
-    buildDelete[T] (Some(where), debug = true)
-
   private val extractor = new QueryExtractor[c.type](c)
 
-  private def buildQuery[T, R <: DbDataSet] (queryTree: Tree, debug: Boolean = false)
+  private def buildQuery[T, R <: DbDataSet] (queryTree: Tree)
                                             (implicit tag1: WeakTypeTag[T], tag2: WeakTypeTag[R]) = {
 
     val (clause, params, tableNames) = extractor.getQueryClause(queryTree, weakTypeOf[T].toString)
 
-    emitMessage("Query", clause, debug)
+    emitMessage("Query", clause)
+
+    val subQueries = c.Expr[Seq[SelectStatement[_]]] (Select(c.prefix.tree, TermName("subQueries")))
+
 
     c.Expr[SelectStatement[R]](q"""SelectStatement(sqlTemplate = ${clause.sql},
                                                    params = ${params.asInstanceOf[Map[String, Tree]]},
                                                    tableNames = $tableNames,
-                                                   subQueries = this.subQueries)""")
+                                                   subQueries = $subQueries.asInstanceOf[Seq[SelectStatement[DbDataSet]]])""")
   }
 
   private def buildQueryAll[T <: DbDataSet] () (implicit tag: WeakTypeTag[T]) = {
 
-    val clause = extractor.getQueryClause(weakTypeOf[T].toString)
+    val (clause, tableName) = extractor.getQueryClause(weakTypeOf[T].toString)
 
     c.Expr[SelectStatement[T]](q"""SelectStatement(sqlTemplate = ${clause.sql},
-                                                   params = Map.empty[String, Any])""")
+                                                   params = Map.empty[String, Any],
+                                                   tableNames = ${List(tableName)},
+                                                   subQueries = Seq.empty[SelectStatement[DbDataSet]])""")
   }
 
-  private def buildUpdate[T <: DbTable] (updateTree: Tree, debug: Boolean = false)
+  private def buildUpdate[T <: DbTable] (updateTree: Tree)
                          (implicit tag: WeakTypeTag[T]) = {
 
      val (clause, params) = extractor.getUpdateClause(updateTree, weakTypeOf[T].toString)
 
-    emitMessage("Update", clause, debug)
+    emitMessage("Update", clause)
 
     c.Expr[UpdateStatement[T]](q"""UpdateStatement(sqlTemplate = ${clause.sql},
                                                    params = ${params.asInstanceOf[Map[String, Tree]]})""")
   }
 
-  private def buildDelete[T <: DbTable] (whereTree: Option[Tree] = None, debug: Boolean = false)
+  private def buildDelete[T <: DbTable] (whereTree: Option[Tree] = None)
                          (implicit tag: WeakTypeTag[T]) = {
 
      val (clause, params) = extractor.getDeleteClause(whereTree, weakTypeOf[T].toString)
 
-    emitMessage("Delete", clause, debug)
+    emitMessage("Delete", clause)
 
     c.Expr[DeleteStatement[T]](q"""DeleteStatement(sqlTemplate = ${clause.sql},
                                                    params = ${params.asInstanceOf[Map[String, Tree]]})""")
   }
 
-  private def emitMessage(operation: String, clause: SQLClause, debug: Boolean) = {
+  private def emitMessage(operation: String, clause: SQLClause) = {
 
-    val compilationMessage = s""" |  Debugging ${operation.toLowerCase()}: \n\n\n${clause.sql}\n\n
-                                  |$operation Tree: \n ${clause}\n\n\n""".stripMargin
+    val compilationMessage = s""" |Debugging ${operation.toLowerCase()}:\n\n\n${clause.sql}\n\n
+                                  |$operation Tree:\n${clause}\n\n\n""".stripMargin
 
-      c.info(c.enclosingPosition, compilationMessage, debug)
+      c.info(c.enclosingPosition, compilationMessage, false)
   }
 }

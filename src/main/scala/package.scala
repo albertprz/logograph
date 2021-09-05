@@ -10,7 +10,7 @@ package object scalaql {
   import scala.language.experimental.macros
 
   // Statement factory functions
-  def selectAll[T <: DbDataSet] (): SelectStatement[T] =
+  def queryAll[T <: DbDataSet] (): SelectStatement[T] =
     macro QueryImpl.selectAll[T]
 
   def update[T <: DbTable] (setMap: T => (Map[Any, Any], Where)): UpdateStatement[T] =
@@ -19,17 +19,11 @@ package object scalaql {
   def updateAll[T <: DbTable] (setMap: T => Map[Any, Any]): UpdateStatement[T] =
     macro QueryImpl.updateAll[T]
 
-  def updateDebug[T <: DbTable] (setMap: T => (Map[Any, Any], Where)): UpdateStatement[T] =
-    macro QueryImpl.updateDebug[T]
-
   def delete[T <: DbTable] (where: T => Where): DeleteStatement[T] =
     macro QueryImpl.delete[T]
 
   def deleteAll[T <: DbTable]: DeleteStatement[T] =
     macro QueryImpl.deleteAll[T]
-
-  def deleteDebug[T <: DbTable] (where: T => Where): DeleteStatement[T] =
-    macro QueryImpl.deleteDebug[T]
 
   def insert[T <: DbTable] (data: T) (implicit tag: ru.TypeTag[T]) =
     InsertStatement (Left (Seq(data)))
@@ -81,9 +75,6 @@ package object scalaql {
 
     def select[R <: DbDataSet](query: T => Query[R]): SelectStatement[R] =
       macro QueryImpl.select[T, R]
-
-    def selectDebug[R <: DbDataSet](query: T => Query[R]): SelectStatement[R] =
-      macro QueryImpl.selectDebug[T, R]
   }
 
 

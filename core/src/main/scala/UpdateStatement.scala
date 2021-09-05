@@ -7,7 +7,7 @@ case class UpdateStatement [T <: DbTable] (sqlTemplate: String,
                                            params: Map[String, Any] = Map.empty)
                                           extends SQLStatefulStatement {
 
-  val (sql, paramList) = UpdateStatement.generate(this)
+  lazy val (sql, paramList) = UpdateStatement.generate(this)
 
   def run [F[+_]] () (implicit context: ScalaQLContext[F]) =
     context.run(this)

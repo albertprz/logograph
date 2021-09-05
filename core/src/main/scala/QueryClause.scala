@@ -69,7 +69,7 @@ case class WhereClause (exprs: List[Expression]) (implicit cfg: ScalaQLConfig)
   val sql  = exprs
               .map(Predicate.adaptSql)
               .map(str => if (exprs.size > 1) s"($str)" else str)
-              .mkString("WHERE       ", " AND \n            ", "\n")
+              .mkString("WHERE       ", s" ${Operator("and").sql} \n            ", "\n")
 }
 
 case class GroupByClause (fields: List[Field]) (implicit cfg: ScalaQLConfig)
@@ -90,7 +90,7 @@ case class HavingClause (exprs: List[Expression]) (implicit cfg: ScalaQLConfig)
   val sql  = exprs
               .map(Predicate.adaptSql)
               .map(str => if (exprs.size > 1) s"($str)" else str)
-              .mkString("HAVING      ", " AND \n            ", "\n")
+              .mkString("HAVING      ", s" ${Operator("and").sql} \n            ", "\n")
 }
 
 case class OrderByClause (exprs: List[Expression]) (implicit cfg: ScalaQLConfig)
@@ -129,7 +129,7 @@ sealed abstract class BaseJoinClause () (implicit cfg: ScalaQLConfig)
   val sql = exprs
               .map(Predicate.adaptSql)
               .map(str => if (exprs.size > 1) s"($str)" else str)
-              .mkString(s"$joinType  [$tableName] AS $tableAlias ON ", " AND \n            ", "\n")
+              .mkString(s"$joinType  [$tableName] AS $tableAlias ON ", s" ${Operator("and").sql} \n            ", "\n")
 }
 
 case class InnerJoinClause (tableName: String, tableAlias: String, exprs: List[Expression])
@@ -225,7 +225,7 @@ case class SetClause (setMap: Map[Field, Expression]) (implicit cfg: ScalaQLConf
 }
 
 case class UpdateClause (tableName: String, setClause: SetClause, whereClause: Option[WhereClause])
-                        (implicit cfg: ScalaQLConfig = ScalaQLConfig())
+                        (implicit cfg: ScalaQLConfig)
     extends SQLClause {
 
   val validate = {}
@@ -242,7 +242,7 @@ case class UpdateClause (tableName: String, setClause: SetClause, whereClause: O
 }
 
 case class DeleteClause (tableName: String, whereClause: Option[WhereClause])
-                        (implicit cfg: ScalaQLConfig = ScalaQLConfig())
+                        (implicit cfg: ScalaQLConfig)
     extends SQLClause {
 
   val validate = {}

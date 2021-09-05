@@ -7,14 +7,14 @@ import utils.StringUtils._
 import utils.TreeUtils._
 
 case class SelectStatement [T <: DbDataSet] (sqlTemplate: String,
-                                              params: Map[String, Any],
-                                              tableNames: Seq[String],
-                                              subQueries: Seq[SelectStatement[DbDataSet]] = Seq.empty,
-                                              index: Int = 0,
-                                              dependencies: Set[Int] = Set.empty)
+                                             params: Map[String, Any],
+                                             tableNames: Seq[String],
+                                             subQueries: Seq[SelectStatement[DbDataSet]] = Seq.empty,
+                                             var index: Int = 0,
+                                             dependencies: Seq[Int] = Seq.empty)
                            (implicit tag: ru.TypeTag[T]) extends SQLStatement {
 
-  val (sql, paramList) = SelectStatement.generate(this)
+  lazy val (sql, paramList) = SelectStatement.generate(this)
 
   def run [F[+_]] () (implicit context: ScalaQLContext[F]) =
     context.run(this)
@@ -79,25 +79,29 @@ object SelectStatement {
 
     val queries = buildTree(select.asInstanceOf[SelectStatement[DbDataSet]]) (_.subQueries)
       .foldLeftWithIndex(Seq.empty[SelectStatement[DbDataSet]]) {
-        case ((acc, i), curr) => (acc :+ curr.copy(index = i,
-                                                  dependencies = curr.subQueries.map(_.index).toSet))
+        case ((acc, i), curr) => {
+          curr.index = i;
+          acc :+ curr.copy(dependencies = curr.subQueries.map(_.index).toSeq)
+        }
     }
-    .map(select =>
-
-      ((select.tableNames zip select.dependencies)
-        .foldLeft(select.sqlTemplate) {
-          case (acc, (curr, i)) => acc.replaceFirst(s"[$curr]", s"[q$i]")
-        }, select.index)
-    )
+      .map { select =>
+        ((select.tableNames zip select.dependencies)
+          .foldLeft(select.sqlTemplate) {
+            case (querySql, (tableName, i)) => querySql.replaceFirst(s"\\[$tableName\\]", s"[q$i]")
+          }, select.index)
+      }
 
     val ctes = queries.init
-                      .map{ case (querySql, i) => s"q$i AS\n(\n$querySql\n)" }
-                      .mkString("WITH \n", ",\n", "\n")
+                      .map{ case (querySql, i) => s"q$i AS\n(\n${querySql.indent(2)})" }
+                      .mkString("WITH ", ",\n", "\n")
 
     val (finalQuery, _) = queries.last
 
+    val sqlTemplate = if (queries.init.nonEmpty) s"$ctes\n$finalQuery"
+                      else finalQuery
+
     val params = (select.subQueries.map(_.params) :+ select.params).flatten.toMap
 
-    (getSQL(ctes + finalQuery, params), getParamList(params))
+    (getSQL(sqlTemplate, params), getParamList(params))
   }
 }

@@ -4,9 +4,6 @@ import scala.collection.StringOps
 
 object StringUtils {
 
-  def convertCase (caseConverter: Option[CaseConverter], str: String) =
-    caseConverter.fold(str)(_.convertCase(str))
-
   def pprint (value: Any): String = value match {
     case seq: Seq[_]   => seq.map(pprint)
                              .mkString("[", getSeparator(seq), "]")
@@ -26,4 +23,20 @@ object StringUtils {
 
   private def getSeparator (value: Any) =
     if (value.toString.size > 30) ",\n " else ", "
+
+
+  implicit class RichStringTest (str: String) {
+
+    def mapLines(mapFn: String => String) = str.split("\n")
+                                               .map(mapFn)
+                                               .mkString("\n")
+
+    def normalized() = str.mapLines(_.trim())
+                          .trim()
+
+    def indent (spacing: Int) = str.mapLines(" " * spacing + _)
+
+    def convertCase (caseConverter: Option[CaseConverter]) =
+      caseConverter.fold(str)(_.convertCase(str))
+  }
 }
