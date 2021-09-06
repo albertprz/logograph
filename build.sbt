@@ -5,6 +5,9 @@ ThisBuild / scalaVersion := scalaVer
 ThisBuild / libraryDependencies ++= mainDependencies ++ testDependencies.map(_ % Test)
 ThisBuild / Compile / compile / logLevel := Level.Warn
 Global / excludeLintKeys += logLevel
+Global / onChangedBuildSource := ReloadOnSourceChanges
+Test / parallelExecution := false
+
 
 val scalaVer = "2.13.5"
 

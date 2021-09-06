@@ -6,12 +6,15 @@ app/target/
 macros/target/
 build/
 
-# emacs
+# metals
 .bsp/
 .bloop/
 .metals/
 
-# other?
+#vscode
+.vscode/
+
+#other
 .history
 .scala_dependencies
 .cache

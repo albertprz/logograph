@@ -111,18 +111,12 @@ case class OrderByClause (exprs: List[Expression]) (implicit cfg: ScalaQLConfig)
               .mkString("ORDER BY    ", ", ", "\n")
 }
 
-sealed abstract class BaseJoinClause () (implicit cfg: ScalaQLConfig)
+sealed abstract class BaseJoinClause (joinType: String) (implicit cfg: ScalaQLConfig)
     extends ExpressionClause {
 
   val tableName: String
   val tableAlias: String
   val exprs: List[Expression]
-
-  val joinType = this match {
-    case inner: InnerJoinClause => "INNER JOIN"
-    case left: LeftJoinClause   => "LEFT JOIN "
-    case right: RightJoinClause => "RIGHT JOIN"
-  }
 
   val validate = {}
 
@@ -132,14 +126,24 @@ sealed abstract class BaseJoinClause () (implicit cfg: ScalaQLConfig)
               .mkString(s"$joinType  [$tableName] AS $tableAlias ON ", s" ${Operator("and").sql} \n            ", "\n")
 }
 
+object BaseJoinClause {
+
+  def apply (str: String) (implicit cfg: ScalaQLConfig) = str match {
+    case "InnerJoin" => InnerJoinClause.apply _
+    case "RightJoin" => RightJoinClause.apply _
+    case "LeftJoin"  => LeftJoinClause.apply _
+  }
+}
+
 case class InnerJoinClause (tableName: String, tableAlias: String, exprs: List[Expression])
-                           (implicit cfg: ScalaQLConfig) extends BaseJoinClause
+                           (implicit cfg: ScalaQLConfig) extends BaseJoinClause("INNER JOIN")
 
 case class LeftJoinClause (tableName: String, tableAlias: String, exprs: List[Expression])
-                          (implicit cfg: ScalaQLConfig) extends BaseJoinClause
+                          (implicit cfg: ScalaQLConfig) extends BaseJoinClause("LEFT JOIN ")
 
 case class RightJoinClause (tableName: String, tableAlias: String, exprs: List[Expression])
-                           (implicit cfg: ScalaQLConfig) extends BaseJoinClause
+                           (implicit cfg: ScalaQLConfig) extends BaseJoinClause("RIGHT JOIN")
+
 
 case class QueryClause (select: Option[BaseSelectClause] = None, from: Option[FromClause] = None,
                         joins: List[BaseJoinClause] = List.empty, wher: Option[WhereClause] = None,

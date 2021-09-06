@@ -131,6 +131,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
   private def getJoinClauses (tree: Tree) = {
 
     val joinTypes = List("InnerJoin", "LeftJoin", "RightJoin")
+
     val argListsMap = (joinTypes zip joinTypes.map(findCtorArgs(tree, _)))
                         .filter { case (_, argsLists) => argsLists.nonEmpty }
                         .toMap
@@ -139,17 +140,9 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
                       argList <- argLists.grouped(2)}
       yield (joinType, getTableAlias(argList(0).head).get, argList(1) flatMap getExpression)
 
-    args.map { case (joinType, tableAlias, exps) => {
-
-        val tableName = tableAliasMap(tableAlias)
-        val joinCtor = joinType match {
-            case "InnerJoin" => InnerJoinClause.apply _
-            case "RightJoin" => RightJoinClause.apply _
-            case "LeftJoin"  => LeftJoinClause.apply _
-        }
-
-      joinCtor(tableName, tableAlias, exps)
-    } }.toList
+    args.map { case (joinType, tableAlias, exps) =>
+        BaseJoinClause (joinType) (config) (tableAliasMap(tableAlias), tableAlias, exps)
+     }.toList
   }
 
 
