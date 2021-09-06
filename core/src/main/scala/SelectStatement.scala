@@ -83,7 +83,7 @@ object SelectStatement {
           curr.index = i;
           acc :+ curr.copy(dependencies = curr.subQueries.map(_.index).toSeq)
         }
-    }
+      }
       .map { select =>
         ((select.tableNames zip select.dependencies)
           .foldLeft(select.sqlTemplate) {

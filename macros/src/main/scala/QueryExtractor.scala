@@ -197,10 +197,15 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     case _ => None
   }
 
-  private def getLiteral(tree: Tree) = tree match {
+  private def getLiteral(tree: Tree): Option[LiteralVal] = tree match {
 
-    case Literal(Constant(value)) =>
+    case Literal(Constant(value))                                                               =>
       Some(LiteralVal(literaltoSql(value)))
+
+    case q"scala.`package`.List.apply[$_](..$values)" if values.forall(getLiteral(_).isDefined) =>
+      Some(LiteralVal(values.flatMap(getLiteral(_).map(_.value))
+                            .mkString("(", ", ", ")")))
+
     case _ => None
   }
 
@@ -211,7 +216,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
       case ident @ q"$_.$_.$_.$_" => Some(ident)
       case ident @ q"$_.$_.$_" => Some(ident)
       case ident @ q"$_.$_" => Some(ident)
-      case Ident(ident) => Some(ident.asInstanceOf[Tree])
+      case ident @ Ident(_) => Some(ident.asInstanceOf[Tree])
       case _ => None
     }
 

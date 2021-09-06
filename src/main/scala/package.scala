@@ -122,8 +122,8 @@ package object scalaql {
 
     def === (y: String): Boolean = ???
     def <>  (y: String): Boolean = ???
-    def in (y: Seq[String]): Boolean = ???
-    def notIn  (y: Seq[String]): Boolean = ???
+    def in (y: List[String]): Boolean = ???
+    def notIn  (y: List[String]): Boolean = ???
     def like (y: String): Boolean = ???
     def notLike (y: String): Boolean = ???
   }
@@ -142,8 +142,8 @@ package object scalaql {
 
     def === (y: Int): Boolean = ???
     def <>  (y: Int): Boolean = ???
-    def in  (y: Seq[Int]): Boolean = ???
-    def notIn  (y: Seq[Int]): Boolean = ???
+    def in  (y: List[Int]): Boolean = ???
+    def notIn  (y: List[Int]): Boolean = ???
   }
 
   // Infix Operators for Longs
@@ -151,8 +151,8 @@ package object scalaql {
 
     def === (y: Long): Boolean = ???
     def <>  (y: Long): Boolean = ???
-    def in  (y: Seq[Long]): Boolean = ???
-    def notIn  (y: Seq[Long]): Boolean = ???
+    def in  (y: List[Long]): Boolean = ???
+    def notIn  (y: List[Long]): Boolean = ???
   }
 
   // Infix Operators for BigDecimals
@@ -160,7 +160,7 @@ package object scalaql {
 
     def === (y: BigDecimal): Boolean = ???
     def <>  (y: BigDecimal): Boolean = ???
-    def in  (y: Seq[BigDecimal]): Boolean = ???
-    def notIn  (y: Seq[BigDecimal]): Boolean = ???
+    def in  (y: List[BigDecimal]): Boolean = ???
+    def notIn  (y: List[BigDecimal]): Boolean = ???
   }
 }

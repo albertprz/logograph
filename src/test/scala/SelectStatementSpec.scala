@@ -4,10 +4,9 @@ import com.albertoperez1994.scalaql._
 import com.albertoperez1994.scalaql.utils.StringUtils._
 import org.scalatest.funspec.AnyFunSpec
 import TestModels._
+import ResultModels._
 
 class SelectStatementSpec extends AnyFunSpec {
-
-  import ResultModels._
 
   describe("A SelectStatement") {
 
@@ -104,6 +103,45 @@ class SelectStatementSpec extends AnyFunSpec {
            ORDER BY    p.[name] asc"""
 
       assert(nestedQuery.sql.normalized() == nestedQuerySql.normalized())
+    }
+
+    it("can serialize queries including literal values") {
+
+      val literalValsQuery = query[Address].select {
+        case a => Query(
+          SelectAll (a),
+          Where (a.street in List("Carnaby St", "Downing St"))
+        )
+      }
+
+      val literalValsQuerySql = """
+          SELECT      a.*
+          FROM        [Address] AS a
+          WHERE       a.[street] in ('Carnaby St', 'Downing St')"""
+
+      assert(literalValsQuery.sql.normalized() == literalValsQuerySql.normalized())
+    }
+
+    it("can serialize queries including runtime values into parameterized queries") {
+
+      val allowedPhoneNumbers = List(658976534L, 870127465L)
+
+      val runtimeValsQuery = query[Telephone].select {
+        case t => Query(
+          SelectAll (t),
+          Where (t.number in allowedPhoneNumbers)
+        )
+      }
+
+      val runtimeValsQuerySql = """
+          SELECT      t.*
+          FROM        [Telephone] AS t
+          WHERE       t.[number] in (?, ?)"""
+
+
+      assert(runtimeValsQuery.sql.normalized() == runtimeValsQuerySql.normalized())
+
+      assert(runtimeValsQuery.paramList == allowedPhoneNumbers)
     }
   }
 }

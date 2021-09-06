@@ -14,11 +14,11 @@ object QueryUtils {
       case str: String   => s"'${str.replace("'", "''")}'"
       case num: Number   => num.toString
       case bool: Boolean => if (bool) "1" else "0"
-      case list: List[Any] => list.map(literaltoSql)
+      case list: List[_]   => list.map(literaltoSql)
                                   .mkString("(", ", ", ")")
-      case other: Any      => throw new Exception("Unknown types cannot be used in queries " +
-                                                   "for constant or runtime parameter values: \n" +
-                                                  s"""|Type: ${literal.getClass.getSimpleName}
-                                                      |Value: $literal""".stripMargin)
-  }
+      case other: Any    => throw new Exception(s"""|Unknown types cannot be used in queries
+                                                    |for constant or runtime parameter values:
+                                                    |Type: ${literal.getClass.getSimpleName}
+                                                    |Value: $literal""".stripMargin)
+    }
 }
