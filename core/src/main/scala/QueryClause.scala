@@ -236,8 +236,8 @@ case class UpdateClause (tableName: String, setClause: SetClause, whereClause: O
 
   val sql = {
 
-    val setClauseSql = setClause.sql
-    val whereClauseSql = whereClause.fold ("") (ExpressionClause.removeAliases)
+    val setClauseSql =  ExpressionClause.removeAliases(setClause.sql)
+    val whereClauseSql = whereClause.fold ("") (x => ExpressionClause.removeAliases(x.sql))
 
    s"""|UPDATE      [${Table(tableName).sql}]
        |$setClauseSql
@@ -253,7 +253,7 @@ case class DeleteClause (tableName: String, whereClause: Option[WhereClause])
 
   val sql  = {
 
-   val whereClauseSql = whereClause.fold ("") (ExpressionClause.removeAliases)
+   val whereClauseSql = whereClause.fold ("") (x => ExpressionClause.removeAliases(x.sql))
 
     s"""|DELETE FROM [${Table(tableName).sql}]
         |$whereClauseSql""".stripMargin
@@ -290,6 +290,6 @@ object ExpressionClause {
   def getNonAggFields(clause: List[ExpressionClause]) =
       clause.flatMap (_.exprs.flatMap(_.nonAggFields))
 
-  def removeAliases (exprClause: ExpressionClause) (implicit cfg: ScalaQLConfig) =
-    exprClause.sql.replaceAll("[a-zA-Z]\\.\\[", "[")
+  def removeAliases (exprClauseSql: String) =
+    exprClauseSql.replaceAll("[a-zA-Z]\\.\\[", "[")
 }

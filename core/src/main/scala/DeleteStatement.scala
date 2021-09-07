@@ -16,7 +16,7 @@ case class DeleteStatement [T <: DbTable]  (private val sqlTemplate: String,
     s"Delete Statement: \n\n$sqlTemplate \n\nParams:  \n\n${pprint(params)}\n\n"
 }
 
-private object DeleteStatement {
+object DeleteStatement {
 
   import SQLStatement._
 

@@ -1,15 +1,13 @@
-
 package test
 
 import com.albertoperez1994.scalaql._
 import com.albertoperez1994.scalaql.utils.StringUtils._
 import org.scalatest.funspec.AnyFunSpec
 import TestModels._
-import ResultModels._
 
 class InsertStatementSpec extends AnyFunSpec {
 
-  describe("A InsertStatement") {
+  describe("An Insert Statement") {
 
 
     it("can serialize insert statements from single values") {

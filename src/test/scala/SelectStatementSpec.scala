@@ -4,11 +4,12 @@ import com.albertoperez1994.scalaql._
 import com.albertoperez1994.scalaql.utils.StringUtils._
 import org.scalatest.funspec.AnyFunSpec
 import TestModels._
-import ResultModels._
 
 class SelectStatementSpec extends AnyFunSpec {
 
-  describe("A SelectStatement") {
+  describe("A Select Statement") {
+
+  import ResultModels._
 
 
     it("can serialize simple queries") {
@@ -31,8 +32,8 @@ class SelectStatementSpec extends AnyFunSpec {
           Where           (a.street like "%Baker St%",
                             coalesce (p.isEmployer, false)),
           OrderBy         (desc (p.age)),
-          LeftJoin  (a)   (a.id === p.addressId),
-          InnerJoin (t)   (t.id === p.telephoneId))
+          InnerJoin (t)   (t.id === p.telephoneId),
+          LeftJoin  (a)   (a.id === p.addressId))
       }
 
       val complexQuerySql = """
@@ -168,7 +169,7 @@ class SelectStatementSpec extends AnyFunSpec {
         case (a, b) => Query(
           Select          (Result (a.name, a.age, a.street, b.telephoneNumber)),
           OrderBy         (asc (a.name)),
-          LeftJoin (b)    (b.name === a.name))
+          InnerJoin (b)    (b.name === a.name))
       }
 
       val deeplyNestedQuerySql =
@@ -212,18 +213,18 @@ class SelectStatementSpec extends AnyFunSpec {
 
           SELECT      a.[name], a.[age], a.[street], b.[telephoneNumber]
           FROM        [q3] AS a
-          LEFT JOIN   [q6] AS b ON b.[name] = a.[name]
+          INNER JOIN  [q6] AS b ON b.[name] = a.[name]
           ORDER BY    a.[name] asc"""
 
 
       assert(deeplyNestedQuery.sql.normalized() == deeplyNestedQuerySql.normalized())
     }
   }
-}
 
-object ResultModels {
+  object ResultModels {
 
-  case class Result (name: String, age: Int, street: String, telephoneNumber: Long) extends DbResult
-  case class InnerResult1 (name: String, age: Int, street: String) extends DbResult
-  case class InnerResult2 (name: String, telephoneNumber: Long) extends DbResult
+    case class Result (name: String, age: Int, street: String, telephoneNumber: Long) extends DbResult
+    case class InnerResult1 (name: String, age: Int, street: String) extends DbResult
+    case class InnerResult2 (name: String, telephoneNumber: Long) extends DbResult
+  }
 }

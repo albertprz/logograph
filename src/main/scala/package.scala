@@ -22,7 +22,7 @@ package object scalaql {
   def delete[T <: DbTable] (where: T => Where): DeleteStatement[T] =
     macro QueryImpl.delete[T]
 
-  def deleteAll[T <: DbTable]: DeleteStatement[T] =
+  def deleteAll[T <: DbTable] (): DeleteStatement[T] =
     macro QueryImpl.deleteAll[T]
 
   def insert[T <: DbTable] (data: T) (implicit tag: ru.TypeTag[T]) =

@@ -25,7 +25,7 @@ class QueryImpl(val c: blackbox.Context) {
   def update[T <: DbTable] (setMap: Tree) (implicit tag: WeakTypeTag[T]): Expr[UpdateStatement[T]] =
     buildUpdate[T] (setMap)
 
-  def deleteAll[T <: DbTable] (implicit tag: WeakTypeTag[T]): Expr[DeleteStatement[T]]  =
+  def deleteAll[T <: DbTable] () (implicit tag: WeakTypeTag[T]): Expr[DeleteStatement[T]]  =
     buildDelete[T] ()
 
   def delete[T <: DbTable] (where: Tree)  (implicit tag: WeakTypeTag[T]): Expr[DeleteStatement[T]]  =

@@ -16,7 +16,7 @@ case class UpdateStatement [T <: DbTable] (sqlTemplate: String,
     s"Update Statement: \n\n$sqlTemplate \n\nParams:  \n\n${pprint(params)}\n\n"
 }
 
-private object UpdateStatement {
+object UpdateStatement {
 
   import SQLStatement._
 
