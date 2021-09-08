@@ -4,16 +4,15 @@ import java.sql.DriverManager
 import com.albertoperez1994.scalaql._
 import cats.effect.IO
 import TestModels._
-import SeedData._
 
 
 object Database {
 
   implicit val context: ScalaQLContext[IO] = Connection.context
 
-  def setup(): IO[Unit] = context.run (insert(Seq(john, thomas)),
-                                       insert(Seq(johnAddress, thomasAddress)),
-                                       insert(Seq(johnTelephone, thomasTelephone)))
+  def setup(): IO[Unit] = context.run (insert(SeedData.people),
+                                       insert(SeedData.addresses),
+                                       insert(SeedData.telephones))
 
 
   def cleanup(): IO[Unit] = context.run (deleteAll[Address],
