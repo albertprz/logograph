@@ -1,11 +1,13 @@
 package test
 
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
+
 import com.albertoperez1994.scalaql._
 import com.albertoperez1994.scalaql.utils.StringUtils._
-import org.scalatest.funspec.AnyFunSpec
 import TestModels._
 
-class InsertStatementSpec extends AnyFunSpec {
+class InsertStatementSpec extends AnyFunSpec with Matchers {
 
   describe("An Insert Statement") {
 
@@ -21,9 +23,9 @@ class InsertStatementSpec extends AnyFunSpec {
            VALUES      (?, ?, ?, ?, ?)"""
 
 
-      assert(singleValueInsert.sql.normalized() == singleValueInsertSql.normalized())
+      singleValueInsert.sql.normalized() should equal (singleValueInsertSql.normalized())
 
-      assert(singleValueInsert.paramList == joe.productIterator.toList)
+      singleValueInsert.paramList should equal (joe.productIterator.toList)
     }
 
 
@@ -40,9 +42,9 @@ class InsertStatementSpec extends AnyFunSpec {
                        (?, ?, ?, ?, ?)"""
 
 
-      assert(sequencedValuesInsert.sql.normalized() == sequencedValuesInsertSql.normalized())
+      sequencedValuesInsert.sql.normalized() should equal (sequencedValuesInsertSql.normalized())
 
-      assert(sequencedValuesInsert.paramList == Seq(joe, mark).flatMap(_.productIterator).toList)
+      sequencedValuesInsert.paramList should equal (Seq(joe, mark).flatMap(_.productIterator).toList)
     }
 
 
@@ -63,7 +65,7 @@ class InsertStatementSpec extends AnyFunSpec {
            WHERE       a.[street] like '%Baker St%'"""
 
 
-      assert(queryInsert.sql.normalized() == queryInsertSql.normalized())
+      queryInsert.sql.normalized() should equal (queryInsertSql.normalized())
     }
   }
 }

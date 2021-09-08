@@ -1,11 +1,13 @@
 package test
 
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
+
 import com.albertoperez1994.scalaql._
 import com.albertoperez1994.scalaql.utils.StringUtils._
-import org.scalatest.funspec.AnyFunSpec
 import TestModels._
 
-class DeleteStatementSpec extends AnyFunSpec {
+class DeleteStatementSpec extends AnyFunSpec with Matchers {
 
   describe("A Delete Statement") {
 
@@ -18,7 +20,7 @@ class DeleteStatementSpec extends AnyFunSpec {
         """DELETE FROM [Address]"""
 
 
-      assert(simpleDelete.sql.normalized() == simpleDeleteSql.normalized())
+      simpleDelete.sql.normalized() should equal (simpleDeleteSql.normalized())
     }
 
 
@@ -32,7 +34,7 @@ class DeleteStatementSpec extends AnyFunSpec {
            WHERE       [number] in (16792021, 72181292)"""
 
 
-      assert(filteredDelete.sql.normalized() == filteredDeleteSql.normalized())
+      filteredDelete.sql.normalized() should equal (filteredDeleteSql.normalized())
     }
   }
 }

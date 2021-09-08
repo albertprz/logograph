@@ -1,11 +1,13 @@
 package test
 
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
+
 import com.albertoperez1994.scalaql._
 import com.albertoperez1994.scalaql.utils.StringUtils._
-import org.scalatest.funspec.AnyFunSpec
 import TestModels._
 
-class UpdateStatementSpec extends AnyFunSpec {
+class UpdateStatementSpec extends AnyFunSpec with Matchers {
 
   describe("An Update Statement") {
 
@@ -20,7 +22,7 @@ class UpdateStatementSpec extends AnyFunSpec {
            SET         [age] = [age] + 5"""
 
 
-      assert(simpleUpdate.sql.normalized() == simpleUpdateSql.normalized())
+      simpleUpdate.sql.normalized() should equal (simpleUpdateSql.normalized())
     }
 
 
@@ -36,7 +38,7 @@ class UpdateStatementSpec extends AnyFunSpec {
          WHERE       [name] = 'Peter'"""
 
 
-      assert(filteredUpdate.sql.normalized() == filteredUpdateSql.normalized())
+      filteredUpdate.sql.normalized() should equal (filteredUpdateSql.normalized())
     }
   }
 }

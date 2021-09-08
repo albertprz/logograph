@@ -1,15 +1,16 @@
 package test
 
+import org.scalatest.funspec.AnyFunSpec
+import org.scalatest.matchers.should.Matchers
+
 import com.albertoperez1994.scalaql._
 import com.albertoperez1994.scalaql.utils.StringUtils._
-import org.scalatest.funspec.AnyFunSpec
 import TestModels._
+import TestResultModels._
 
-class SelectStatementSpec extends AnyFunSpec {
+class SelectStatementSpec extends AnyFunSpec with Matchers {
 
   describe("A Select Statement") {
-
-  import ResultModels._
 
 
     it("can serialize simple queries") {
@@ -20,7 +21,7 @@ class SelectStatementSpec extends AnyFunSpec {
         SELECT      p.*
         FROM        [Person] AS p"""
 
-      assert(simpleQuery.sql.normalized() == simpleQuerySql.normalized())
+      simpleQuery.sql.normalized() should equal (simpleQuerySql.normalized())
     }
 
 
@@ -45,7 +46,7 @@ class SelectStatementSpec extends AnyFunSpec {
                       (coalesce (p.[isEmployer], 0))
           ORDER BY    p.[age] desc"""
 
-      assert(complexQuery.sql.normalized() == complexQuerySql.normalized())
+      complexQuery.sql.normalized() should equal (complexQuerySql.normalized())
     }
 
 
@@ -63,7 +64,7 @@ class SelectStatementSpec extends AnyFunSpec {
           FROM        [Address] AS a
           WHERE       a.[street] in ('Carnaby St', 'Downing St')"""
 
-      assert(literalValsQuery.sql.normalized() == literalValsQuerySql.normalized())
+      literalValsQuery.sql.normalized() should equal (literalValsQuerySql.normalized())
     }
 
     it("can serialize queries including runtime values") {
@@ -83,9 +84,9 @@ class SelectStatementSpec extends AnyFunSpec {
           WHERE       t.[number] in (?, ?)"""
 
 
-      assert(runtimeValsQuery.sql.normalized() == runtimeValsQuerySql.normalized())
+      runtimeValsQuery.sql.normalized() should equal (runtimeValsQuerySql.normalized())
 
-      assert(runtimeValsQuery.paramList == allowedPhoneNumbers)
+      runtimeValsQuery.paramList should equal (allowedPhoneNumbers)
     }
 
 
@@ -126,9 +127,9 @@ class SelectStatementSpec extends AnyFunSpec {
           WHERE       p.[name] <> 'George'"""
 
 
-      assert((personsQuery1 union personsQuery2).sql.normalized() == unionQuerySql.normalized())
+      (personsQuery1 union personsQuery2).sql.normalized() should equal (unionQuerySql.normalized())
 
-      assert((personsQuery1 intersect personsQuery2).sql.normalized() == intersectQuerySql.normalized())
+      (personsQuery1 intersect personsQuery2).sql.normalized() should equal (intersectQuerySql.normalized())
     }
 
 
@@ -217,14 +218,7 @@ class SelectStatementSpec extends AnyFunSpec {
           ORDER BY    a.[name] asc"""
 
 
-      assert(deeplyNestedQuery.sql.normalized() == deeplyNestedQuerySql.normalized())
+      deeplyNestedQuery.sql.normalized() should equal (deeplyNestedQuerySql.normalized())
     }
-  }
-
-  object ResultModels {
-
-    case class Result (name: String, age: Int, street: String, telephoneNumber: Long) extends DbResult
-    case class InnerResult1 (name: String, age: Int, street: String) extends DbResult
-    case class InnerResult2 (name: String, telephoneNumber: Long) extends DbResult
   }
 }

@@ -2,7 +2,6 @@ ThisBuild / organization := "com.albertoperez1994"
 ThisBuild / version      := "1.0.0"
 ThisBuild / scalaVersion := scalaVer
 
-ThisBuild / libraryDependencies ++= mainDependencies ++ testDependencies.map(_ % Test)
 ThisBuild / Compile / compile / logLevel := Level.Warn
 Global / excludeLintKeys += logLevel
 Global / onChangedBuildSource := ReloadOnSourceChanges
@@ -15,19 +14,24 @@ lazy val core = project
   .in(file("core"))
   .settings(
     name := "scalaql-core",
+    libraryDependencies ++= mainDependencies
   )
 
 lazy val macros = project
   .in(file("macros"))
   .settings(
     name := "scalaql-macros",
+    libraryDependencies ++= mainDependencies
   )
 .dependsOn(core)
 
 lazy val app = project
   .in(file("."))
+  .configs(IntegrationTest)
   .settings(
     name := "scalaql",
+    itSettings,
+    libraryDependencies ++= mainDependencies ++ testDependencies.map(_ % "it,test")
   )
 .dependsOn(core, macros)
 .aggregate(core, macros)
@@ -35,8 +39,11 @@ lazy val app = project
 
 lazy val mainDependencies = scalaReflect ++ cats ++ catsEffect ++ circe ++ pureconfig
 
-lazy val testDependencies = scalaTest ++ scalaCheck
+lazy val testDependencies = scalaTest ++ scalaCheck ++ sqlite
 
+lazy val itSettings = inConfig(IntegrationTest)(Defaults.itSettings) ++
+                        Seq (IntegrationTest / scalaSource := baseDirectory.value / "src/it/scala",
+                             TaskKey[Unit]("test") := (IntegrationTest / test).dependsOn(Test / test).value)
 
 /// Dependencies ///
 val scalaReflect = Seq("org.scala-lang" % "scala-reflect" % scalaVer)
@@ -56,3 +63,5 @@ val scalaTest = Seq("org.scalatest" %% "scalatest" % "3.2.9",
                     "org.scalactic" %% "scalactic" % "3.2.9")
 
 val scalaCheck = Seq("org.scalacheck" %% "scalacheck" % "1.14.1")
+
+val sqlite = Seq("org.xerial" % "sqlite-jdbc" % "3.14.2")
