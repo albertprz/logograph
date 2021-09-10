@@ -221,7 +221,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     val tableAliases = findLambdaFnArgs(tree)
                      .map(_.toString)
 
-    val tableNames = splitTupledTypeTag(typeName)
+    val tableNames = splitTupledTypeTag(typeName).map(Table(_).sql)
 
     (tableAliases zip tableNames).toMap
   }

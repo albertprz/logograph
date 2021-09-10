@@ -2,6 +2,8 @@ package com.albertoperez1994.scalaql
 
 import scala.reflect.runtime.{universe => ru}
 
+import com.albertoperez1994.scalaql.config.ScalaQLConfig
+import com.albertoperez1994.scalaql.core.{Table, Column}
 import com.albertoperez1994.scalaql.utils
 import utils.StringUtils._
 import utils.ReflectionUtils._
@@ -22,7 +24,9 @@ case class InsertStatement [T <: DbTable] (data: Either[Seq[T], SelectStatement[
     }
 }
 
-private object InsertStatement {
+object InsertStatement {
+
+  private implicit val cfg = ScalaQLConfig.get
 
   def generate [T <: DbTable] (insert: InsertStatement[T])
                               (implicit tag: ru.TypeTag[T]) = {
@@ -50,7 +54,7 @@ private object InsertStatement {
                                                 .map(stringify)
                                                 .mkString(", \n")
 
-     s"""|INSERT INTO [$tableName] ${stringify(paramNames)}
+     s"""|INSERT INTO [${Table(tableName).sql}] ${stringify(paramNames.map(Column(_).sql))}
          |VALUES      $paramPlaceholders """.stripMargin
   }
 
@@ -60,7 +64,7 @@ private object InsertStatement {
     val companion = companionOf[T]
     val paramNames = companion.paramNames.map(x => s"[$x]")
 
-    s"""|INSERT INTO [$tableName] ${stringify(paramNames)}
+    s"""|INSERT INTO [${Table(tableName).sql}] ${stringify(paramNames.map(Column(_).sql))}
         |${query.sql} """.stripMargin
   }
 }

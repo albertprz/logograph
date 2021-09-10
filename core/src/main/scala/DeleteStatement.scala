@@ -1,5 +1,6 @@
 package com.albertoperez1994.scalaql
 
+import com.albertoperez1994.scalaql.config.ScalaQLConfig
 import com.albertoperez1994.scalaql.utils
 import utils.StringUtils._
 
@@ -19,6 +20,8 @@ case class DeleteStatement [T <: DbTable]  (private val sqlTemplate: String,
 object DeleteStatement {
 
   import SQLStatement._
+
+  implicit val cfg = ScalaQLConfig.get
 
   def generate [T <: DbTable] (delete: DeleteStatement[T]) = {
 

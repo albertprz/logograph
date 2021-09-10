@@ -1,5 +1,6 @@
 package com.albertoperez1994.scalaql
 
+import com.albertoperez1994.scalaql.config.ScalaQLConfig
 import com.albertoperez1994.scalaql.utils
 import utils.StringUtils._
 
@@ -19,6 +20,8 @@ case class UpdateStatement [T <: DbTable] (sqlTemplate: String,
 object UpdateStatement {
 
   import SQLStatement._
+
+  private implicit val cfg = ScalaQLConfig.get
 
   def generate [T <: DbTable] (update: UpdateStatement[T]) = {
 

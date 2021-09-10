@@ -19,7 +19,7 @@ class SelectStatementSpec extends AnyFunSpec with Matchers {
 
       val simpleQuerySql = """
         SELECT      p.*
-        FROM        [Person] AS p"""
+        FROM        [person] AS p"""
 
       simpleQuery.sql.normalized() should equal (simpleQuerySql.normalized())
     }
@@ -39,12 +39,12 @@ class SelectStatementSpec extends AnyFunSpec with Matchers {
 
       val complexQuerySql = """
           SELECT      p.[name], p.[age], a.[street], 4
-          FROM        [Person] AS p
-          INNER JOIN  [Telephone] AS t ON t.[id] = p.[telephoneId]
-          LEFT JOIN   [Address] AS a ON a.[id] = p.[addressId]
-          WHERE       (a.[street] like '%Baker St%') and
-                      (coalesce (p.[isEmployer], 0))
-          ORDER BY    p.[age] desc"""
+          FROM        [person] AS p
+          INNER JOIN  [telephone] AS t ON t.[id] = p.[telephone_id]
+          LEFT JOIN   [address] AS a ON a.[id] = p.[address_id]
+          WHERE       (a.[street] LIKE '%Baker St%') AND
+                      (COALESCE (p.[is_employer], 0))
+          ORDER BY    p.[age] DESC"""
 
       complexQuery.sql.normalized() should equal (complexQuerySql.normalized())
     }
@@ -59,10 +59,10 @@ class SelectStatementSpec extends AnyFunSpec with Matchers {
         )
       }
 
-      val literalValsQuerySql = """
-          SELECT      a.*
-          FROM        [Address] AS a
-          WHERE       a.[street] in ('Carnaby St', 'Downing St')"""
+      val literalValsQuerySql =
+        """SELECT      a.*
+           FROM        [address] AS a
+           WHERE       a.[street] IN ('Carnaby St', 'Downing St')"""
 
       literalValsQuery.sql.normalized() should equal (literalValsQuerySql.normalized())
     }
@@ -78,10 +78,10 @@ class SelectStatementSpec extends AnyFunSpec with Matchers {
         )
       }
 
-      val runtimeValsQuerySql = """
-          SELECT      t.*
-          FROM        [Telephone] AS t
-          WHERE       t.[number] in (?, ?)"""
+      val runtimeValsQuerySql =
+        """SELECT      t.*
+           FROM        [telephone] AS t
+           WHERE       t.[number] IN (?, ?)"""
 
 
       runtimeValsQuery.sql.normalized() should equal (runtimeValsQuerySql.normalized())
@@ -106,24 +106,24 @@ class SelectStatementSpec extends AnyFunSpec with Matchers {
 
       val unionQuerySql =
         """SELECT      DISTINCT p.*
-           FROM        [Person] AS p
+           FROM        [person] AS p
            WHERE       p.[age] < 38
 
            UNION
 
            SELECT      DISTINCT p.*
-           FROM        [Person] AS p
+           FROM        [person] AS p
            WHERE       p.[name] <> 'George'"""
 
       val intersectQuerySql =
        """SELECT      DISTINCT p.*
-          FROM        [Person] AS p
+          FROM        [person] AS p
           WHERE       p.[age] < 38
 
           INTERSECT
 
           SELECT      DISTINCT p.*
-          FROM        [Person] AS p
+          FROM        [person] AS p
           WHERE       p.[name] <> 'George'"""
 
 
@@ -177,33 +177,33 @@ class SelectStatementSpec extends AnyFunSpec with Matchers {
        """WITH q1 AS
           (
             SELECT      p.*
-            FROM        [Person] AS p
-            WHERE       (p.[name] = 'Mark' or p.[name] = 'John') and
+            FROM        [person] AS p
+            WHERE       (p.[name] = 'Mark' OR p.[name] = 'John') AND
                         (p.[age] > 25)
           ),
           q2 AS
           (
             SELECT      a.*
-            FROM        [Address] AS a
-            WHERE       a.[street] like '%Baker St%'
+            FROM        [address] AS a
+            WHERE       a.[street] LIKE '%Baker St%'
           ),
           q3 AS
           (
-            SELECT      p.[name], max (p.[age]), a.[street]
+            SELECT      p.[name], MAX (p.[age]), a.[street]
             FROM        [q1] AS p, [q2] AS a
             GROUP BY    p.[name], a.[street]
           ),
           q4 AS
           (
             SELECT      p.*
-            FROM        [Person] AS p
-            WHERE       (p.[name] = 'Mark' or p.[name] = 'John') and
+            FROM        [person] AS p
+            WHERE       (p.[name] = 'Mark' OR p.[name] = 'John') AND
                         (p.[age] > 25)
           ),
           q5 AS
           (
             SELECT      t.*
-            FROM        [Telephone] AS t
+            FROM        [telephone] AS t
             WHERE       t.[number] <> 676874981
           ),
           q6 AS
@@ -212,11 +212,12 @@ class SelectStatementSpec extends AnyFunSpec with Matchers {
             FROM        [q4] AS p, [q5] AS t
           )
 
-          SELECT      a.[name], a.[age], a.[street], b.[telephoneNumber]
+          SELECT      a.[name], a.[age], a.[street], b.[telephone_number]
           FROM        [q3] AS a
           INNER JOIN  [q6] AS b ON b.[name] = a.[name]
-          ORDER BY    a.[name] asc"""
+          ORDER BY    a.[name] ASC"""
 
+      println(deeplyNestedQuery.sql)
 
       deeplyNestedQuery.sql.normalized() should equal (deeplyNestedQuerySql.normalized())
     }

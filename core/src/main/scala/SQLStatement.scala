@@ -1,5 +1,8 @@
 package com.albertoperez1994.scalaql
 
+import com.albertoperez1994.scalaql.core.Operator
+import com.albertoperez1994.scalaql.config.ScalaQLConfig
+
 trait SQLStatement {
 
   val sql: String
@@ -19,11 +22,12 @@ private object SQLStatement {
     }).toList
 
 
-  def getSQL (sqlTemplate: String, params: Map[String, Any]) =
+  def getSQL (sqlTemplate: String, params: Map[String, Any]) (implicit cfg: ScalaQLConfig) =
     params.values
           .filter (_.isInstanceOf[List[Any]])
           .foldLeft (sqlTemplate) {
-            case (acc, curr: List[Any]) => acc.replaceFirst("in [?]", curr.map(x => "?")
-                                                                          .mkString("in (", ", ", ")"))
+            case (acc, curr: List[Any]) => acc.replaceFirst(s"${Operator("in").sql} [?]",
+                                                            curr.map(x => "?")
+                                                                  .mkString(s"${Operator("in").sql} (", ", ", ")"))
           }
 }

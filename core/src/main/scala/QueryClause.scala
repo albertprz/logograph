@@ -123,7 +123,9 @@ sealed abstract class BaseJoinClause (joinType: String) (implicit cfg: ScalaQLCo
   val sql = exprs
               .map(Predicate.adaptSql)
               .map(str => if (exprs.size > 1) s"($str)" else str)
-              .mkString(s"$joinType  [$tableName] AS $tableAlias ON ", s" ${Operator("and").sql} \n            ", "\n")
+              .mkString(s"$joinType  [${Table(tableName).sql}] AS $tableAlias ON ",
+                        s" ${Operator("and").sql} \n            ",
+                        "\n")
 }
 
 object BaseJoinClause {

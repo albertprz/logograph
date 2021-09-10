@@ -33,15 +33,15 @@ private object Connection {
 
   private val init = {
 
-    val initStatementsSql = Seq( """ CREATE TABLE Person (
+    val initStatementsSql = Seq( """ CREATE TABLE person (
                                     name text,
                                     age int,
-                                    isEmployer int,
-                                    addressId int,
-                                    telephoneId int) """,
+                                    is_employer int,
+                                    address_id int,
+                                    telephone_id int) """,
 
-                                  "CREATE TABLE Address (id int, street text)",
-                                  "CREATE TABLE Telephone (id int, number string)")
+                                  "CREATE TABLE address (id int, street text)",
+                                  "CREATE TABLE telephone (id int, number string)")
 
     val stmt = connection.createStatement()
 

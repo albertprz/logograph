@@ -18,7 +18,7 @@ class UpdateStatementSpec extends AnyFunSpec with Matchers {
         Map(p.age -> (p.age + 5)))
 
       val simpleUpdateSql =
-        """UPDATE      [Person]
+        """UPDATE      [person]
            SET         [age] = [age] + 5"""
 
 
@@ -33,7 +33,7 @@ class UpdateStatementSpec extends AnyFunSpec with Matchers {
          Where(p.name === "Peter")))
 
       val filteredUpdateSql =
-      """UPDATE      [Person]
+      """UPDATE      [person]
          SET         [name] = 'John'
          WHERE       [name] = 'Peter'"""
 

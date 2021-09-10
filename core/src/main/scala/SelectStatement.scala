@@ -2,6 +2,7 @@ package com.albertoperez1994.scalaql
 
 import scala.reflect.runtime.{universe => ru}
 
+import com.albertoperez1994.scalaql.config.ScalaQLConfig
 import com.albertoperez1994.scalaql.utils
 import utils.StringUtils._
 import utils.TreeUtils._
@@ -47,6 +48,8 @@ case class SelectStatement [T <: DbDataSet] (sqlTemplate: String,
 object SelectStatement {
 
   import SQLStatement._
+
+  private implicit val cfg = ScalaQLConfig.get
 
   def union[T <: DbDataSet] (selects: Seq[SelectStatement[T]]) (implicit tag: ru.TypeTag[T]) =
     concat(selects, "UNION")

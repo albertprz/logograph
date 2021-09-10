@@ -19,7 +19,7 @@ class InsertStatementSpec extends AnyFunSpec with Matchers {
       val singleValueInsert = insert(joe)
 
       val singleValueInsertSql =
-        """INSERT INTO [Person] ([name], [age], [isEmployer], [addressId], [telephoneId])
+        """INSERT INTO [person] ([name], [age], [is_employer], [address_id], [telephone_id])
            VALUES      (?, ?, ?, ?, ?)"""
 
 
@@ -37,7 +37,7 @@ class InsertStatementSpec extends AnyFunSpec with Matchers {
       val sequencedValuesInsert = insert(Seq(joe, mark))
 
       val sequencedValuesInsertSql =
-        """INSERT INTO [Person] ([name], [age], [isEmployer], [addressId], [telephoneId])
+        """INSERT INTO [person] ([name], [age], [is_employer], [address_id], [telephone_id])
            VALUES      (?, ?, ?, ?, ?),
                        (?, ?, ?, ?, ?)"""
 
@@ -59,10 +59,10 @@ class InsertStatementSpec extends AnyFunSpec with Matchers {
       val queryInsert = insert(adressesQuery)
 
       val queryInsertSql =
-        """INSERT INTO [Address] ([id], [street])
+        """INSERT INTO [address] ([id], [street])
            SELECT      a.*
-           FROM        [Address] AS a
-           WHERE       a.[street] like '%Baker St%'"""
+           FROM        [address] AS a
+           WHERE       a.[street] LIKE '%Baker St%'"""
 
 
       queryInsert.sql.normalized() should equal (queryInsertSql.normalized())

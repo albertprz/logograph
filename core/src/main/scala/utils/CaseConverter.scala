@@ -32,7 +32,7 @@ object StringCase {
                         "KebabCase", "KebabUpperCase")
 
   def apply(caseName: String): Either[CaseNotAllowed, StringCase] =
-    caseName match {
+    CaseConverter(PascalCase).convertCase(caseName) match {
       case "CamelCase"      => Right(CamelCase)
       case "PascalCase"     => Right(PascalCase)
       case "SnakeCase"      => Right(SnakeCase)
