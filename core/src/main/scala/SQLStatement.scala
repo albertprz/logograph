@@ -1,9 +1,9 @@
 package com.albertoperez1994.scalaql
 
-import com.albertoperez1994.scalaql.core.Operator
+import com.albertoperez1994.scalaql.core.{SQLClause, Operator}
 import com.albertoperez1994.scalaql.config.ScalaQLConfig
 
-trait SQLStatement {
+trait SQLStatement extends SQLClause {
 
   val sql: String
   val paramList: List[Any]

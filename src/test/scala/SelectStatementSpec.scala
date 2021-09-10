@@ -21,7 +21,7 @@ class SelectStatementSpec extends AnyFunSpec with Matchers {
         SELECT      p.*
         FROM        [person] AS p"""
 
-      simpleQuery.sql.normalized() should equal (simpleQuerySql.normalized())
+      simpleQuery.sql.trimLines() should equal (simpleQuerySql.trimLines())
     }
 
 
@@ -46,7 +46,7 @@ class SelectStatementSpec extends AnyFunSpec with Matchers {
                       (COALESCE (p.[is_employer], 0))
           ORDER BY    p.[age] DESC"""
 
-      complexQuery.sql.normalized() should equal (complexQuerySql.normalized())
+      complexQuery.sql.trimLines() should equal (complexQuerySql.trimLines())
     }
 
 
@@ -64,7 +64,7 @@ class SelectStatementSpec extends AnyFunSpec with Matchers {
            FROM        [address] AS a
            WHERE       a.[street] IN ('Carnaby St', 'Downing St')"""
 
-      literalValsQuery.sql.normalized() should equal (literalValsQuerySql.normalized())
+      literalValsQuery.sql.trimLines() should equal (literalValsQuerySql.trimLines())
     }
 
     it("can serialize queries including runtime values") {
@@ -84,7 +84,7 @@ class SelectStatementSpec extends AnyFunSpec with Matchers {
            WHERE       t.[number] IN (?, ?)"""
 
 
-      runtimeValsQuery.sql.normalized() should equal (runtimeValsQuerySql.normalized())
+      runtimeValsQuery.sql.trimLines() should equal (runtimeValsQuerySql.trimLines())
 
       runtimeValsQuery.paramList should equal (allowedPhoneNumbers)
     }
@@ -127,9 +127,9 @@ class SelectStatementSpec extends AnyFunSpec with Matchers {
           WHERE       p.[name] <> 'George'"""
 
 
-      (personsQuery1 union personsQuery2).sql.normalized() should equal (unionQuerySql.normalized())
+      (personsQuery1 union personsQuery2).sql.trimLines() should equal (unionQuerySql.trimLines())
 
-      (personsQuery1 intersect personsQuery2).sql.normalized() should equal (intersectQuerySql.normalized())
+      (personsQuery1 intersect personsQuery2).sql.trimLines() should equal (intersectQuerySql.trimLines())
     }
 
 
@@ -217,9 +217,8 @@ class SelectStatementSpec extends AnyFunSpec with Matchers {
           INNER JOIN  [q6] AS b ON b.[name] = a.[name]
           ORDER BY    a.[name] ASC"""
 
-      println(deeplyNestedQuery.sql)
 
-      deeplyNestedQuery.sql.normalized() should equal (deeplyNestedQuerySql.normalized())
+      deeplyNestedQuery.sql.trimLines() should equal (deeplyNestedQuerySql.trimLines())
     }
   }
 }

@@ -10,6 +10,8 @@ case class UpdateStatement [T <: DbTable] (sqlTemplate: String,
 
   lazy val (sql, paramList) = UpdateStatement.generate(this)
 
+  lazy val validate = {}
+
   def run [F[+_]] () (implicit context: ScalaQLContext[F]) =
     context.run(this)
 

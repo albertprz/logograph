@@ -22,7 +22,7 @@ class UpdateStatementSpec extends AnyFunSpec with Matchers {
            SET         [age] = [age] + 5"""
 
 
-      simpleUpdate.sql.normalized() should equal (simpleUpdateSql.normalized())
+      simpleUpdate.sql.trimLines() should equal (simpleUpdateSql.trimLines())
     }
 
 
@@ -38,7 +38,7 @@ class UpdateStatementSpec extends AnyFunSpec with Matchers {
          WHERE       [name] = 'Peter'"""
 
 
-      filteredUpdate.sql.normalized() should equal (filteredUpdateSql.normalized())
+      filteredUpdate.sql.trimLines() should equal (filteredUpdateSql.trimLines())
     }
   }
 }

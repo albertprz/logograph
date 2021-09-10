@@ -23,7 +23,7 @@ class InsertStatementSpec extends AnyFunSpec with Matchers {
            VALUES      (?, ?, ?, ?, ?)"""
 
 
-      singleValueInsert.sql.normalized() should equal (singleValueInsertSql.normalized())
+      singleValueInsert.sql.trimLines() should equal (singleValueInsertSql.trimLines())
 
       singleValueInsert.paramList should equal (joe.productIterator.toList)
     }
@@ -42,7 +42,7 @@ class InsertStatementSpec extends AnyFunSpec with Matchers {
                        (?, ?, ?, ?, ?)"""
 
 
-      sequencedValuesInsert.sql.normalized() should equal (sequencedValuesInsertSql.normalized())
+      sequencedValuesInsert.sql.trimLines() should equal (sequencedValuesInsertSql.trimLines())
 
       sequencedValuesInsert.paramList should equal (Seq(joe, mark).flatMap(_.productIterator).toList)
     }
@@ -65,7 +65,7 @@ class InsertStatementSpec extends AnyFunSpec with Matchers {
            WHERE       a.[street] LIKE '%Baker St%'"""
 
 
-      queryInsert.sql.normalized() should equal (queryInsertSql.normalized())
+      queryInsert.sql.trimLines() should equal (queryInsertSql.trimLines())
     }
   }
 }

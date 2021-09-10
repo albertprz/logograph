@@ -31,8 +31,12 @@ object StringUtils {
                                                .map(mapFn)
                                                .mkString("\n")
 
-    def normalized() = str.mapLines(_.trim())
-                          .trim()
+    def trimLines() = str.mapLines(_.trim())
+                         .trim()
+
+    def normalizedToLower() = str.replaceAll("-", "")
+                                 .replaceAll("_", "")
+                                 .toLowerCase()
 
     def indent (spacing: Int) = str.mapLines(" " * spacing + _)
 

@@ -14,6 +14,8 @@ case class InsertStatement [T <: DbTable] (data: Either[Seq[T], SelectStatement[
 
   lazy val (sql, paramList) = InsertStatement.generate(this)
 
+  lazy val validate = {}
+
   def run [F[+_]] () (implicit context: ScalaQLContext[F]) =
     context.run(this)
 

@@ -10,6 +10,8 @@ case class DeleteStatement [T <: DbTable]  (private val sqlTemplate: String,
 
   lazy val (sql, paramList) = DeleteStatement.generate(this)
 
+  lazy val validate = {}
+
   def run [F[+_]] () (implicit context: ScalaQLContext[F]) =
     context.run(this)
 

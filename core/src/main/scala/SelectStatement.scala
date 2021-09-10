@@ -3,7 +3,7 @@ package com.albertoperez1994.scalaql
 import scala.reflect.runtime.{universe => ru}
 
 import com.albertoperez1994.scalaql.config.ScalaQLConfig
-import com.albertoperez1994.scalaql.utils
+import com.albertoperez1994.scalaql.core.SQLEngine._
 import utils.StringUtils._
 import utils.TreeUtils._
 
@@ -15,7 +15,12 @@ case class SelectStatement [T <: DbDataSet] (sqlTemplate: String,
                                              dependencies: Seq[Int] = Seq.empty)
                            (implicit tag: ru.TypeTag[T]) extends SQLStatement {
 
+
+  import SelectStatement._
+
   lazy val (sql, paramList) = SelectStatement.generate(this)
+
+  lazy val validate = validateNestedCtes(this)
 
   def run [F[+_]] () (implicit context: ScalaQLContext[F]) =
     context.run(this)
@@ -45,7 +50,7 @@ case class SelectStatement [T <: DbDataSet] (sqlTemplate: String,
     s"Query: \n\n$sqlTemplate \n\nParams:  \n\n${pprint(params)}\n\n"
 }
 
-object SelectStatement {
+case object SelectStatement {
 
   import SQLStatement._
 
@@ -80,6 +85,8 @@ object SelectStatement {
 
   private def generate [T <: DbDataSet] (select: SelectStatement[_]) =  {
 
+    select.validate
+
     val queries = buildTree(select.asInstanceOf[SelectStatement[DbDataSet]]) (_.subQueries)
       .foldLeftWithIndex(Seq.empty[SelectStatement[DbDataSet]]) {
         case ((acc, i), curr) => {
@@ -106,5 +113,17 @@ object SelectStatement {
     val params = (select.subQueries.map(_.params) :+ select.params).flatten.toMap
 
     (getSQL(sqlTemplate, params), getParamList(params))
+  }
+
+  private def validateNestedCtes (select: SelectStatement[_]) = {
+
+    val isNestedCte = select.subQueries.size > 1 ||
+                      select.subQueries.flatMap(_.subQueries).size > 0
+
+    cfg.engine match {
+      case Some(SQLite) | Some(MySQL) if (isNestedCte) =>
+        throw new Exception(s"Nested CTEs are not allowed for this SQL engine: ${cfg.engine}")
+      case _ => {}
+    }
   }
 }

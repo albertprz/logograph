@@ -20,7 +20,7 @@ class DeleteStatementSpec extends AnyFunSpec with Matchers {
         """DELETE FROM [address]"""
 
 
-      simpleDelete.sql.normalized() should equal (simpleDeleteSql.normalized())
+      simpleDelete.sql.trimLines() should equal (simpleDeleteSql.trimLines())
     }
 
 
@@ -34,7 +34,7 @@ class DeleteStatementSpec extends AnyFunSpec with Matchers {
            WHERE       [number] IN (16792021, 72181292)"""
 
 
-      filteredDelete.sql.normalized() should equal (filteredDeleteSql.normalized())
+      filteredDelete.sql.trimLines() should equal (filteredDeleteSql.trimLines())
     }
   }
 }
