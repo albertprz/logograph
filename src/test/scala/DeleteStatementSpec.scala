@@ -30,7 +30,7 @@ class DeleteStatementSpec extends AnyFunSpec with Matchers {
         Where(t.number in List(16792021, 72181292)))
 
       val filteredDeleteSql =
-        """DELETE FROM [telephone]
+        """DELETE FROM [phone]
            WHERE       [number] IN (16792021, 72181292)"""
 
 

@@ -50,23 +50,27 @@ object InsertStatement {
   def getSQL [T <: DbTable] (data: Seq[T]) (implicit tag: ru.TypeTag[T]) = {
 
     val tableName = className[T]
+    val table = Table(tableName)
+
     val classSymbol = constructorOf[T]
-    val paramNames = classSymbol.paramNames.map(x => s"[$x]")
+    val paramNames = classSymbol.paramNames
     val paramPlaceholders = (0 to data.size - 1).map(x => paramNames.map(x => "?"))
                                                 .map(stringify)
                                                 .mkString(", \n")
 
-     s"""|INSERT INTO [${Table(tableName).sql}] ${stringify(paramNames.map(Column(_).sql))}
+     s"""|INSERT INTO ${table.sql} ${stringify(paramNames.map(Column(_, tableName).sql))}
          |VALUES      $paramPlaceholders """.stripMargin
   }
 
   def getSQL [T <: DbTable] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) = {
 
     val tableName = className[T]
-    val classSymbol = constructorOf[T]
-    val paramNames = classSymbol.paramNames.map(x => s"[$x]")
+    val table = Table(tableName)
 
-    s"""|INSERT INTO [${Table(tableName).sql}] ${stringify(paramNames.map(Column(_).sql))}
+    val classSymbol = constructorOf[T]
+    val paramNames = classSymbol.paramNames
+
+    s"""|INSERT INTO ${table.sql} ${stringify(paramNames.map(Column(_, tableName).sql))}
         |${query.sql} """.stripMargin
   }
 }

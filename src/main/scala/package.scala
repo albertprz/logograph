@@ -118,7 +118,7 @@ package object scalaql {
 
 
   // Infix Operators for Strings
-  implicit class RichString (x: String) {
+  implicit class ScalaQLString (x: String) {
 
     def === (y: String): Boolean = ???
     def <>  (y: String): Boolean = ???
@@ -129,7 +129,7 @@ package object scalaql {
   }
 
   // Infix Operators for Booleans
-  implicit class RichBoolean (x: Boolean) {
+  implicit class ScalaQLBoolean (x: Boolean) {
 
     def === (y: Boolean): Boolean = ???
     def <>  (y: Boolean): Boolean = ???
@@ -138,7 +138,7 @@ package object scalaql {
   }
 
   // Infix Operators for Ints
-  implicit class RichInt (x: Int) {
+  implicit class ScalaQLInt (x: Int) {
 
     def === (y: Int): Boolean = ???
     def <>  (y: Int): Boolean = ???
@@ -147,7 +147,7 @@ package object scalaql {
   }
 
   // Infix Operators for Longs
-  implicit class RichLong (x: Long) {
+  implicit class ScalaQLLong (x: Long) {
 
     def === (y: Long): Boolean = ???
     def <>  (y: Long): Boolean = ???
@@ -156,7 +156,7 @@ package object scalaql {
   }
 
   // Infix Operators for BigDecimals
-  implicit class RichBigDecimal (x: BigDecimal) {
+  implicit class ScalaQLBigDecimal (x: BigDecimal) {
 
     def === (y: BigDecimal): Boolean = ???
     def <>  (y: BigDecimal): Boolean = ???

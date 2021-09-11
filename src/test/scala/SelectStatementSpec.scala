@@ -38,15 +38,15 @@ class SelectStatementSpec extends AnyFunSpec with Matchers {
       }
 
       val complexQuerySql = """
-          SELECT      p.[name] AS [name], p.[age] AS [age], a.[street] AS [street], 72162183 AS [telephone_number]
+          SELECT      p.[name] AS [name], p.[age] AS [age], a.[street] AS [street], 72162183 AS [phone_number]
           FROM        [person] AS p
-          INNER JOIN  [telephone] AS t ON t.[id] = p.[telephone_id]
+          INNER JOIN  [phone] AS t ON t.[id] = p.[phone_id]
           LEFT JOIN   [address] AS a ON a.[id] = p.[address_id]
           WHERE       (a.[street] LIKE '%Baker St%') AND
                       (COALESCE (p.[is_employer], 0))
           ORDER BY    p.[age] DESC"""
 
-      println(complexQuery.sql)
+
       complexQuery.sql.trimLines() should equal (complexQuerySql.trimLines())
     }
 
@@ -65,6 +65,7 @@ class SelectStatementSpec extends AnyFunSpec with Matchers {
            FROM        [address] AS a
            WHERE       a.[street] IN ('Carnaby St', 'Downing St')"""
 
+
       literalValsQuery.sql.trimLines() should equal (literalValsQuerySql.trimLines())
     }
 
@@ -81,7 +82,7 @@ class SelectStatementSpec extends AnyFunSpec with Matchers {
 
       val runtimeValsQuerySql =
         """SELECT      t.*
-           FROM        [telephone] AS t
+           FROM        [phone] AS t
            WHERE       t.[number] IN (?, ?)"""
 
 
@@ -204,16 +205,16 @@ class SelectStatementSpec extends AnyFunSpec with Matchers {
           q5 AS
           (
             SELECT      t.*
-            FROM        [telephone] AS t
+            FROM        [phone] AS t
             WHERE       t.[number] <> 676874981
           ),
           q6 AS
           (
-            SELECT      p.[name] AS [name], t.[number] AS [telephone_number]
+            SELECT      p.[name] AS [name], t.[number] AS [phone_number]
             FROM        [q4] AS p, [q5] AS t
           )
 
-          SELECT      a.[name] AS [name], a.[age] AS [age], a.[street] AS [street], b.[telephone_number] AS [telephone_number]
+          SELECT      a.[name] AS [name], a.[age] AS [age], a.[street] AS [street], b.[phone_number] AS [phone_number]
           FROM        [q3] AS a
           INNER JOIN  [q6] AS b ON b.[name] = a.[name]
           ORDER BY    a.[name] ASC"""

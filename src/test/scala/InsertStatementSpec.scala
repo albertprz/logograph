@@ -19,7 +19,7 @@ class InsertStatementSpec extends AnyFunSpec with Matchers {
       val singleValueInsert = insert(joe)
 
       val singleValueInsertSql =
-        """INSERT INTO [person] ([name], [age], [is_employer], [address_id], [telephone_id])
+        """INSERT INTO [person] ([name], [age], [is_employer], [address_id], [phone_id])
            VALUES      (?, ?, ?, ?, ?)"""
 
 
@@ -37,7 +37,7 @@ class InsertStatementSpec extends AnyFunSpec with Matchers {
       val sequencedValuesInsert = insert(Seq(joe, mark))
 
       val sequencedValuesInsertSql =
-        """INSERT INTO [person] ([name], [age], [is_employer], [address_id], [telephone_id])
+        """INSERT INTO [person] ([name], [age], [is_employer], [address_id], [phone_id])
            VALUES      (?, ?, ?, ?, ?),
                        (?, ?, ?, ?, ?)"""
 

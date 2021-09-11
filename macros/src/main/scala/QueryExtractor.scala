@@ -3,6 +3,7 @@ package com.albertoperez1994.scalaql.macros
 import com.albertoperez1994.scalaql.core._
 import com.albertoperez1994.scalaql.{utils => utils}
 import utils.QueryUtils._
+import utils.StringUtils._
 import scala.reflect.macros.blackbox
 import com.albertoperez1994.scalaql.config.ScalaQLConfig
 
@@ -11,7 +12,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
   import c.universe._
 
   private val ops = new TreeOps[c.type](c)
-  private var tableAliasMap: Map[String, String] = null
+  private var tableAliasMap: Map[String, Table] = null
   private implicit val config: ScalaQLConfig = ScalaQLConfig.get
 
   import ops._
@@ -24,11 +25,11 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     val setMap = mapArgs.map { case (key, value) => (getField(key).get, getExpression(value).get)  }
                         .toMap
 
+    val table = Table(splitTupledTypeTag(typeName).head)
     val setClause = SetClause(setMap)
     val whereClause = getWhereClause(updateTree)
-    val tableName = splitTupledTypeTag(typeName).head
 
-    val updateClause = UpdateClause(tableName, setClause, whereClause)
+    val updateClause = UpdateClause(table, setClause, whereClause)
     val params = ExpressionClause.findParameters(updateClause)
 
     (updateClause, params)
@@ -41,19 +42,21 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     }
 
     val whereClause = whereTree.flatMap(getWhereClause)
-    val tableName = splitTupledTypeTag(typeName).head
+    val table = Table(splitTupledTypeTag(typeName).head)
 
-    val deleteClause = DeleteClause(tableName, whereClause)
+    val deleteClause = DeleteClause(table, whereClause)
     val params = ExpressionClause.findParameters(deleteClause)
 
     (deleteClause, params)
   }
 
-  def getQueryClause (tree: Tree, typeName: String, columnAliases: List[String]) = {
+  def getQueryClause (tree: Tree, fromTypeName: String, selectTypeName: String, columnAliases: List[String]) = {
 
-    init(tree, typeName)
+    init(tree, fromTypeName)
 
-    val selectClause = getSelectClause(tree, columnAliases)
+    val selectTableName = splitTupledTypeTag(selectTypeName).head
+
+    val selectClause = getSelectClause(tree, columnAliases, selectTableName)
     val whereClause = getWhereClause(tree)
     val orderByClause = getOrderByClause(tree)
     val joinClauses = getJoinClauses(tree)
@@ -69,16 +72,17 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
     val tableName = typeName.split('.').last
     val tableAlias = tableName.head.toLower.toString
+    val table = Table(tableName)
 
     val select = SelectAllClause (tableAlias)
-    val from = FromClause (Map(tableAlias -> tableName))
+    val from = FromClause (Map(tableAlias -> table))
 
     val queryClause = QueryClause (Some(select), Some(from))
 
-    (queryClause, tableName)
+    (queryClause, table)
   }
 
-  private def getSelectClause (tree: Tree, columnAliases: List[String]) = {
+  private def getSelectClause (tree: Tree, columnAliases: List[String], selectTableName: String) = {
 
     val args = findTypedCtorArgs(tree, "Select").flatten
                   .flatMap(getExpression)
@@ -92,11 +96,13 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     val distinctAllArgs =  findCtorArgs(tree, "SelectDistinctAll").flatten
                               .flatMap(getTableAlias)
 
+    val columns = columnAliases.map(Column(_, selectTableName))
+
 
     if      (distinctAllArgs.nonEmpty)  Some(SelectDistinctAllClause(distinctAllArgs.head))
-    else if (distinctArgs.nonEmpty)     Some(SelectDistinctClause(distinctArgs, columnAliases.map(Column(_))))
+    else if (distinctArgs.nonEmpty)     Some(SelectDistinctClause(distinctArgs, columns))
     else if (allArgs.nonEmpty)          Some(SelectAllClause(allArgs.head))
-    else if (args.nonEmpty)             Some(SelectClause(args, columnAliases.map(Column(_))))
+    else if (args.nonEmpty)             Some(SelectClause(args, columns))
     else                                None
   }
 
@@ -157,15 +163,15 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
   private def getOperation(tree: Tree) = {
 
     val op = tree match {
-      case q"com.albertoperez1994.scalaql.`package`.RichString($operand1).$operator($operand2)" =>
+      case q"com.albertoperez1994.scalaql.`package`.ScalaQLString($operand1).$operator($operand2)" =>
         Some((operator, List(operand1, operand2)))
-      case q"com.albertoperez1994.scalaql.`package`.RichBoolean($operand1).$operator($operand2)" =>
+      case q"com.albertoperez1994.scalaql.`package`.ScalaQLBoolean($operand1).$operator($operand2)" =>
         Some((operator, List(operand1, operand2)))
-      case q"com.albertoperez1994.scalaql.`package`.RichInt($operand1).$operator($operand2)" =>
+      case q"com.albertoperez1994.scalaql.`package`.ScalaQLInt($operand1).$operator($operand2)" =>
         Some((operator, List(operand1, operand2)))
-      case q"com.albertoperez1994.scalaql.`package`.RichLong($operand1).$operator($operand2)" =>
+      case q"com.albertoperez1994.scalaql.`package`.ScalaQLLong($operand1).$operator($operand2)" =>
         Some((operator, List(operand1, operand2)))
-      case q"com.albertoperez1994.scalaql.`package`.RichBigDecimal($operand1).$operator($operand2)" =>
+      case q"com.albertoperez1994.scalaql.`package`.ScalaQLBigDecimal($operand1).$operator($operand2)" =>
         Some((operator, List(operand1, operand2)))
       case q"com.albertoperez1994.scalaql.`package`.$operator[$tpe](..$operands)" =>  Some((operator, operands))
       case q"com.albertoperez1994.scalaql.`package`.$operator(..$operands)"       =>  Some((operator, operands))
@@ -179,8 +185,13 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
   private def getField(tree: Tree) = tree match {
 
-    case q"$tableAlias.$column" if (tableAliasMap.keySet.contains(tableAlias.toString)) =>
-      Some(Field(tableAlias.toString, column.toString))
+    case q"$tableAlias.$columnName" if (tableAliasMap.keySet.contains(tableAlias.toString())) => {
+
+      val table = tableAliasMap(tableAlias.toString())
+      val column = Column(columnName.toString(), table.tableName)
+
+      Some(Field(tableAlias.toString(), column))
+    }
     case _ => None
   }
 
@@ -197,7 +208,8 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
     case q"scala.`package`.List.apply[$_](..$values)" if values.forall(getLiteral(_).isDefined) =>
       Some(LiteralVal(values.flatMap(getLiteral(_).map(_.value))
-                            .mkString("(", ", ", ")")))
+                            .mkString(", ")
+                            .wrapParens()))
 
     case _ => None
   }
@@ -221,7 +233,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     val tableAliases = findLambdaFnArgs(tree)
                      .map(_.toString)
 
-    val tableNames = splitTupledTypeTag(typeName).map(Table(_).sql)
+    val tableNames = splitTupledTypeTag(typeName).map(Table(_))
 
     (tableAliases zip tableNames).toMap
   }

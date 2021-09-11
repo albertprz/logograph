@@ -97,7 +97,7 @@ case object SelectStatement {
       .map { select =>
         ((select.tableNames zip select.dependencies)
           .foldLeft(select.sqlTemplate) {
-            case (querySql, (tableName, i)) => querySql.replaceFirst(s"\\[$tableName\\]", s"[q$i]")
+            case (querySql, (tableName, i)) => querySql.replaceFirst(s"\\[${tableName.unwrap()}\\]", s"[q$i]")
           }, select.index)
       }
 

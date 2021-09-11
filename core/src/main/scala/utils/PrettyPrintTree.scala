@@ -2,6 +2,7 @@ package com.albertoperez1994.scalaql.utils
 
 import com.albertoperez1994.scalaql.core.Identity
 import com.albertoperez1994.scalaql.config.ScalaQLConfig
+import StringUtils._
 
   trait PrettyPrintTree {
 
@@ -45,7 +46,7 @@ import com.albertoperez1994.scalaql.config.ScalaQLConfig
 
     private def showSeq (seq: Seq[_], depth: Int) = {
       val seqString = concatStr(seq.iterator, depth)
-      s"[$seqString]"
+      seqString.wrapBrackets()
     }
 
     private def concatStr(iter: Iterator[_], depth: Int) =

@@ -25,11 +25,11 @@ case class LiteralVal (value: String) (implicit cfg: ScalaQLConfig)
   val sql = value
 }
 
-case class Field (tableAlias: String, column: String) (implicit cfg: ScalaQLConfig)
+case class Field (tableAlias: String, column: Column) (implicit cfg: ScalaQLConfig)
     extends Expression {
 
   val validate = {}
-  val sql = s"$tableAlias." + (if (column != "*") s"[${Column(column).sql}]" else column)
+  val sql = s"$tableAlias.${column.sql}"
 }
 
 case class Identity (name: String, tree: Any) (implicit cfg: ScalaQLConfig)
@@ -72,32 +72,40 @@ case class Operation (operator: String, operands: List[Expression]) (implicit cf
     opType match {
       case Infix => operands.map(_.sql).mkString(s" $convOperator ")
       case Postfix => s"${operands.head.sql} $convOperator"
-      case Prefix =>  s"$convOperator (${operands.map(_.sql).mkString(", ")})"
+      case Prefix =>  s"$convOperator " + operands.map(_.sql).mkString(", ")
+                                                             .wrapParens()
     }
   }
 }
 
 
-case class Operator(str: String) (implicit cfg: ScalaQLConfig)
+case class Table(tableName: String) (implicit cfg: ScalaQLConfig)
     extends SQLClause {
 
   val validate = {}
-  val sql = str.convertCase(cfg.operatorCaseConverter)
+  val sql = tableName.convert(cfg.tableConverter)
+                     .convertCase(cfg.tableCaseConverter)
+                     .wrapBrackets()
 }
 
-case class Column(str: String) (implicit cfg: ScalaQLConfig)
+case class Column(columnName: String, tableName: String) (implicit cfg: ScalaQLConfig)
     extends SQLClause {
 
   val validate = {}
-  val sql = str.convertCase(cfg.columnCaseConverter)
+  val sql = if (columnName != "*")  columnName.convert(cfg.columnConverter.getOrElse(tableName, Map.empty))
+                                              .convertCase(cfg.columnCaseConverter)
+                                              .wrapBrackets()
+            else columnName
 }
 
-case class Table(str: String) (implicit cfg: ScalaQLConfig)
+case class Operator(operatorName: String) (implicit cfg: ScalaQLConfig)
     extends SQLClause {
 
   val validate = {}
-  val sql = str.convertCase(cfg.tableCaseConverter)
+  val sql = operatorName.convert(cfg.operatorConverter)
+                        .convertCase(cfg.operatorCaseConverter)
 }
+
 
 private object Expression {
 

@@ -36,7 +36,7 @@ class QueryImpl(val c: blackbox.Context) {
   private def buildQuery[T, R <: DbDataSet] (queryTree: Tree)
                                             (implicit tag1: WeakTypeTag[T], tag2: WeakTypeTag[R]) = {
 
-    val (clause, params, tableNames) = extractor.getQueryClause(queryTree, weakTypeOf[T].toString, getParamNames[R])
+    val (clause, params, table) = extractor.getQueryClause(queryTree, weakTypeOf[T].toString, weakTypeOf[R].toString, getParamNames[R])
 
     emitMessage("Query", clause)
 
@@ -45,17 +45,17 @@ class QueryImpl(val c: blackbox.Context) {
 
     c.Expr[SelectStatement[R]](q"""SelectStatement(sqlTemplate = ${clause.sql},
                                                    params = ${params.asInstanceOf[Map[String, Tree]]},
-                                                   tableNames = $tableNames,
+                                                   tableNames = ${table.map(_.sql)},
                                                    subQueries = $subQueries.asInstanceOf[Seq[SelectStatement[DbDataSet]]])""")
   }
 
   private def buildQueryAll[T <: DbDataSet] () (implicit tag: WeakTypeTag[T]) = {
 
-    val (clause, tableName) = extractor.getQueryClause(weakTypeOf[T].toString)
+    val (clause, table) = extractor.getQueryClause(weakTypeOf[T].toString)
 
     c.Expr[SelectStatement[T]](q"""SelectStatement(sqlTemplate = ${clause.sql},
                                                    params = Map.empty[String, Any],
-                                                   tableNames = ${List(tableName)},
+                                                   tableNames = ${List(table.sql)},
                                                    subQueries = Seq.empty[SelectStatement[DbDataSet]])""")
   }
 
