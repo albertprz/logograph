@@ -49,11 +49,11 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     (deleteClause, params)
   }
 
-  def getQueryClause (tree: Tree, typeName: String) = {
+  def getQueryClause (tree: Tree, typeName: String, columnAliases: List[String]) = {
 
     init(tree, typeName)
 
-    val selectClause = getSelectClause(tree)
+    val selectClause = getSelectClause(tree, columnAliases)
     val whereClause = getWhereClause(tree)
     val orderByClause = getOrderByClause(tree)
     val joinClauses = getJoinClauses(tree)
@@ -70,8 +70,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     val tableName = typeName.split('.').last
     val tableAlias = tableName.head.toLower.toString
 
-    val field = Field (tableAlias, "*")
-    val select = SelectClause (List(field))
+    val select = SelectAllClause (tableAlias)
     val from = FromClause (Map(tableAlias -> tableName))
 
     val queryClause = QueryClause (Some(select), Some(from))
@@ -79,7 +78,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     (queryClause, tableName)
   }
 
-  private def getSelectClause (tree: Tree) = {
+  private def getSelectClause (tree: Tree, columnAliases: List[String]) = {
 
     val args = findTypedCtorArgs(tree, "Select").flatten
                   .flatMap(getExpression)
@@ -93,10 +92,11 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     val distinctAllArgs =  findCtorArgs(tree, "SelectDistinctAll").flatten
                               .flatMap(getTableAlias)
 
+
     if      (distinctAllArgs.nonEmpty)  Some(SelectDistinctAllClause(distinctAllArgs.head))
-    else if (distinctArgs.nonEmpty)     Some(SelectDistinctClause(distinctArgs))
+    else if (distinctArgs.nonEmpty)     Some(SelectDistinctClause(distinctArgs, columnAliases.map(Column(_))))
     else if (allArgs.nonEmpty)          Some(SelectAllClause(allArgs.head))
-    else if (args.nonEmpty)             Some(SelectClause(args))
+    else if (args.nonEmpty)             Some(SelectClause(args, columnAliases.map(Column(_))))
     else                                None
   }
 

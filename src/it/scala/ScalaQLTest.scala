@@ -25,7 +25,7 @@ class ScalaQLTest extends AnyFunSpec with BeforeAndAfter with Matchers {
   describe("ScalaQL") {
 
 
-    it("can retrieve complex query results") {
+    it("can retrieve query results") {
 
       val complexQuery = query[(Person, Address, Telephone)].select {
         case (p, a, t) => Query(
@@ -50,7 +50,8 @@ class ScalaQLTest extends AnyFunSpec with BeforeAndAfter with Matchers {
 
       context.run(insert(matt),
                   insert(mattAddress),
-                  insert(mattTelephone)).unsafeRunSync()
+                  insert(mattTelephone))
+              .unsafeRunSync()
 
       queryAll[Person]().run().unsafeRunSync() should equal (SeedData.people :+ matt)
 
@@ -66,15 +67,11 @@ class ScalaQLTest extends AnyFunSpec with BeforeAndAfter with Matchers {
                                           p.isEmployer -> true),
                                       Where(p.name === "John")))).unsafeRunSync()
 
-
-      val filteredQuery = query[Person].select {
-        case p => Query(
-          SelectAll    (p),
-          Where        (p.name === "John")
-        )}
+      val simpleQuery = queryAll[Person]()
 
 
-      filteredQuery.run().unsafeRunSync().head should equal (SeedData.john.copy(age = 40, isEmployer = true))
+      simpleQuery.run().unsafeRunSync() should equal (Seq (SeedData.john.copy(age = 40, isEmployer = true),
+                                                           SeedData.thomas))
     }
 
 
@@ -82,7 +79,8 @@ class ScalaQLTest extends AnyFunSpec with BeforeAndAfter with Matchers {
 
       context.run(delete[Person](p => Where(p.age < 33)),
                   delete[Address](a => Where(a.street notLike "%Carnaby%")),
-                  delete[Telephone](t => Where(t.number <> 62163219))).unsafeRunSync()
+                  delete[Telephone](t => Where(t.number <> 62163219)))
+              .unsafeRunSync()
 
 
       queryAll[Person]().run().unsafeRunSync().head should equal (SeedData.thomas)

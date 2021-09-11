@@ -6,32 +6,29 @@ object ReflectionUtils {
 
   private lazy val universeMirror = runtimeMirror(getClass.getClassLoader)
 
-  def companionOf[T: TypeTag] = {
+  def constructorOf[T: TypeTag] = {
 
-    val module = typeOf[T].typeSymbol.companion.asModule
-    val companionMirror = universeMirror.reflectModule(module)
-    Companion(companionMirror.instance)
+    val classSymbol = weakTypeOf[T].typeSymbol.asClass
+    val classConstructor = classSymbol.info.member(termNames.CONSTRUCTOR).asMethod
+    val classMirror = universeMirror.reflectClass(classSymbol)
+    Constructor(classMirror.reflectConstructor(classConstructor))
   }
 
   def className[T: TypeTag] =
-    typeOf[T].toString.split('.').last
+    weakTypeOf[T].toString.split('.').last
 
-  case class Companion(companionObject: Any) {
+  case class Constructor(constructor: MethodMirror) {
 
-    def apply (x: Seq[Any]) =
-      applyMethod.invoke(companionObject, x :_ *)
+    def apply (x: Seq[Any]) = constructor.apply(x :_ *)
 
-    private val applyMethod =
-      companionObject.getClass.getDeclaredMethods
-                  .filter(_.getName == "apply")
-                  .find(_.getReturnType.getName != "java.lang.Object").get
+    val paramNames = constructor.symbol
+                                .paramLists
+                                .head
+                                .map(_.name.decoded)
 
-    val paramNames =
-      applyMethod.getParameters
-                    .map(_.getName).toList
-
-    val paramTypes =
-      applyMethod.getParameterTypes
-                    .map(_.getName).toList
+    val paramTypes = constructor.symbol
+                                .paramLists
+                                .head
+                                .map(_.typeSignature.typeSymbol.fullName)
   }
 }

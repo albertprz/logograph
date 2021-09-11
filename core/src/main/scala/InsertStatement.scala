@@ -50,8 +50,8 @@ object InsertStatement {
   def getSQL [T <: DbTable] (data: Seq[T]) (implicit tag: ru.TypeTag[T]) = {
 
     val tableName = className[T]
-    val companion = companionOf[T]
-    val paramNames = companion.paramNames.map(x => s"[$x]")
+    val classSymbol = constructorOf[T]
+    val paramNames = classSymbol.paramNames.map(x => s"[$x]")
     val paramPlaceholders = (0 to data.size - 1).map(x => paramNames.map(x => "?"))
                                                 .map(stringify)
                                                 .mkString(", \n")
@@ -63,8 +63,8 @@ object InsertStatement {
   def getSQL [T <: DbTable] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) = {
 
     val tableName = className[T]
-    val companion = companionOf[T]
-    val paramNames = companion.paramNames.map(x => s"[$x]")
+    val classSymbol = constructorOf[T]
+    val paramNames = classSymbol.paramNames.map(x => s"[$x]")
 
     s"""|INSERT INTO [${Table(tableName).sql}] ${stringify(paramNames.map(Column(_).sql))}
         |${query.sql} """.stripMargin

@@ -20,7 +20,7 @@ case class SelectStatement [T <: DbDataSet] (sqlTemplate: String,
 
   lazy val (sql, paramList) = SelectStatement.generate(this)
 
-  lazy val validate = validateNestedCtes(this)
+  lazy val validate = {}
 
   def run [F[+_]] () (implicit context: ScalaQLContext[F]) =
     context.run(this)
@@ -113,17 +113,5 @@ case object SelectStatement {
     val params = (select.subQueries.map(_.params) :+ select.params).flatten.toMap
 
     (getSQL(sqlTemplate, params), getParamList(params))
-  }
-
-  private def validateNestedCtes (select: SelectStatement[_]) = {
-
-    val isNestedCte = select.subQueries.size > 1 ||
-                      select.subQueries.flatMap(_.subQueries).size > 0
-
-    cfg.engine match {
-      case Some(SQLite) | Some(MySQL) if (isNestedCte) =>
-        throw new Exception(s"Nested CTEs are not allowed for this SQL engine: ${cfg.engine}")
-      case _ => {}
-    }
   }
 }

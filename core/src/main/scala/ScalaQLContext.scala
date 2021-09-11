@@ -55,11 +55,11 @@ private object ScalaQLContext {
   def extractResults [T <: DbDataSet] (resultSet: ResultSet) (implicit tag: ru.TypeTag[T]) = {
 
     val results = ListBuffer[T]()
-    val companion = companionOf[T]
+    val classSymbol = constructorOf[T]
 
     while (resultSet.next()) {
-        val ctorArgs = getCtorArgs(resultSet, companion.paramTypes)
-        results += companion.apply(ctorArgs).asInstanceOf[T]
+        val ctorArgs = getCtorArgs(resultSet, classSymbol.paramTypes)
+        results += classSymbol.apply(ctorArgs).asInstanceOf[T]
     }
 
     results.toList
@@ -79,7 +79,7 @@ private object ScalaQLContext {
         case time: Time      => stmt.setTime(i + 1, time)
         case other @ _      => throw new Exception("Unknown types cannot be used in queries " +
                                                     "for constant or runtime parameter values: \n" +
-                                                    s"""|Type: ${other.getClass.getSimpleName}
+                                                    s"""|Type: ${other.getClass.getName()}
                                                         |Value: $other""".stripMargin)
       }
     }
@@ -89,18 +89,17 @@ private object ScalaQLContext {
   def getCtorArgs (resultSet: ResultSet, paramTypes: List[String]) =
     for (i <- 0 to paramTypes.size - 1)
         yield paramTypes(i) match {
-          case "int"                  => resultSet.getInt(i + 1)
-          case "long"                 => resultSet.getLong(i + 1)
-          case "float"                => resultSet.getFloat(i + 1)
-          case "double"               => resultSet.getDouble(i + 1)
-          case "boolean"              => resultSet.getBoolean(i + 1)
+          case "scala.Int"            => resultSet.getInt(i + 1)
+          case "scala.Long"           => resultSet.getLong(i + 1)
+          case "scala.Float"          => resultSet.getFloat(i + 1)
+          case "scala.Double"         => resultSet.getDouble(i + 1)
+          case "scala.Boolean"        => resultSet.getBoolean(i + 1)
           case "java.lang.String"     => resultSet.getString(i + 1)
           case "java.lang.BigDecimal" => resultSet.getBigDecimal(i + 1)
           case "java.sql.date"        => resultSet.getDate(i + 1)
           case "java.sql.time"        => resultSet.getTime(i + 1)
           case other @ _              => throw new Exception("Unknown types cannot be returned " +
                                                              "as query results: \n" +
-                                                             s"""|Type: ${other.getClass.getSimpleName}
-                                                                 |Value: $other""".stripMargin)
+                                                             s"Type: ${other.getClass.getName()}".stripMargin)
         }
 }

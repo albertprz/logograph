@@ -5,6 +5,7 @@ import com.albertoperez1994.scalaql.config.ScalaQLConfig
 
 trait SQLStatement extends SQLClause {
 
+  val validate: Unit
   val sql: String
   val paramList: List[Any]
   def run [F[+_]] () (implicit context: ScalaQLContext[F]): F[Any]

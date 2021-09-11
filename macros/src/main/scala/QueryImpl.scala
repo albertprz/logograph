@@ -36,7 +36,7 @@ class QueryImpl(val c: blackbox.Context) {
   private def buildQuery[T, R <: DbDataSet] (queryTree: Tree)
                                             (implicit tag1: WeakTypeTag[T], tag2: WeakTypeTag[R]) = {
 
-    val (clause, params, tableNames) = extractor.getQueryClause(queryTree, weakTypeOf[T].toString)
+    val (clause, params, tableNames) = extractor.getQueryClause(queryTree, weakTypeOf[T].toString, getParamNames[R])
 
     emitMessage("Query", clause)
 
@@ -88,4 +88,9 @@ class QueryImpl(val c: blackbox.Context) {
 
       c.info(c.enclosingPosition, compilationMessage, false)
   }
+
+  private def getParamNames[T: WeakTypeTag]() = weakTypeOf[T].decls
+                                                             .filter(_.name.decoded == "<init>")
+                                                             .head.asMethod.paramLists.head
+                                                             .map(_.name.decoded)
 }

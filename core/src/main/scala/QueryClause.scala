@@ -10,14 +10,24 @@ trait ExpressionClause extends SQLClause {
 
 sealed trait BaseSelectClause extends ExpressionClause
 
-case class SelectClause (exprs: List[Expression]) (implicit cfg: ScalaQLConfig)
+case class SelectClause (exprs: List[Expression], columnAliases: List[Column]) (implicit cfg: ScalaQLConfig)
     extends BaseSelectClause {
 
   val validate = {}
 
-  val sql = exprs
-              .map(_.sql)
+  val sql = (exprs zip columnAliases)
+              .map { case (expr, alias) => s"${expr.sql} AS [${alias.sql}]" }
               .mkString("SELECT      ", ", ", "\n")
+}
+
+case class SelectDistinctClause (exprs: List[Expression], columnAliases: List[Column]) (implicit cfg: ScalaQLConfig)
+    extends BaseSelectClause {
+
+  val validate = {}
+
+  val sql = (exprs zip columnAliases)
+              .map { case (expr, alias) => s"${expr.sql} AS [${alias.sql}]" }
+              .mkString("SELECT      DISTINCT ", ", ", "\n")
 }
 
 case class SelectAllClause (tableAlias: String) (implicit cfg: ScalaQLConfig)
@@ -28,16 +38,6 @@ case class SelectAllClause (tableAlias: String) (implicit cfg: ScalaQLConfig)
   val validate = {}
 
   val sql = s"SELECT      $tableAlias.*\n"
-}
-
-case class SelectDistinctClause (exprs: List[Expression]) (implicit cfg: ScalaQLConfig)
-    extends BaseSelectClause {
-
-  val validate = {}
-
-  val sql  = exprs
-              .map(_.sql)
-              .mkString("SELECT      DISTINCT ", ", ", "\n")
 }
 
 case class SelectDistinctAllClause (tableAlias: String) (implicit cfg: ScalaQLConfig)
