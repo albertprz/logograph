@@ -1,6 +1,5 @@
-package com.albertoperez1994
+package com.albertoperez1994.scalaql
 
-import scala.reflect.runtime.{universe => ru}
 
 import com.albertoperez1994.scalaql.core._
 import com.albertoperez1994.scalaql.macros.QueryImpl
@@ -25,13 +24,13 @@ package object scalaql {
   def deleteAll[T <: DbTable] (): DeleteStatement[T] =
     macro QueryImpl.deleteAll[T]
 
-  def insert[T <: DbTable] (data: T) (implicit tag: ru.TypeTag[T]) =
+  def insert[T <: DbTable] (data: T) =
     InsertStatement (Left (Seq(data)))
 
-  def insert[T <: DbTable] (data: Seq[T]) (implicit tag: ru.TypeTag[T]) =
+  def insert[T <: DbTable] (data: Seq[T]) =
     InsertStatement (Left (data))
 
-  def insert[T <: DbTable] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
+  def insert[T <: DbTable] (query: SelectStatement[T]) =
     InsertStatement (Right (query))
 
   def query[T] = QueryBuilder[T]()
@@ -79,16 +78,16 @@ package object scalaql {
 
 
   // Query Set Operations
-  def union[T <: DbDataSet] (selects: SelectStatement[T]*) (implicit tag: ru.TypeTag[T]) =
+  def union[T <: DbDataSet] (selects: SelectStatement[T]*) =
     SelectStatement.union(selects)
 
-  def unionAll[T <: DbDataSet] (selects: SelectStatement[T]*) (implicit tag: ru.TypeTag[T]) =
+  def unionAll[T <: DbDataSet] (selects: SelectStatement[T]*) =
     SelectStatement.unionAll(selects)
 
-  def intersect[T <: DbDataSet] (selects: SelectStatement[T]*) (implicit tag: ru.TypeTag[T]) =
+  def intersect[T <: DbDataSet] (selects: SelectStatement[T]*) =
     SelectStatement.intersect(selects)
 
-  def except[T <: DbDataSet] (selects: SelectStatement[T]*) (implicit tag: ru.TypeTag[T]) =
+  def except[T <: DbDataSet] (selects: SelectStatement[T]*) =
     SelectStatement.except(selects)
 
 

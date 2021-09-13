@@ -4,15 +4,13 @@ import java.sql.{Connection, ResultSet, PreparedStatement, Statement, Date, Time
 import java.math.BigDecimal
 import scala.util.{Try, Success, Failure}
 import scala.collection.mutable.ListBuffer
-import scala.reflect.runtime.{universe => ru}
 import cats.Monad
-import cats.syntax.all._
+import cats.syntax.all.*
 import cats.effect.{Sync, Resource}
 
-import com.albertoperez1994.scalaql.utils
 import com.albertoperez1994.scalaql.config.ScalaQLConfig
-import utils.ReflectionUtils._
-import utils.StringUtils._
+import utils.TypeInfo
+import utils.StringUtils.*
 
 class ScalaQLContext [F[_] : Sync : Monad] (conn: Connection) {
 
@@ -20,18 +18,18 @@ class ScalaQLContext [F[_] : Sync : Monad] (conn: Connection) {
 
   conn.setAutoCommit(false)
 
-  def run [T <: DbDataSet] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T]): F[List[T]]  =
+  def run [T <: DbDataSet] (query: SelectStatement[T]): F[List[T]]  =
     runQuery (query)
 
   def run (stmts: SQLStatefulStatement*): F[Unit] =
     runStatefulStatement (stmts)
 
 
-  private def runQuery [T <: DbDataSet] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
+  private def runQuery [T <: DbDataSet] (query: SelectStatement[T]): F[List[T]] =
     prepareStatement(query.sql, query.paramList).use { stmt =>
 
       for (resultSet <- Sync[F].blocking { stmt.executeQuery() })
-        yield extractResults(resultSet)
+        yield extractResults(resultSet, query.typeInfo)
     }
 
   private def runStatefulStatement  (stmts: Seq[SQLStatefulStatement]) = {
@@ -52,14 +50,16 @@ class ScalaQLContext [F[_] : Sync : Monad] (conn: Connection) {
 
 private object ScalaQLContext {
 
-  def extractResults [T <: DbDataSet] (resultSet: ResultSet) (implicit tag: ru.TypeTag[T]) = {
+  def extractResults [T <: DbDataSet] (resultSet: ResultSet, typeInfo: TypeInfo) = {
 
     val results = ListBuffer[T]()
-    val classSymbol = constructorOf[T]
+    val constructor = Class.forName(typeInfo.fullClassName)
+                           .getConstructors()
+                           .head
 
     while (resultSet.next()) {
-        val ctorArgs = getCtorArgs(resultSet, classSymbol.paramTypes)
-        results += classSymbol.apply(ctorArgs).asInstanceOf[T]
+        val ctorArgs = getCtorArgs(resultSet, typeInfo.elemTypes)
+        results += constructor.newInstance(ctorArgs).asInstanceOf[T]
     }
 
     results.toList

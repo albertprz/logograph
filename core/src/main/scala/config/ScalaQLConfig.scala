@@ -1,7 +1,9 @@
 package com.albertoperez1994.scalaql.config
 
-import com.albertoperez1994.scalaql.core.SQLEngine
-import com.albertoperez1994.scalaql.utils.{FileUtils, Error, CaseConverter, StringCase}
+import com.albertoperez1994.scalaql.core
+import com.albertoperez1994.scalaql.utils
+import utils.{FileUtils, Error, CaseConverter, StringCase}
+import core.SQLEngine
 import StringCase.CamelCase
 import Error.InvalidScalaQLConfig
 
@@ -20,8 +22,6 @@ case class ScalaQLConfig (engine:                Option[SQLEngine]              
 
 object ScalaQLConfig {
 
-  import Implicits._
-
   val configFileName = "scalaql.conf"
 
   val get = FileUtils.getFile(configFileName)
@@ -29,24 +29,22 @@ object ScalaQLConfig {
                                               .load[ScalaQLConfig]
                                               .getOrElse(throw new InvalidScalaQLConfig))
                      .getOrElse(ScalaQLConfig())
-}
 
-private object Implicits {
 
-  implicit val hint: ProductHint[ScalaQLConfig] = ProductHint[ScalaQLConfig](allowUnknownKeys = false)
+  given ProductHint[ScalaQLConfig] =
+    ProductHint[ScalaQLConfig](allowUnknownKeys = false)
 
-  implicit val caseConverterConfigReader: ConfigReader[CaseConverter] =
+  given ConfigReader[CaseConverter] =
     ConfigReader.fromNonEmptyStringTry(StringCase(_).map(CaseConverter.apply).toTry)
 
-  implicit val engineConfigReader: ConfigReader[SQLEngine] =
+  given ConfigReader[SQLEngine] =
     ConfigReader.fromNonEmptyStringTry(SQLEngine(_).toTry)
 
-  implicit def mapConfigReader[T: ConfigReader] = new ConfigReader[Map[String, T]] with ReadsMissingKeys {
+  given mapConfigReader[T: ConfigReader]: ConfigReader[Map[String, T]] with
     override def from(cur: ConfigCursor) =
       if (cur.isUndefined) Right(Map.empty) else ConfigReader[Map[String, T]].from(cur)
-  }
 
-  implicit val configReader: ConfigReader[ScalaQLConfig] =
+  given ConfigReader[ScalaQLConfig] =
     ConfigReader.forProduct7[ScalaQLConfig, Option[SQLEngine],
                              Option[CaseConverter], Option[CaseConverter], Option[CaseConverter],
                              Map[String, String], Map[String, Map[String, String]], Map[String, String]] (

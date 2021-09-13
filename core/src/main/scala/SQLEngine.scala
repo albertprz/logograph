@@ -7,8 +7,8 @@ sealed trait SQLEngine
 
 object SQLEngine {
 
-  val engines = Set(PostgreSQL, SQLServer, Oracle, SQLite, MySQL)
-                  .map(_.productPrefix)
+  // val engines = Set(PostgreSQL, SQLServer, Oracle, SQLite, MySQL)
+  //                 .map(_.productPrefix)
 
   def apply(engineName: String) = {
     engineName.normalizedToLower() match {
@@ -17,7 +17,7 @@ object SQLEngine {
       case "oracle"     => Right(Oracle)
       case "sqlite"     => Right(SQLite)
       case "mysql"      => Right(MySQL)
-      case _            => Left(CaseNotAllowed(engineName, SQLEngine.toString(), engines))
+      case _            => Left(CaseNotAllowed(engineName, SQLEngine.toString(), Set.empty))
     }
   }
 

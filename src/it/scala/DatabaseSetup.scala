@@ -36,7 +36,7 @@ private object Connection {
     val initStatementsSql = Seq( """ CREATE TABLE Person (
                                     name text,
                                     age int,
-                                    employer int,
+                                    isEmployer int,
                                     addressId int,
                                     telephoneId int) """,
 

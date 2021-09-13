@@ -1,16 +1,15 @@
 package com.albertoperez1994.scalaql
 
-import scala.reflect.runtime.{universe => ru}
 
 import com.albertoperez1994.scalaql.config.ScalaQLConfig
 import com.albertoperez1994.scalaql.core.{Table, Column}
 import com.albertoperez1994.scalaql.utils
 import utils.StringUtils._
-import utils.ReflectionUtils._
+import utils.TypeInfo
+import scala.deriving.Mirror
 
-case class InsertStatement [T <: DbTable] (data: Either[Seq[T], SelectStatement[T]])
-                                            (implicit tag: ru.TypeTag[T])
-                                            extends SQLStatefulStatement {
+case class InsertStatement [T <: DbTable] (data: Either[Seq[T], SelectStatement[T]], typeInfo: TypeInfo)
+    extends SQLStatefulStatement {
 
   lazy val (sql, paramList) = InsertStatement.generate(this)
 
@@ -28,14 +27,16 @@ case class InsertStatement [T <: DbTable] (data: Either[Seq[T], SelectStatement[
 
 object InsertStatement {
 
-  private implicit val cfg = ScalaQLConfig.get
 
-  def generate [T <: DbTable] (insert: InsertStatement[T])
-                              (implicit tag: ru.TypeTag[T]) = {
+  given ScalaQLConfig = ScalaQLConfig.get
+
+  def generate [T <: DbTable] (insert: InsertStatement[T]) = {
+
+    import insert.{data, typeInfo}
 
     val sql = insert.data match {
-      case Left(data) => getSQL(data)
-      case Right(query) => getSQL(query)
+      case Left(data) => getSQL(data, typeInfo)
+      case Right(query) => getSQL(query, typeInfo)
     }
 
     val paramList = insert.data match {
@@ -47,30 +48,28 @@ object InsertStatement {
   }
 
 
-  def getSQL [T <: DbTable] (data: Seq[T]) (implicit tag: ru.TypeTag[T]) = {
+  def getSQL [T <: DbTable] (data: Seq[T], typeInfo: TypeInfo) = {
 
-    val tableName = className[T]
+    val tableName = typeInfo.className
     val table = Table(tableName)
 
-    val classSymbol = constructorOf[T]
-    val paramNames = classSymbol.paramNames
-    val paramPlaceholders = (0 to data.size - 1).map(x => paramNames.map(x => "?"))
+    val elemNames = typeInfo.elemNames
+    val paramPlaceholders = (0 to data.size - 1).map(x => elemNames.map(x => "?"))
                                                 .map(stringify)
                                                 .mkString(", \n")
 
-     s"""|INSERT INTO ${table.sql} ${stringify(paramNames.map(Column(_, tableName).sql))}
+     s"""|INSERT INTO ${table.sql} ${stringify(elemNames.map(Column(_, tableName).sql))}
          |VALUES      $paramPlaceholders """.stripMargin
   }
 
-  def getSQL [T <: DbTable] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) = {
+  def getSQL [T <: DbTable] (query: SelectStatement[T], typeInfo: TypeInfo) = {
 
-    val tableName = className[T]
+    val tableName = typeInfo.className
     val table = Table(tableName)
 
-    val classSymbol = constructorOf[T]
-    val paramNames = classSymbol.paramNames
+    val elemNames = typeInfo.elemNames
 
-    s"""|INSERT INTO ${table.sql} ${stringify(paramNames.map(Column(_, tableName).sql))}
+    s"""|INSERT INTO ${table.sql} ${stringify(elemNames.map(Column(_, tableName).sql))}
         |${query.sql} """.stripMargin
   }
 }

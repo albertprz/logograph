@@ -241,9 +241,9 @@ case class UpdateClause (table: Table, setClause: SetClause, whereClause: Option
     val setClauseSql =  ExpressionClause.removeAliases(setClause.sql)
     val whereClauseSql = whereClause.fold ("") (x => ExpressionClause.removeAliases(x.sql))
 
-   s"""|UPDATE      ${table.sql}
-       |$setClauseSql
-       |$whereClauseSql""".stripMargin
+    s"""|UPDATE      ${table.sql}
+        |$setClauseSql
+        |$whereClauseSql""".stripMargin
   }
 }
 

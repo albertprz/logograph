@@ -3,11 +3,11 @@ package com.albertoperez1994.scalaql
 import com.albertoperez1994.scalaql.core.{SQLClause, Operator}
 import com.albertoperez1994.scalaql.config.ScalaQLConfig
 
-trait SQLStatement extends SQLClause {
+trait SQLStatement {
 
-  val validate: Unit
-  val sql: String
-  val paramList: List[Any]
+  def validate: Unit
+  def sql: String
+  def paramList: List[Any]
   def run [F[+_]] () (implicit context: ScalaQLContext[F]): F[Any]
 }
 

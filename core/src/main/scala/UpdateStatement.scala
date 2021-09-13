@@ -23,7 +23,7 @@ object UpdateStatement {
 
   import SQLStatement._
 
-  private implicit val cfg = ScalaQLConfig.get
+  given ScalaQLConfig = ScalaQLConfig.get
 
   def generate [T <: DbTable] (update: UpdateStatement[T]) = {
 

@@ -1,20 +1,24 @@
 package com.albertoperez1994.scalaql
 
-import scala.reflect.runtime.{universe => ru}
+import config.ScalaQLConfig
+import utils.TypeInfo
+import utils.StringUtils.*
+import utils.TreeUtils.*
 
-import com.albertoperez1994.scalaql.config.ScalaQLConfig
-import com.albertoperez1994.scalaql.core.SQLEngine._
-import utils.StringUtils._
-import utils.TreeUtils._
+import java.lang.reflect.ParameterizedType
 
 case class SelectStatement [T <: DbDataSet] (sqlTemplate: String,
                                              params: Map[String, Any],
                                              tableNames: Seq[String],
+                                             typeInfo: TypeInfo,
                                              subQueries: Seq[SelectStatement[DbDataSet]] = Seq.empty,
                                              var index: Int = 0,
                                              dependencies: Seq[Int] = Seq.empty)
-                           (implicit tag: ru.TypeTag[T]) extends SQLStatement {
+                            extends SQLStatement {
 
+  // .getActualTypeArguments()
+    // .asInstanceOf[ParameterizedType]
+    //                            .getActualTypeArguments()
 
   import SelectStatement._
 
@@ -25,25 +29,25 @@ case class SelectStatement [T <: DbDataSet] (sqlTemplate: String,
   def run [F[+_]] () (implicit context: ScalaQLContext[F]) =
     context.run(this)
 
-  def union (select: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
+  def union (select: SelectStatement[T]) =
     SelectStatement.union(Seq(this, select))
 
-  def unionAll (select: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
+  def unionAll (select: SelectStatement[T])  =
     SelectStatement.unionAll(Seq(this, select))
 
-  def intersect (select: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
+  def intersect (select: SelectStatement[T]) =
     SelectStatement.intersect(Seq(this, select))
 
-  def except (select: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
+  def except (select: SelectStatement[T]) =
     SelectStatement.except(Seq(this, select))
 
-  def ++ (select: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
+  def ++ (select: SelectStatement[T]) =
     this.union(select)
 
-  def -- (select: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
+  def -- (select: SelectStatement[T]) =
     this.except(select)
 
-  def && (select: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
+  def && (select: SelectStatement[T]) =
     this.intersect(select)
 
   override def toString () =
@@ -52,25 +56,24 @@ case class SelectStatement [T <: DbDataSet] (sqlTemplate: String,
 
 case object SelectStatement {
 
-  import SQLStatement._
+  import SQLStatement.*
 
-  private implicit val cfg = ScalaQLConfig.get
+  given ScalaQLConfig = ScalaQLConfig.get
 
-  def union[T <: DbDataSet] (selects: Seq[SelectStatement[T]]) (implicit tag: ru.TypeTag[T]) =
+  def union[T <: DbDataSet] (selects: Seq[SelectStatement[T]]) =
     concat(selects, "UNION")
 
-  def unionAll[T <: DbDataSet] (selects: Seq[SelectStatement[T]]) (implicit tag: ru.TypeTag[T]) =
+  def unionAll[T <: DbDataSet] (selects: Seq[SelectStatement[T]]) =
     concat(selects, "UNION ALL")
 
-  def intersect[T <: DbDataSet] (selects: Seq[SelectStatement[T]]) (implicit tag: ru.TypeTag[T]) =
+  def intersect[T <: DbDataSet] (selects: Seq[SelectStatement[T]]) =
     concat(selects, "INTERSECT")
 
-  def except[T <: DbDataSet] (selects: Seq[SelectStatement[T]]) (implicit tag: ru.TypeTag[T]) =
+  def except[T <: DbDataSet] (selects: Seq[SelectStatement[T]]) =
     concat(selects, "EXCEPT")
 
 
-  private def concat[T <: DbDataSet] (selects: Seq[SelectStatement[T]], separator: String)
-                    (implicit tag: ru.TypeTag[T]) = {
+  private def concat[T <: DbDataSet] (selects: Seq[SelectStatement[T]], separator: String) = {
 
     val sqlTemplate = selects.map(_.sql)
                              .mkString("\n" + separator + "\n\n")
@@ -80,10 +83,12 @@ case object SelectStatement {
     val tableNames = selects.map(_.tableNames)
                               .fold(Seq.empty)(_++_)
 
-    SelectStatement[T](sqlTemplate, params, tableNames)
+    val typeInfo = selects.head.typeInfo
+
+    SelectStatement[T](sqlTemplate, params, tableNames, typeInfo)
   }
 
-  private def generate [T <: DbDataSet] (select: SelectStatement[_]) =  {
+  private def generate [T <: DbDataSet] (select: SelectStatement[?]) =  {
 
     select.validate
 

@@ -36,9 +36,8 @@ class ScalaQLTest extends AnyFunSpec with BeforeAndAfter with Matchers {
           InnerJoin (a)   (a.id === p.addressId))
       }
 
-      val results = Result(SeedData.john.name, SeedData.john.age, SeedData.johnAddress.street, SeedData.johnTelephone.number)
-
-      complexQuery.run().unsafeRunSync().head should equal (results)
+      complexQuery.run().unsafeRunSync().head should equal (Result(SeedData.john.name, SeedData.john.age,
+                                                                   SeedData.johnAddress.street, SeedData.johnTelephone.number))
     }
 
 
@@ -70,8 +69,8 @@ class ScalaQLTest extends AnyFunSpec with BeforeAndAfter with Matchers {
       val simpleQuery = queryAll[Person]()
 
 
-      simpleQuery.run().unsafeRunSync() should equal (Seq (SeedData.john.copy(age = 40, isEmployer = true),
-                                                           SeedData.thomas))
+      simpleQuery.run().unsafeRunSync() should equal (Seq(SeedData.john.copy(age = 40, isEmployer = true),
+                                                          SeedData.thomas))
     }
 
 

@@ -31,9 +31,9 @@ sealed trait StringCase {
 
 object StringCase {
 
-  val stringCases = Set(CamelCase, PascalCase, SnakeCase,
-                        SnakeUpperCase, KebabCase, KebabUpperCase)
-                          .map(_.productPrefix)
+  // val stringCases = Set(CamelCase, PascalCase, SnakeCase,
+  //                       SnakeUpperCase, KebabCase, KebabUpperCase)
+  //                         .map(_.productPrefix)
 
   def apply(caseName: String): Either[CaseNotAllowed, StringCase] =
     caseName.normalizedToLower() match {
@@ -43,7 +43,7 @@ object StringCase {
       case "snakeuppercase" => Right(SnakeUpperCase)
       case "kebabcase"      => Right(KebabCase)
       case "kebabuppercase" => Right(KebabUpperCase)
-      case _                => Left(CaseNotAllowed(caseName, StringCase.toString(), stringCases))
+      case _                => Left(CaseNotAllowed(caseName, StringCase.toString(), Set.empty))
   }
 
   case object CamelCase extends StringCase {

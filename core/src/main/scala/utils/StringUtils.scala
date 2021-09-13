@@ -1,6 +1,6 @@
 package com.albertoperez1994.scalaql.utils
 
-import scala.collection.StringOps
+// import scala.collection.StringOps
 
 object StringUtils {
 

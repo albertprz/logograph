@@ -23,7 +23,7 @@ object DeleteStatement {
 
   import SQLStatement._
 
-  implicit val cfg = ScalaQLConfig.get
+  given ScalaQLConfig = ScalaQLConfig.get
 
   def generate [T <: DbTable] (delete: DeleteStatement[T]) = {
 
