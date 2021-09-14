@@ -1,15 +1,18 @@
-package com.albertoperez1994.scalaql
-
+package com.albertoperez1994
 
 import com.albertoperez1994.scalaql.core._
 import com.albertoperez1994.scalaql.macros.QueryImpl
+import com.albertoperez1994.scalaql.utils.ReflectionUtils._
+
+import scala.reflect.runtime.{universe => ru}
+
 
 package object scalaql {
 
   import scala.language.experimental.macros
 
   // Statement factory functions
-  def queryAll[T <: DbDataSet] (): SelectStatement[T] =
+  def queryAll[T <: DbTable] (): SelectStatement[T] =
     macro QueryImpl.selectAll[T]
 
   def update[T <: DbTable] (setMap: T => (Map[Any, Any], Where)): UpdateStatement[T] =
@@ -24,14 +27,14 @@ package object scalaql {
   def deleteAll[T <: DbTable] (): DeleteStatement[T] =
     macro QueryImpl.deleteAll[T]
 
-  def insert[T <: DbTable] (data: T) =
-    InsertStatement (Left (Seq(data)))
+  def insert[T <: DbTable] (data: T) (implicit tag: ru.TypeTag[T]) =
+    InsertStatement (Left (Seq(data)), extractTypeInfo[T]())
 
-  def insert[T <: DbTable] (data: Seq[T]) =
-    InsertStatement (Left (data))
+  def insert[T <: DbTable] (data: Seq[T]) (implicit tag: ru.TypeTag[T]) =
+    InsertStatement (Left (data), extractTypeInfo[T]())
 
-  def insert[T <: DbTable] (query: SelectStatement[T]) =
-    InsertStatement (Right (query))
+  def insert[T <: DbTable] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
+    InsertStatement (Right (query), extractTypeInfo[T]())
 
   def query[T] = QueryBuilder[T]()
 

@@ -8,8 +8,7 @@ Test / parallelExecution := false
 
 lazy val mainSettings = Seq(
 
-  scalaVersion := "3.0.0",
-  crossScalaVersions := Seq("3.0.0", "2.13.6"),
+  scalaVersion := "2.13.6",
 
   scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((2, 13)) => Seq("-Ytasty-reader")
@@ -28,14 +27,14 @@ lazy val core = project
   .settings(
     name := "scalaql-core",
     mainSettings,
-    crossScalaVersions := Seq()
+    scalaVersion := "3.0.0",
   )
 
 lazy val macros = project
   .in(file("macros"))
   .settings(
     name := "scalaql-macros",
-    mainSettings
+    mainSettings,
   )
 .dependsOn(core)
 

@@ -130,10 +130,12 @@ sealed abstract class BaseJoinClause (joinType: String) (implicit cfg: ScalaQLCo
 
 object BaseJoinClause {
 
-  def apply (str: String) (implicit cfg: ScalaQLConfig) = str match {
-    case "InnerJoin" => InnerJoinClause.apply _
-    case "RightJoin" => RightJoinClause.apply _
-    case "LeftJoin"  => LeftJoinClause.apply _
+  def apply (str: String) (implicit cfg: ScalaQLConfig):
+      (Table, String, List[Expression]) => BaseJoinClause =
+    str match {
+      case "InnerJoin" => InnerJoinClause.apply _
+      case "RightJoin" => RightJoinClause.apply _
+      case "LeftJoin"  => LeftJoinClause.apply _
   }
 }
 

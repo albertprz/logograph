@@ -24,11 +24,11 @@ object ScalaQLConfig {
 
   val configFileName = "scalaql.conf"
 
-  val get = FileUtils.getFile(configFileName)
-                     .map(file => ConfigSource.file(file)
-                                              .load[ScalaQLConfig]
-                                              .getOrElse(throw new InvalidScalaQLConfig))
-                     .getOrElse(ScalaQLConfig())
+  lazy val get = FileUtils.getFile(configFileName)
+                          .map(file => ConfigSource.file(file)
+                                                    .load[ScalaQLConfig]
+                                                    .getOrElse(throw new InvalidScalaQLConfig))
+                          .getOrElse(ScalaQLConfig())
 
 
   given ProductHint[ScalaQLConfig] =
@@ -40,9 +40,11 @@ object ScalaQLConfig {
   given ConfigReader[SQLEngine] =
     ConfigReader.fromNonEmptyStringTry(SQLEngine(_).toTry)
 
-  given mapConfigReader[T: ConfigReader]: ConfigReader[Map[String, T]] with
+  given mapConfigReader[T: ConfigReader]: ConfigReader[Map[String, T]] =
+    new ConfigReader[Map[String, T]] with ReadsMissingKeys {
     override def from(cur: ConfigCursor) =
       if (cur.isUndefined) Right(Map.empty) else ConfigReader[Map[String, T]].from(cur)
+    }
 
   given ConfigReader[ScalaQLConfig] =
     ConfigReader.forProduct7[ScalaQLConfig, Option[SQLEngine],

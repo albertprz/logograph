@@ -16,9 +16,6 @@ case class SelectStatement [T <: DbDataSet] (sqlTemplate: String,
                                              dependencies: Seq[Int] = Seq.empty)
                             extends SQLStatement {
 
-  // .getActualTypeArguments()
-    // .asInstanceOf[ParameterizedType]
-    //                            .getActualTypeArguments()
 
   import SelectStatement._
 
