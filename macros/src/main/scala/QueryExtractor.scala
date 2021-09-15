@@ -179,6 +179,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
       case _ => None
     }
 
+
     for ((operator, operands) <- op)
       yield Operation(operator.decodedName.toString, operands.flatMap(getExpression))
   }

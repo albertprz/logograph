@@ -1,6 +1,5 @@
 package com.albertoperez1994.scalaql
 
-
 sealed trait SelectBase [T <: DbDataSet]
 case class Select [T <: DbDataSet] (select: T) extends SelectBase[T]
 case class SelectAll [T <: DbTable] (select: T) extends SelectBase[T]
@@ -15,10 +14,7 @@ case class LeftJoin (table: DbDataSet) (join: Boolean*) extends BaseJoin
 case class RightJoin (table: DbDataSet) (join: Boolean*) extends BaseJoin
 
 
-class Query[T <: DbDataSet] {
-
-  def where (filterFns: Seq[T => Boolean]) = ???
-}
+case class Query[T <: DbDataSet]()
 
 object Query {
 

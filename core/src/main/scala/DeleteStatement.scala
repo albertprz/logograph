@@ -4,8 +4,8 @@ import com.albertoperez1994.scalaql.config.ScalaQLConfig
 import com.albertoperez1994.scalaql.utils
 import utils.StringUtils._
 
-case class DeleteStatement [T <: DbTable]  (private val sqlTemplate: String,
-                                            private val params: Map[String, Any] = Map.empty)
+case class DeleteStatement [T <: DbTable]  (sqlTemplate: String,
+                                            params: Map[String, Any] = Map.empty)
                                            extends SQLStatefulStatement {
 
   lazy val (sql, paramList) = DeleteStatement.generate(this)

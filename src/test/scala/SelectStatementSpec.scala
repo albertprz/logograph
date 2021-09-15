@@ -5,8 +5,6 @@ import org.scalatest.matchers.should.Matchers
 
 import com.albertoperez1994.scalaql._
 import com.albertoperez1994.scalaql.utils.StringUtils._
-import TestModels._
-import TestResultModels._
 
 class SelectStatementSpec extends AnyFunSpec with Matchers {
 

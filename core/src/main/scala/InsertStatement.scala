@@ -27,7 +27,6 @@ case class InsertStatement [T <: DbTable] (data: Either[Seq[T], SelectStatement[
 
 object InsertStatement {
 
-
   given ScalaQLConfig = ScalaQLConfig.get
 
   def generate [T <: DbTable] (insert: InsertStatement[T]) = {

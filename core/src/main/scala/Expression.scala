@@ -43,20 +43,24 @@ case class Identity (name: String, tree: Any) (implicit cfg: ScalaQLConfig)
 }
 
 
-sealed trait OpType
-case object Infix  extends OpType
-case object Prefix  extends OpType
-case object Postfix  extends OpType
+enum OpType:
+  case Infix, Prefix, Postfix
+
+// sealed trait OpType
+// case class Infix()  extends OpType
+// case class Prefix()  extends OpType
+// case class Postfix()  extends OpType
 
 
 case class Operation (operator: String, operands: List[Expression]) (implicit cfg: ScalaQLConfig)
     extends Expression {
 
   import QueryOps._
+  import OpType._
 
-  val opType = if       (infixOps.contains(operator))        Infix
-               else if  (postfixOps.contains(operator))      Postfix
-               else if  (prefixOps.contains(operator))       Prefix
+  val opType: OpType = if      infixOps.contains(operator)   then Infix
+                       else if postfixOps.contains(operator) then Postfix
+                       else                                       Prefix
 
 
   val validate = {

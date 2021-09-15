@@ -4,11 +4,12 @@ ThisBuild / Compile / compile / logLevel := Level.Warn
 Global / excludeLintKeys += logLevel
 Global / onChangedBuildSource := ReloadOnSourceChanges
 Test / parallelExecution := false
+IntegrationTest / classLoaderLayeringStrategy := ClassLoaderLayeringStrategy.ScalaLibrary
+
 
 
 lazy val mainSettings = Seq(
 
-  scalaVersion := "2.13.6",
 
   scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((2, 13)) => Seq("-Ytasty-reader")
@@ -27,7 +28,7 @@ lazy val core = project
   .settings(
     name := "scalaql-core",
     mainSettings,
-    scalaVersion := "3.0.0",
+    scalaVersion := "3.0.0"
   )
 
 lazy val macros = project
@@ -35,6 +36,7 @@ lazy val macros = project
   .settings(
     name := "scalaql-macros",
     mainSettings,
+    scalaVersion := "2.13.6"
   )
 .dependsOn(core)
 
@@ -46,6 +48,7 @@ lazy val app = project
     mainSettings,
     integrationTestSettings,
     libraryDependencies ++= testDependencies,
+    scalaVersion := "2.13.6"
   )
 .dependsOn(core, macros)
 .aggregate(core, macros)

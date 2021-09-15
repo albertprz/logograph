@@ -5,7 +5,6 @@ import utils.TypeInfo
 import utils.StringUtils.*
 import utils.TreeUtils.*
 
-import java.lang.reflect.ParameterizedType
 
 case class SelectStatement [T <: DbDataSet] (sqlTemplate: String,
                                              params: Map[String, Any],
@@ -16,14 +15,13 @@ case class SelectStatement [T <: DbDataSet] (sqlTemplate: String,
                                              dependencies: Seq[Int] = Seq.empty)
                             extends SQLStatement {
 
-
   import SelectStatement._
 
   lazy val (sql, paramList) = SelectStatement.generate(this)
 
   lazy val validate = {}
 
-  def run [F[+_]] () (implicit context: ScalaQLContext[F]) =
+  def run [F[+_]] () (implicit context: ScalaQLContext[F]): F[List[T]] =
     context.run(this)
 
   def union (select: SelectStatement[T]) =

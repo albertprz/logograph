@@ -3,7 +3,6 @@ package it
 import java.sql.DriverManager
 import com.albertoperez1994.scalaql._
 import cats.effect.IO
-import TestModels._
 
 
 object Database {

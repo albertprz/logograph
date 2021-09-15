@@ -11,6 +11,7 @@ import cats.effect.{Sync, Resource}
 import com.albertoperez1994.scalaql.config.ScalaQLConfig
 import utils.TypeInfo
 import utils.StringUtils.*
+import java.lang.reflect.Method
 
 class ScalaQLContext [F[_] : Sync : Monad] (conn: Connection) {
 
@@ -53,13 +54,15 @@ private object ScalaQLContext {
   def extractResults [T <: DbDataSet] (resultSet: ResultSet, typeInfo: TypeInfo) = {
 
     val results = ListBuffer[T]()
+
     val constructor = Class.forName(typeInfo.fullClassName)
                            .getConstructors()
                            .head
 
+
     while (resultSet.next()) {
-        val ctorArgs = getCtorArgs(resultSet, typeInfo.elemTypes)
-        results += constructor.newInstance(ctorArgs).asInstanceOf[T]
+      val ctorArgs = getCtorArgs(resultSet, typeInfo.elemTypes)
+      results += constructor.newInstance(ctorArgs: _*).asInstanceOf[T]
     }
 
     results.toList
@@ -89,17 +92,17 @@ private object ScalaQLContext {
   def getCtorArgs (resultSet: ResultSet, paramTypes: List[String]) =
     for (i <- 0 to paramTypes.size - 1)
         yield paramTypes(i) match {
-          case "scala.Int"            => resultSet.getInt(i + 1)
-          case "scala.Long"           => resultSet.getLong(i + 1)
-          case "scala.Float"          => resultSet.getFloat(i + 1)
-          case "scala.Double"         => resultSet.getDouble(i + 1)
-          case "scala.Boolean"        => resultSet.getBoolean(i + 1)
-          case "java.lang.String"     => resultSet.getString(i + 1)
-          case "java.lang.BigDecimal" => resultSet.getBigDecimal(i + 1)
-          case "java.sql.date"        => resultSet.getDate(i + 1)
-          case "java.sql.time"        => resultSet.getTime(i + 1)
-          case other @ _              => throw new Exception("Unknown types cannot be returned " +
-                                                             "as query results: \n" +
-                                                             s"Type: ${other.getClass.getName()}".stripMargin)
+          case "Int"            => resultSet.getInt(i + 1)
+          case "Long"           => resultSet.getLong(i + 1)
+          case "Float"          => resultSet.getFloat(i + 1)
+          case "Double"         => resultSet.getDouble(i + 1)
+          case "Boolean"        => resultSet.getBoolean(i + 1)
+          case "String"         => resultSet.getString(i + 1)
+          case "BigDecimal"     => resultSet.getBigDecimal(i + 1)
+          case "date"           => resultSet.getDate(i + 1)
+          case "time"           => resultSet.getTime(i + 1)
+          case other @ _        => throw new Exception("Unknown types cannot be returned " +
+                                                        "as query results: \n" +
+                                                        s"Type: ${other.getClass.getName()}".stripMargin)
         }
 }

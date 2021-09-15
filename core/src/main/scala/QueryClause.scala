@@ -2,7 +2,6 @@ package com.albertoperez1994.scalaql.core
 
 import com.albertoperez1994.scalaql.utils.StringUtils._
 import com.albertoperez1994.scalaql.config.ScalaQLConfig
-import com.albertoperez1994.scalaql.{SelectDistinct, SelectDistinctAll}
 
 trait ExpressionClause extends SQLClause {
   val exprs: List[Expression]
@@ -201,8 +200,8 @@ case class QueryClause (select: Option[BaseSelectClause] = None, from: Option[Fr
     val orderByExprs = orderBy.fold (List.empty[Expression]) (_.exprs) diff
                        select.fold  (List.empty[Expression]) (_.exprs)
 
-      if ((groupBy.isDefined || select.fold(false)(x => x.isInstanceOf[SelectDistinct[_]] ||
-                                                        x.isInstanceOf[SelectDistinctAll[_]])) &&
+      if ((groupBy.isDefined || select.fold(false)(x => x.isInstanceOf[SelectDistinctClause] ||
+                                                        x.isInstanceOf[SelectDistinctAllClause])) &&
          orderByExprs.nonEmpty) {
       throw new Exception(s"""|\nThere are some expressions used in the Order By Clause, which were not
                               |included in the Select Clause:\n${pprint(orderByExprs)}

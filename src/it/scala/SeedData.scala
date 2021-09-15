@@ -1,6 +1,5 @@
 package it
 
-import TestModels._
 
 object SeedData {
 

@@ -6,8 +6,6 @@ import org.scalatest.matchers.should.Matchers
 import cats.effect.unsafe.implicits.global
 
 import com.albertoperez1994.scalaql._
-import TestModels._
-import TestResultModels._
 import Database.context
 
 
@@ -36,6 +34,7 @@ class ScalaQLTest extends AnyFunSpec with BeforeAndAfter with Matchers {
           InnerJoin (a)   (a.id === p.addressId))
       }
 
+
       complexQuery.run().unsafeRunSync().head should equal (Result(SeedData.john.name, SeedData.john.age,
                                                                    SeedData.johnAddress.street, SeedData.johnTelephone.number))
     }
@@ -52,11 +51,11 @@ class ScalaQLTest extends AnyFunSpec with BeforeAndAfter with Matchers {
                   insert(mattTelephone))
               .unsafeRunSync()
 
-      queryAll[Person]().run().unsafeRunSync() should equal (SeedData.people :+ matt)
+      queryAll[Person].run().unsafeRunSync() should equal (SeedData.people :+ matt)
 
-      queryAll[Address]().run().unsafeRunSync() should equal (SeedData.addresses :+ mattAddress)
+      queryAll[Address].run().unsafeRunSync() should equal (SeedData.addresses :+ mattAddress)
 
-      queryAll[Telephone]().run().unsafeRunSync() should equal (SeedData.telephones :+ mattTelephone)
+      queryAll[Telephone].run().unsafeRunSync() should equal (SeedData.telephones :+ mattTelephone)
     }
 
 
@@ -66,7 +65,7 @@ class ScalaQLTest extends AnyFunSpec with BeforeAndAfter with Matchers {
                                           p.isEmployer -> true),
                                       Where(p.name === "John")))).unsafeRunSync()
 
-      val simpleQuery = queryAll[Person]()
+      val simpleQuery = queryAll[Person]
 
 
       simpleQuery.run().unsafeRunSync() should equal (Seq(SeedData.john.copy(age = 40, isEmployer = true),
@@ -82,11 +81,11 @@ class ScalaQLTest extends AnyFunSpec with BeforeAndAfter with Matchers {
               .unsafeRunSync()
 
 
-      queryAll[Person]().run().unsafeRunSync().head should equal (SeedData.thomas)
+      queryAll[Person].run().unsafeRunSync().head should equal (SeedData.thomas)
 
-      queryAll[Address]().run().unsafeRunSync().head should equal (SeedData.thomasAddress)
+      queryAll[Address].run().unsafeRunSync().head should equal (SeedData.thomasAddress)
 
-      queryAll[Telephone]().run().unsafeRunSync().head should equal (SeedData.thomasTelephone)
+      queryAll[Telephone].run().unsafeRunSync().head should equal (SeedData.thomasTelephone)
     }
   }
 }
