@@ -1,8 +1,10 @@
 package com.albertoperez1994.scalaql.utils
 
-object QueryUtils {
+
+object QueryUtils:
 
   def splitTupledTypeTag (typeTagStr: String) =
+
     typeTagStr.replace("(", "")
               .replace(")", "")
               .split(',')
@@ -10,15 +12,14 @@ object QueryUtils {
               .toList
 
   def literaltoSql (literal: Any): String =
-    literal match {
+
+    literal match
       case str: String   => s"'${str.replace("'", "''")}'"
       case num: Number   => num.toString
-      case bool: Boolean => if (bool) "1" else "0"
-      case list: List[_]   => list.map(literaltoSql)
+      case bool: Boolean => if bool then "1" else "0"
+      case list: List[?]   => list.map(literaltoSql)
                                   .mkString("(", ", ", ")")
       case other: Any    => throw new Exception(s"""|Unknown types cannot be used in queries
                                                     |for constant or runtime parameter values:
                                                     |Type: ${literal.getClass.getSimpleName}
                                                     |Value: $literal""".stripMargin)
-    }
-}

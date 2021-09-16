@@ -13,9 +13,10 @@ import utils.TypeInfo
 import utils.StringUtils.*
 import java.lang.reflect.Method
 
-class ScalaQLContext [F[_] : Sync : Monad] (conn: Connection) {
 
-  import ScalaQLContext._
+class ScalaQLContext [F[_] : Sync : Monad] (conn: Connection):
+
+  import ScalaQLContext.*
 
   conn.setAutoCommit(false)
 
@@ -29,29 +30,28 @@ class ScalaQLContext [F[_] : Sync : Monad] (conn: Connection) {
   private def runQuery [T <: DbDataSet] (query: SelectStatement[T]): F[List[T]] =
     prepareStatement(query.sql, query.paramList).use { stmt =>
 
-      for (resultSet <- Sync[F].blocking { stmt.executeQuery() })
+      for resultSet <- Sync[F].blocking { stmt.executeQuery() }
         yield extractResults(resultSet, query.typeInfo)
     }
 
-  private def runStatefulStatement  (stmts: Seq[SQLStatefulStatement]) = {
+  private def runStatefulStatement  (stmts: Seq[SQLStatefulStatement]) =
 
-    val preparedStmts = for ((sql, paramList) <- stmts.map(x => (x.sql, x.paramList)))
+    val preparedStmts = for (sql, paramList) <- stmts.map(x => (x.sql, x.paramList))
                         yield prepareStatement(sql, paramList)
                                 .use { stmt => Sync[F].blocking { stmt.executeUpdate() } }
 
     preparedStmts.fold (Sync[F].pure(0)) { case (acc, curr) => acc *> curr } *>
     Sync[F].blocking { conn.commit() }
-  }
 
   private def prepareStatement (querySql: String, paramList: List[Any]) =
     Resource.make { Sync[F].blocking { conn.prepareStatement(querySql) } }
                   { stmt => Sync[F].blocking { stmt.close() } }
             .map  { stmt => parameteriseStatement(stmt, paramList) }
-}
 
-private object ScalaQLContext {
 
-  def extractResults [T <: DbDataSet] (resultSet: ResultSet, typeInfo: TypeInfo) = {
+private object ScalaQLContext:
+
+  def extractResults [T <: DbDataSet] (resultSet: ResultSet, typeInfo: TypeInfo) =
 
     val results = ListBuffer[T]()
 
@@ -60,17 +60,15 @@ private object ScalaQLContext {
                            .head
 
 
-    while (resultSet.next()) {
+    while resultSet.next() do
       val ctorArgs = getCtorArgs(resultSet, typeInfo.elemTypes)
       results += constructor.newInstance(ctorArgs: _*).asInstanceOf[T]
-    }
 
     results.toList
-  }
 
-  def parameteriseStatement (stmt: PreparedStatement, params: List[Any]) = {
-    for (i <- 0 to params.size - 1) {
-      params(i) match {
+  def parameteriseStatement (stmt: PreparedStatement, params: List[Any]) =
+    for i <- 0 to params.size - 1 do
+      params(i) match
         case int: Int        => stmt.setInt(i + 1, int)
         case long: Long      => stmt.setLong(i + 1, long)
         case float: Float    => stmt.setFloat(i + 1, float)
@@ -84,14 +82,11 @@ private object ScalaQLContext {
                                                     "for constant or runtime parameter values: \n" +
                                                     s"""|Type: ${other.getClass.getName()}
                                                         |Value: $other""".stripMargin)
-      }
-    }
     stmt
-  }
 
   def getCtorArgs (resultSet: ResultSet, paramTypes: List[String]) =
-    for (i <- 0 to paramTypes.size - 1)
-        yield paramTypes(i) match {
+    for i <- 0 to paramTypes.size - 1
+        yield paramTypes(i) match
           case "Int"            => resultSet.getInt(i + 1)
           case "Long"           => resultSet.getLong(i + 1)
           case "Float"          => resultSet.getFloat(i + 1)
@@ -104,5 +99,3 @@ private object ScalaQLContext {
           case other @ _        => throw new Exception("Unknown types cannot be returned " +
                                                         "as query results: \n" +
                                                         s"Type: ${other.getClass.getName()}".stripMargin)
-        }
-}

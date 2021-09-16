@@ -13,7 +13,7 @@ case class SelectStatement [T <: DbDataSet] (sqlTemplate: String,
                                              subQueries: Seq[SelectStatement[DbDataSet]] = Seq.empty,
                                              var index: Int = 0,
                                              dependencies: Seq[Int] = Seq.empty)
-                            extends SQLStatement {
+                            extends SQLStatement:
 
   import SelectStatement._
 
@@ -21,7 +21,7 @@ case class SelectStatement [T <: DbDataSet] (sqlTemplate: String,
 
   lazy val validate = {}
 
-  def run [F[+_]] () (implicit context: ScalaQLContext[F]): F[List[T]] =
+  def run [F[+_]] () (using context: ScalaQLContext[F]): F[List[T]] =
     context.run(this)
 
   def union (select: SelectStatement[T]) =
@@ -47,9 +47,9 @@ case class SelectStatement [T <: DbDataSet] (sqlTemplate: String,
 
   override def toString () =
     s"Query: \n\n$sqlTemplate \n\nParams:  \n\n${pprint(params)}\n\n"
-}
 
-case object SelectStatement {
+
+case object SelectStatement:
 
   import SQLStatement.*
 
@@ -68,7 +68,7 @@ case object SelectStatement {
     concat(selects, "EXCEPT")
 
 
-  private def concat[T <: DbDataSet] (selects: Seq[SelectStatement[T]], separator: String) = {
+  private def concat[T <: DbDataSet] (selects: Seq[SelectStatement[T]], separator: String) =
 
     val sqlTemplate = selects.map(_.sql)
                              .mkString("\n" + separator + "\n\n")
@@ -81,9 +81,9 @@ case object SelectStatement {
     val typeInfo = selects.head.typeInfo
 
     SelectStatement[T](sqlTemplate, params, tableNames, typeInfo)
-  }
 
-  private def generate [T <: DbDataSet] (select: SelectStatement[?]) =  {
+
+  private def generate [T <: DbDataSet] (select: SelectStatement[?]) =
 
     select.validate
 
@@ -102,16 +102,14 @@ case object SelectStatement {
       }
 
     val ctes = queries.init
-                      .map{ case (querySql, i) => s"q$i AS\n(\n${querySql.indent(2)})" }
+                      .map{ (querySql, i) => s"q$i AS\n(\n${querySql.indent(2)})" }
                       .mkString("WITH ", ",\n", "\n")
 
     val (finalQuery, _) = queries.last
 
-    val sqlTemplate = if (queries.init.nonEmpty) s"$ctes\n$finalQuery"
+    val sqlTemplate = if queries.init.nonEmpty then s"$ctes\n$finalQuery"
                       else finalQuery
 
     val params = (select.subQueries.map(_.params) :+ select.params).flatten.toMap
 
     (getSQL(sqlTemplate, params), getParamList(params))
-  }
-}

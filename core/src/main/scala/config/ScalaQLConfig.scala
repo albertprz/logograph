@@ -20,7 +20,7 @@ case class ScalaQLConfig (engine:                Option[SQLEngine]              
                           operatorConverter:     Map[String, String]              = Map.empty)
 
 
-object ScalaQLConfig {
+object ScalaQLConfig:
 
   import Implicits.given ConfigReader[ScalaQLConfig]
 
@@ -31,9 +31,8 @@ object ScalaQLConfig {
                                                     .load[ScalaQLConfig]
                                                     .getOrElse(throw new InvalidScalaQLConfig))
                           .getOrElse(ScalaQLConfig())
-}
 
-  object Implicits {
+object Implicits:
 
   given ProductHint[ScalaQLConfig] =
     ProductHint[ScalaQLConfig](allowUnknownKeys = false)
@@ -46,8 +45,8 @@ object ScalaQLConfig {
 
   given ConfigReader[ScalaQLConfig] =
     ConfigReader.forProduct7[ScalaQLConfig, Option[SQLEngine],
-                             Option[CaseConverter], Option[CaseConverter], Option[CaseConverter],
-                             Map[String, String], Map[String, Map[String, String]], Map[String, String]] (
+                            Option[CaseConverter], Option[CaseConverter], Option[CaseConverter],
+                            Map[String, String], Map[String, Map[String, String]], Map[String, String]] (
       "engine", "tableCaseConverter", "columnCaseConverter", "operatorCaseConverter",
                 "tableConverter", "columnConverter", "operatorConverter") {
       case (engine, tableCaseConverter, columnCaseConverter, operatorCaseConverter,
@@ -55,4 +54,3 @@ object ScalaQLConfig {
         ScalaQLConfig(engine, tableCaseConverter, columnCaseConverter, operatorCaseConverter,
                     tableConverter, columnConverter, operatorConverter)
     }
-  }

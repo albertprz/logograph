@@ -1,6 +1,6 @@
 package com.albertoperez1994.scalaql.core
 
-object QueryOps {
+object QueryOps:
 
   val infixOps = List("-", "+", "*", "/", "===", "<>", "and", "or", "<", ">", "<=", ">=",
                       "like", "notLike", "in", "notIn")
@@ -14,4 +14,3 @@ object QueryOps {
   val aggOps = List("count", "sum", "avg", "max", "min", "stringAgg")
 
   val opsConversion = Map("===" -> "=", "notLike" -> "not like", "notIn" -> "not in")
-}

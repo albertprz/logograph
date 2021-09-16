@@ -5,7 +5,7 @@ import java.io.FileReader
 import java.util.{Optional, Properties}
 
 
-object FileUtils {
+object FileUtils:
 
   def getFile(fileName: String) =
     Files.walk(Paths.get("."))
@@ -15,9 +15,8 @@ object FileUtils {
           .map(_.toFile())
 
 
-  implicit class RichOptional[T] (opt: Optional[T]) {
-    def toOption [T] () =
-      if (opt.isPresent) Some(opt.get())
+  extension[T] (opt: Optional[T])
+
+    def toOption () =
+      if opt.isPresent then Some(opt.get())
       else               None
-  }
-}

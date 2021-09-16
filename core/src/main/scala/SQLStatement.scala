@@ -3,17 +3,18 @@ package com.albertoperez1994.scalaql
 import com.albertoperez1994.scalaql.core.{SQLClause, Operator}
 import com.albertoperez1994.scalaql.config.ScalaQLConfig
 
-trait SQLStatement {
+
+trait SQLStatement:
 
   def validate: Unit
   def sql: String
   def paramList: List[Any]
   def run [F[+_]] () (implicit context: ScalaQLContext[F]): F[Any]
-}
 
 trait SQLStatefulStatement extends SQLStatement
 
-private object SQLStatement {
+
+private object SQLStatement:
 
   def getParamList (params: Map[String, Any]) =
     (params.values flatMap { _ match {
@@ -31,4 +32,3 @@ private object SQLStatement {
                                                             curr.map(x => "?")
                                                                   .mkString(s"${Operator("in").sql} (", ", ", ")"))
           }
-}

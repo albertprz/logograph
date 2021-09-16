@@ -5,13 +5,13 @@ import scala.quoted.*
 case class TypeInfo (fullClassName: String, className: String, elemNames: List[String], elemTypes: List[String])
 
 
-object TypeInfo {
+object TypeInfo:
 
-  def build(tuple: (String, String, List[String], List[String])) = {
+  def build(tuple: (String, String, List[String], List[String])) =
 
     val (fullClassName, className, elemNames, elemTypes) = tuple
     TypeInfo(fullClassName, className, elemNames, elemTypes)
-  }
+
 
   // inline def apply[T]: (String, String, List[String], List[String]) = ${ typeInfoImpl[T] }
 
@@ -30,4 +30,3 @@ object TypeInfo {
 
   //   Expr((fullClassName, className, elemNames, elemTypes))
   // }
-}

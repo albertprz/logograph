@@ -1,16 +1,16 @@
 package com.albertoperez1994.scalaql.utils
 
-// import scala.collection.StringOps
 
-object StringUtils {
+object StringUtils:
 
-  def pprint (value: Any): String = value match {
-    case seq: Seq[_]   => seq.map(pprint)
+  def pprint (value: Any): String = value match
+
+    case seq: Seq[?]   => seq.map(pprint)
                              .mkString(getSeparator(seq))
                              .wrapBrackets()
 
-    case dict: Map[_, _] => dict.map { case (k, v) => (pprint(k),  pprint(v)) }
-                                .map { case (k, v) => s"$k -> $v" }
+    case dict: Map[?, ?] => dict.map { (k, v) => (pprint(k),  pprint(v)) }
+                                .map { (k, v) => s"$k -> $v" }
                                 .mkString(getSeparator(dict))
                                 .wrapCurlyBrackets()
 
@@ -20,15 +20,17 @@ object StringUtils {
                                 .wrapBrackets()
     case null => "null"
     case other @ _ => other.toString
-  }
+
 
   def stringify (seq: Seq[String]) = seq.mkString("(", ", ", ")")
 
+
   private def getSeparator (value: Any) =
-    if (value.toString.size > 30) ",\n " else ", "
+    if value.toString.size > 30 then ",\n " else ", "
 
 
-  implicit class RichString (str: String) {
+
+  extension (str: String)
 
     def mapLines(mapFn: String => String) = str.split("\n")
                                                .map(mapFn)
@@ -56,12 +58,10 @@ object StringUtils {
       str.substring(1, str.length - 1)
 
     def wrapBrackets () =
-      wrap("[", "]")
+      str.wrap("[", "]")
 
     def wrapParens () =
-      wrap("(", ")")
+      str.wrap("(", ")")
 
     def wrapCurlyBrackets () =
-      wrap("{", "}")
-  }
-}
+      str.wrap("{", "}")

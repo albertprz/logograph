@@ -28,6 +28,7 @@ lazy val core = project
   .settings(
     name := "scalaql-core",
     mainSettings,
+    scalacOptions ++= Seq("-new-syntax", "-indent"),
     scalaVersion := "3.0.0"
   )
 

@@ -123,6 +123,19 @@ class QueryImpl(val c: blackbox.Context) {
     val fullName = weakTypeOf[T].toString()
     val name     = fullName.split('.').last
 
+    val nestedCaseClass = fullName.split(',')
+                                  .find(_.split('.').dropRight(1).last.head.isUpper)
+
+    if (nestedCaseClass.nonEmpty) {
+
+      c.error(c.enclosingPosition,
+              s"""ScalaQL Compilation Error:
+                  Case classes used in queries must be defined at the top-level within a package scope.
+                  Case class '${nestedCaseClass.get}' defined within the scope of an object or class is not supported."""
+                +"\n\n")
+    }
+
+
     TypeInfo(fullName, name, elemNames, elemTypes)
   }
 }

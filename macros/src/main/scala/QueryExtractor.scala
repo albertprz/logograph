@@ -209,8 +209,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
     case q"scala.`package`.List.apply[$_](..$values)" if values.forall(getLiteral(_).isDefined) =>
       Some(LiteralVal(values.flatMap(getLiteral(_).map(_.value))
-                            .mkString(", ")
-                            .wrapParens()))
+                            .mkString("(", ", ", ")")))
 
     case _ => None
   }
