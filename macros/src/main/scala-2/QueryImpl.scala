@@ -51,7 +51,7 @@ class QueryImpl(val c: blackbox.Context) {
   private def buildQuery[T, R <: DbDataSet] (queryTree: Tree)
                                             (implicit tag1: WeakTypeTag[T], tag2: WeakTypeTag[R]) = {
 
-    val (typeInfoT, typeInfoR) = (extractTypeInfo[T](), extractTypeInfo[R]())
+    val (typeInfoT, typeInfoR) = (extractTypeInfo[T], extractTypeInfo[R])
     val (clause, params, table) = extractor.getQueryClause(queryTree, typeInfoT.fullClassName,
                                                            typeInfoR.fullClassName, typeInfoR.elemNames)
 
@@ -70,7 +70,7 @@ class QueryImpl(val c: blackbox.Context) {
 
   private def buildQueryAll[T <: DbDataSet] () (implicit tag: WeakTypeTag[T]) = {
 
-    val typeInfo = extractTypeInfo[T]()
+    val typeInfo = extractTypeInfo[T]
 
     val (clause, table) = extractor.getQueryClause(weakTypeOf[T].toString)
 
@@ -112,7 +112,7 @@ class QueryImpl(val c: blackbox.Context) {
   }
 
 
-  private def extractTypeInfo[T: WeakTypeTag]() = {
+  private def extractTypeInfo[T: WeakTypeTag] = {
 
     val ctorParamList = weakTypeOf[T].decls
                                      .filter(_.name.decoded == "<init>")

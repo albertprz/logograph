@@ -11,22 +11,3 @@ object TypeInfo:
 
     val (fullClassName, className, elemNames, elemTypes) = tuple
     TypeInfo(fullClassName, className, elemNames, elemTypes)
-
-
-  // inline def apply[T]: (String, String, List[String], List[String]) = ${ typeInfoImpl[T] }
-
-  // def typeInfoImpl[T: Type](using q: Quotes): Expr[(String, String, List[String], List[String])] = {
-
-  //   import q.reflect.*
-
-  //   val typeSymbol = TypeRepr.of[T].typeSymbol
-  //   val className = typeSymbol.name
-  //   val fullClassName = typeSymbol.fullName
-  //   val fields = typeSymbol.caseFields
-
-  //   val elemNames = fields.map(_.name)
-  //   val elemTypes = fields.map(_.tree match { case v: ValDef => v.tpt.tpe.typeSymbol.name })
-
-
-  //   Expr((fullClassName, className, elemNames, elemTypes))
-  // }

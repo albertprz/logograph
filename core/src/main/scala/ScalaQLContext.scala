@@ -40,10 +40,10 @@ class ScalaQLContext [F[_] : Sync : Monad] (conn: Connection):
                         yield prepareStatement(sql, paramList)
                                 .use { stmt => Sync[F].blocking { stmt.executeUpdate() } }
 
-    preparedStmts.fold (Sync[F].pure(0)) { case (acc, curr) => acc *> curr } *>
+    preparedStmts.fold (Sync[F].pure(0)) { (acc, curr) => acc *> curr } *>
     Sync[F].blocking { conn.commit() }
 
-  private def prepareStatement (querySql: String, paramList: List[Any]) =
+  private def prepareStatement (querySql: String, paramList: List[?]) =
     Resource.make { Sync[F].blocking { conn.prepareStatement(querySql) } }
                   { stmt => Sync[F].blocking { stmt.close() } }
             .map  { stmt => parameteriseStatement(stmt, paramList) }
@@ -66,7 +66,8 @@ private object ScalaQLContext:
 
     results.toList
 
-  def parameteriseStatement (stmt: PreparedStatement, params: List[Any]) =
+  def parameteriseStatement (stmt: PreparedStatement, params: List[?]) =
+
     for i <- 0 to params.size - 1 do
       params(i) match
         case int: Int        => stmt.setInt(i + 1, int)
@@ -85,6 +86,7 @@ private object ScalaQLContext:
     stmt
 
   def getCtorArgs (resultSet: ResultSet, paramTypes: List[String]) =
+
     for i <- 0 to paramTypes.size - 1
         yield paramTypes(i) match
           case "Int"            => resultSet.getInt(i + 1)

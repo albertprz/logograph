@@ -18,6 +18,7 @@ class SelectStatementSpec extends AnyFunSpec with Matchers {
         SELECT      p.*
         FROM        [person] AS p"""
 
+
       simpleQuery.sql.trimLines() should equal (simpleQuerySql.trimLines())
     }
 
