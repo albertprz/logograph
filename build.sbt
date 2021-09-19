@@ -11,12 +11,12 @@ lazy val mainSettings = Seq(
 
   scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((2, 13)) => Seq("-Ytasty-reader")
-    case _             => Seq("-new-syntax", "-rewrite")
+    case _             => Seq("-new-syntax", "-indent")
   }),
 
   libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
-    case Some((2, 13)) => cats ++ catsEffect ++ pureconfig ++ scalaReflect.map(_ % scalaVersion.value)
-    case _             => cats ++ catsEffect ++ pureconfig.map(_.cross(CrossVersion.for3Use2_13))
+    case Some((2, 13)) => scalaReflect.map(_ % scalaVersion.value)
+    case _             => Seq()
   })
 )
 
@@ -26,7 +26,11 @@ lazy val core = project
   .settings(
     name := "scalaql-core",
     mainSettings,
-    scalaVersion := "3.0.0"
+    scalaVersion := "3.0.0",
+    libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, 13)) => cats ++ catsEffect ++ pureconfig
+      case _             => cats ++ catsEffect ++ pureconfig.map(_.cross(CrossVersion.for3Use2_13))
+    })
   )
 
 lazy val macros = project
