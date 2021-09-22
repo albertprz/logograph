@@ -12,7 +12,7 @@ class DeleteStatementSpec extends AnyFunSpec with Matchers {
 
     it("can serialize delete all statements") {
 
-      val simpleDelete = deleteAll[Address]()
+      val simpleDelete = deleteAll[Address]
 
       val simpleDeleteSql =
         """DELETE FROM [address]"""

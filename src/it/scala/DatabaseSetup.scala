@@ -1,52 +1,52 @@
-package it
+// package it
 
-import java.sql.DriverManager
-import com.albertoperez1994.scalaql._
-import cats.effect.IO
-
-
-object Database {
-
-  implicit val context: ScalaQLContext[IO] = Connection.context
-
-  def setup(): IO[Unit] = context.run (insert(SeedData.people),
-                                       insert(SeedData.addresses),
-                                       insert(SeedData.telephones))
+// import java.sql.DriverManager
+// import com.albertoperez1994.scalaql._
+// import cats.effect.IO
 
 
-  def cleanup(): IO[Unit] = context.run (deleteAll[Address],
-                                         deleteAll[Telephone],
-                                         deleteAll[Person])
+// object Database {
 
-}
+//   implicit val context: ScalaQLContext[IO] = Connection.context
 
-private object Connection {
+//   def setup(): IO[Unit] = context.run (insert(SeedData.people),
+//                                        insert(SeedData.addresses),
+//                                        insert(SeedData.telephones))
 
-  lazy val context = new ScalaQLContext[IO](connection)
 
-  private val connection = {
+//   def cleanup(): IO[Unit] = context.run (deleteAll[Address],
+//                                          deleteAll[Telephone],
+//                                          deleteAll[Person])
 
-    Class.forName("org.sqlite.JDBC");
-    DriverManager.getConnection("jdbc:sqlite::memory:")
-  }
+// }
 
-  private val init = {
+// private object Connection {
 
-    val initStatementsSql = Seq( """ CREATE TABLE Person (
-                                    name text,
-                                    age int,
-                                    isEmployer int,
-                                    addressId int,
-                                    telephoneId int) """,
+//   lazy val context = new ScalaQLContext[IO](connection)
 
-                                  "CREATE TABLE Address (id int, street text)",
-                                  "CREATE TABLE Telephone (id int, number string)")
+//   private val connection = {
 
-    val stmt = connection.createStatement()
+//     Class.forName("org.sqlite.JDBC");
+//     DriverManager.getConnection("jdbc:sqlite::memory:")
+//   }
 
-    for (stmtSql <- initStatementsSql)
-      stmt.addBatch(stmtSql)
+//   private val init = {
 
-    stmt.executeBatch()
-  }
-}
+//     val initStatementsSql = Seq( """ CREATE TABLE Person (
+//                                     name text,
+//                                     age int,
+//                                     isEmployer int,
+//                                     addressId int,
+//                                     telephoneId int) """,
+
+//                                   "CREATE TABLE Address (id int, street text)",
+//                                   "CREATE TABLE Telephone (id int, number string)")
+
+//     val stmt = connection.createStatement()
+
+//     for (stmtSql <- initStatementsSql)
+//       stmt.addBatch(stmtSql)
+
+//     stmt.executeBatch()
+//   }
+// }

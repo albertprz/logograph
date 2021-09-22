@@ -2,10 +2,10 @@ package com.albertoperez1994.scalaql
 
 
 enum SelectBase [T <: DbDataSet]:
-  case Select (select: T)
-  case SelectAll (select: T)
-  case SelectDistinct  (select: T)
-  case SelectDistinctAll  (select: T)
+  case Select            [T <: DbDataSet] (select: T)  extends SelectBase[T]
+  case SelectAll         [T <: DbDataSet] (select: T)  extends SelectBase[T]
+  case SelectDistinct    [T <: DbDataSet] (select: T)  extends SelectBase[T]
+  case SelectDistinctAll [T <: DbDataSet] (select: T)  extends SelectBase[T]
 
 case class Where   (where: Boolean*)
 case class OrderBy (orderBy: Any*)
@@ -16,8 +16,8 @@ enum BaseJoin:
   case RightJoin (table: DbDataSet) (join: Boolean*)
 
 
-import SelectBase.*
-import BaseJoin.*
+export SelectBase.*
+export BaseJoin.*
 
 
 case class Query[T <: DbDataSet]()

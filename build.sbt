@@ -9,9 +9,11 @@ Test / parallelExecution := false
 
 lazy val mainSettings = Seq(
 
+  scalaVersion := "3.0.0",
+
   scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((2, 13)) => Seq("-Ytasty-reader")
-    case _             => Seq("-new-syntax", "-indent")
+    case _             => Seq("-new-syntax", "-indent", "-Yforce-sbt-phases")
   }),
 
   libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
@@ -26,7 +28,6 @@ lazy val core = project
   .settings(
     name := "scalaql-core",
     mainSettings,
-    scalaVersion := "3.0.0",
     libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 13)) => cats ++ catsEffect ++ pureconfig
       case _             => cats ++ catsEffect ++ pureconfig.map(_.cross(CrossVersion.for3Use2_13))
@@ -38,8 +39,7 @@ lazy val macros = project
   .settings(
     name := "scalaql-macros",
     mainSettings,
-    scalaVersion := "2.13.6",
-    crossScalaVersions := Seq("2.13.6", "3.0.0")
+    crossScalaVersions := Seq("3.0.0", "2.13.6")
   )
 .dependsOn(core)
 
@@ -51,8 +51,7 @@ lazy val app = project
     mainSettings,
     integrationTestSettings,
     libraryDependencies ++= testDependencies,
-    scalaVersion := "2.13.6",
-    crossScalaVersions := Seq("2.13.6", "3.0.0")
+    crossScalaVersions := Seq("3.0.0", "2.13.6")
   )
 .dependsOn(core, macros)
 .aggregate(core, macros)

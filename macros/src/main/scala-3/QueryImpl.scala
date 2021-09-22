@@ -2,6 +2,7 @@ package com.albertoperez1994.scalaql.macros
 
 import com.albertoperez1994.scalaql.*
 import com.albertoperez1994.scalaql.core.*
+import com.albertoperez1994.scalaql.utils.StringUtils.*
 import com.albertoperez1994.scalaql.utils.TypeInfo
 
 import scala.quoted.*
@@ -53,9 +54,11 @@ private def buildQuery[T, R <: DbDataSet] (queryTree: Expr[T => Query[R]])
   import extractor.*
   import quotes.reflect.*
 
-  val (typeInfoT, typeInfoR) = (extractTypeInfo[T], extractTypeInfo[R])
-  val (clause, params, table) = extractor.getQueryClause(queryTree.asTerm, typeInfoT.fullClassName,
-                                                         typeInfoR.fullClassName, typeInfoR.elemNames)
+
+  val typeInfo = extractTypeInfo[R]
+
+  val (clause, params, table) = extractor.getQueryClause(queryTree.asTerm, getClassName[T],
+                                                         typeInfo.fullClassName, typeInfo.elemNames)
 
   emitMessage("Query", clause)
 
@@ -64,7 +67,7 @@ private def buildQuery[T, R <: DbDataSet] (queryTree: Expr[T => Query[R]])
                         params       = Map.empty,
                         // params       = ${Expr(params.asInstanceOf[Map[String, Expr[Any]]])},
                         tableNames   = ${Expr(table.map(_.sql))},
-                        typeInfo     = ${Expr(typeInfoR)},
+                        typeInfo     = ${Expr(typeInfo)},
                         subQueries   = Seq.empty,
                         index        = 0,
                         dependencies = Seq.empty) }
@@ -135,10 +138,23 @@ private def emitMessage (operation: String, clause: SQLClause) (using Quotes) =
   report.info(compilationMessage)
 
 
-private def extractTypeInfo[T: Type] (using Quotes) =
+private def getClassName[T: Type] (using Quotes) =
 
   import quotes.reflect.*
 
+  val className = TypeRepr.of[T].show
+
+  if className.contains("Tuple") then
+    className.betweenChars('[', ']')
+             .wrapParens()
+
+  else
+    className
+
+
+private def extractTypeInfo[T: Type] (using Quotes) =
+
+  import quotes.reflect.*
 
   val typeSymbol = TypeRepr.of[T].typeSymbol
   val className = typeSymbol.name

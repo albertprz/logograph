@@ -22,7 +22,7 @@ class QueryExtractor  (val quotes: Quotes):
     init(updateTree, typeName)
 
     val mapArgs = findMapArgs(updateTree)
-    val setMap = mapArgs.map { case (key, value) => (getField(key.asTerm).get, getExpression(value.asTerm).get)  }
+    val setMap = mapArgs.map { case (key, value) => (getField(key).get, getExpressions(value).head)  }
                         .toMap
 
     val table = Table(splitTupledTypeTag(typeName).head)
@@ -84,10 +84,10 @@ class QueryExtractor  (val quotes: Quotes):
   private def getSelectClause (tree: Tree, columnAliases: List[String], selectTableName: String) =
 
     val args = findTypedCtorArgs(tree, "Select").flatten
-                  .flatMap(getExpression)
+                  .flatMap(getExpressions)
 
     val distinctArgs =  findTypedCtorArgs(tree, "SelectDistinct").flatten
-                           .flatMap(getExpression)
+                           .flatMap(getExpressions)
 
     val allArgs =  findCtorArgs(tree, "SelectAll").flatten
                       .flatMap(getTableAlias)
@@ -107,8 +107,8 @@ class QueryExtractor  (val quotes: Quotes):
 
   private def getWhereClause (tree: Tree) =
 
-    val args = findCtorArgs(tree, "Where").flatten
-                  .flatMap(getExpression)
+    val args = findCtorArgs (tree, "Where").flatten
+                  .flatMap(getExpressions)
 
     if args.nonEmpty then  Some(WhereClause(args))
     else                   None
@@ -117,7 +117,7 @@ class QueryExtractor  (val quotes: Quotes):
   private def getOrderByClause (tree: Tree) =
 
     val args = findCtorArgs (tree, "OrderBy").flatten
-                  .flatMap(getExpression)
+                  .flatMap(getExpressions)
 
     if args.nonEmpty then  Some(OrderByClause(args))
     else                   None
@@ -141,50 +141,53 @@ class QueryExtractor  (val quotes: Quotes):
                         .filter { case (_, argsLists) => argsLists.nonEmpty }
                         .toMap
 
+
     val args = for  (joinType, argLists) <- argListsMap
-                      argList <- argLists.grouped(2)
-      yield (joinType, getTableAlias(argList(0).head).get, argList(1) flatMap getExpression)
+                      argList <- argLists.grouped(2).filter(_.size > 1)
+      yield (joinType, getTableAlias(argList(0).head).get, argList(1) flatMap getExpressions)
+
 
     args.map { case (joinType, tableAlias, exps) =>
         BaseJoinClause (joinType) (tableAliasMap(tableAlias), tableAlias, exps)
      }.toList
 
 
-  private def getExpression(tree: Tree): Option[Expression] =
+  private def getExpressions(tree: Tree): List[Expression] =
 
-    val expressions = List (getField(tree), getOperation(tree), getLiteral(tree),
-                                                getIdentity(tree))
 
-    expressions.flatten.headOption
+    val exprTrees = tree match {
+      case block: Typed =>  getSeqLiteralElems(block.expr)
+      case x            =>  List(x)
+    }
+
+
+    val expressions = for exprTree <- exprTrees
+                        yield List (getField(exprTree), getOperation(exprTree),
+                                    getLiteral(exprTree), getIdentity(exprTree))
+                          .flatten.headOption
+
+    expressions.flatten
+
 
 
   private def getOperation(tree: Tree) =
 
+
     val op: Option[(String, List[Term])] = tree match
-      // case '{ com.albertoperez1994.scalaql.`package`.ScalaQLString($operand1).$operator($operand2) } =>
-      //   Some((operator, List(operand1, operand2)))
-      // case '{ com.albertoperez1994.scalaql.`package`.ScalaQLBoolean($operand1).$operator($operand2) } =>
-      //   Some((operator, List(operand1, operand2)))
-      // case '{ com.albertoperez1994.scalaql.`package`.ScalaQLInt($operand1).$operator($operand2) } =>
-      //   Some((operator, List(operand1, operand2)))
-      // case '{ com.albertoperez1994.scalaql.`package`.ScalaQLLong($operand1).$operator($operand2) } =>
-      //   Some((operator, List(operand1, operand2)))
-      // case '{ com.albertoperez1994.scalaql.`package`.ScalaQLBigDecimal($operand1).$operator($operand2) } =>
-      //   Some((operator, List(operand1, operand2)))
-      // case '{ com.albertoperez1994.scalaql.`package`.$operator[$tpe](..$operands) } =>  Some((operator, operands))
-      // case '{ com.albertoperez1994.scalaql.`package`.$operator(..$operands) }       =>  Some((operator, operands))
-      case Apply(Select(operand, operator), operands) =>  Some((operator, operand +: operands))
+      case Apply(TypeApply(Ident(operator), _), operands)       =>  Some((operator, operands))
+      case Apply(Apply(Ident(operator), operands1), operands2)  =>  Some((operator, operands1 ++ operands2))
+      case Apply(Select(operand, operator), operands)           =>  Some((operator, operand +: operands))
       case _ => None
 
 
     for (operator, operands) <- op
-      yield Operation(operator, operands.flatMap(getExpression))
+      yield Operation(operator, operands.flatMap(getExpressions))
 
 
   private def getField(tree: Tree) = tree match
 
-    case Select(tableAlias, columnName)
-        if (tableAliasMap.keySet.contains(tableAlias.toString())) => {
+    case Select(Ident(tableAlias), columnName)
+      if (tableAliasMap.keySet.contains(tableAlias.toString())) => {
 
       val table = tableAliasMap(tableAlias.toString())
       val column = Column(columnName.toString(), table.tableName)
@@ -200,31 +203,28 @@ class QueryExtractor  (val quotes: Quotes):
     case _ => None
 
 
-  private def getLiteral(tree: Tree): Option[LiteralVal] = tree.asExpr match
+  private def getLiteral(tree: Tree): Option[LiteralVal] =
 
-    case Literal(value)                              =>
-      Some(LiteralVal(literaltoSql(value)))
+    tree match
 
-    case '{ scala.`package`.List.apply[a]($values) } => {
+    case Literal(constant) =>
+       Some(LiteralVal(literaltoSql(constant.value)))
 
-      val valueList = findAll(values.asTerm) (t => t match {
-        case Literal(_) => true
-        case _          => false
-      } )
+    case Apply(TypeApply(Select(Ident(id), _), _), List(block))  if id.toString.contains("List") =>
 
-      if valueList.nonEmpty then
-        Some(LiteralVal(valueList.flatMap(getLiteral(_).map(_.value))
-                                 .mkString("(", ", ", ")")))
-      else
-        None
-    }
+       val list = getSeqLiteralElems(block.asInstanceOf[Typed].expr)
+                      .flatMap(getLiteral(_).map(_.value))
+                      .mkString(", ")
+                      .wrapParens()
+
+       Some(LiteralVal(list))
 
     case _ => None
 
 
   private def getIdentity(tree: Tree) =
 
-    val identity = tree.asExpr match
+    val identity = tree match
       case ident @ Select(Select(Select(Select(_, _), _), _), _)    => Some(ident)
       case ident @ Select(Select(Select(_, _), _), _)               => Some(ident)
       case ident @ Select(Select(_, _), _)                          => Some(ident)
@@ -249,25 +249,34 @@ class QueryExtractor  (val quotes: Quotes):
     tableAliasMap = getTableAliasMap(tree, fromTypeName)
 
 
+  def getSeqLiteralElems (seqLiteral: Any) =
+    seqLiteral.asInstanceOf[Product].productIterator.toList.head
+              .asInstanceOf[List[Tree]]
+
+
   def findMapArgs (tree: Tree) =
 
-    val mapEntries = findAll(tree) (t => t.asExpr match {
-        case '{ scala.Predef.ArrowAssoc($key: t1).->($value: t2) } => true
-        case _                                                     => false
+    // println(tree.show)
+
+    val mapEntries = findAll(tree) (_ match {
+        case Apply(TypeApply(Select(Apply(TypeApply(Ident(arrow), _), _), _), _), _) =>
+          arrow.contains("ArrowAssoc")
+        case _                    => false
     } )
 
     for mapEntry <- mapEntries
-      yield mapEntry.asExpr match
-        case '{ scala.Predef.ArrowAssoc($key: t1).->($value: t2) } => (key, value)
+      yield mapEntry match
+        case Apply(TypeApply(Select(Apply(_, key), _), _), value) => (key.head, value.head)
 
 
   def findTypedCtorArgs (tree: Tree, className: String) =
 
     val ctor = findAll(tree) (t => t match {
-        case Apply(Apply(TypeApply(Select(x, _), _), _), _) => x.toString.contains(s".$className")
-        case Apply(TypeApply(Select(x, _), _), _)           => x.toString.contains(s".$className")
-        case _ => false
+        case Apply(Apply(TypeApply(Select(Ident(x), _), _), _), _) => x.toString.contains(className)
+        case Apply(TypeApply(Select(Ident(x), _), _), _)           => x.toString.contains(className)
+        case _                                                     => false
       })
+
 
     val ctorArgs = ctor flatMap extractFnArgs
 
@@ -275,19 +284,20 @@ class QueryExtractor  (val quotes: Quotes):
                     arg <- argList
       yield arg match
           case Apply(_, args) => Some(args)
-          case _ => None
+          case _              => None
 
     args.flatten
+
 
 
   def findCtorArgs (tree: Tree, className: String) =
 
     val ctor = findAll(tree) (t => t match {
-        case Apply(Apply(TypeApply(Select(x, _), _), _), _) => x.toString.contains(s".$className")
-        case Apply(TypeApply(Select(x, _), _), _)           => x.toString.contains(s".$className")
-        case Apply(Apply(Select(x, _), _), _)               => x.toString.contains(s".$className")
-        case Apply(Select(x, _), _)                         => x.toString.contains(s".$className")
-        case _                                              => false
+        case Apply(Apply(TypeApply(Select(Ident(x), _), _), _), _) => x.toString.contains(className)
+        case Apply(TypeApply(Select(Ident(x), _), _), _)           => x.toString.contains(className)
+        case Apply(Apply(Select(Ident(x), _), _), _)               => x.toString.contains(className)
+        case Apply(Select(Ident(x), _), _)                         => x.toString.contains(className)
+        case _                                                     => false
       })
 
     ctor flatMap extractFnArgs
@@ -296,10 +306,11 @@ class QueryExtractor  (val quotes: Quotes):
   def findLambdaFnArgs (tree: Tree) =
 
     val lambdaFn = findAll(tree) (t => t match {
-        case _: CaseDef | _: ValDef => true
+        case _: DefDef | _: CaseDef | _: ValDef => true
         case _                      => false
       })
 
+    (lambdaFn flatMap extractDefDefArgs) ++
     (lambdaFn flatMap extractCaseDefArgs) ++
     (lambdaFn flatMap extractValDefArgs)
 
@@ -307,21 +318,29 @@ class QueryExtractor  (val quotes: Quotes):
   private def extractCaseDefArgs (tree: Tree) =
 
     val args = tree match
-      case CaseDef(Apply(_, args), _, _) => args
-      case CaseDef(arg @ Bind(_, _), _, _) => List(arg)
+      case CaseDef(caseDef, _, _) => findAll(caseDef) ( _ match {
+        case _: Bind => true
+        case _       => false
+      } )
       case _ => List.empty
 
     (for arg <- args
       yield arg match {
-        case Bind(arg, _) => Some(arg)
+        case Bind(arg, _) if !arg.contains("$") => Some(arg)
         case _ => None
       }
     ).flatten
 
 
+  private def extractDefDefArgs (tree: Tree) =
+    tree match
+      case  DefDef(arg, _, _, _) if !arg.contains("$") => List(arg)
+      case _ => List.empty
+
+
   private def extractValDefArgs (tree: Tree) =
     tree match
-      case ValDef(arg, _ , _) => List(arg)
+      case ValDef(arg, _ , _) if !arg.contains("$") => List(arg)
       case _ => List.empty
 
 

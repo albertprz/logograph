@@ -176,6 +176,14 @@ case class QueryClause (select: Option[BaseSelectClause] = None, from: Option[Fr
      if aggPreds.nonEmpty then Some(HavingClause(aggPreds))
      else None
 
+  val sql = select.fold("")(_.sql)           +
+            from.fold("")(_.sql)             +
+            joins.map(_.sql).mkString("")    +
+            where.fold("")(_.sql)            +
+            groupBy.fold("")(_.sql)          +
+            having.fold("")(_.sql)           +
+            orderBy.fold("")(_.sql)
+
   val validate =
 
     if select.isEmpty then
@@ -200,13 +208,6 @@ case class QueryClause (select: Option[BaseSelectClause] = None, from: Option[Fr
                               |for the Order By clause if the query is using
                               | a Group By or Distinct clause \n""".stripMargin)
 
-  val sql = select.fold("")(_.sql)           +
-            from.fold("")(_.sql)             +
-            joins.map(_.sql).mkString("")    +
-            where.fold("")(_.sql)            +
-            groupBy.fold("")(_.sql)          +
-            having.fold("")(_.sql)           +
-            orderBy.fold("")(_.sql)
 end QueryClause
 
 case class SetClause (setMap: Map[Field, Expression]) (using ScalaQLConfig)

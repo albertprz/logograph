@@ -11,27 +11,8 @@ inline def queryAll[T <: DbTable]: SelectStatement[T] =
   ${ QueryImpl.selectAll[T] }
 
 
-inline def update[T <: DbTable] (inline setMap: T => (Map[Any, Any], Where)): UpdateStatement[T] =
-  ${ QueryImpl.update[T] ('setMap) }
-
-
-inline def updateAll[T <: DbTable] (inline setMap: T => Map[Any, Any]): UpdateStatement[T] =
-  ${ QueryImpl.updateAll[T] ('setMap) }
-
-
-inline def delete[T <: DbTable] (inline where: T => Where): DeleteStatement[T] =
-  ${ QueryImpl.delete[T] ('where) }
-
-
-inline def deleteAll[T <: DbTable] (): DeleteStatement[T] =
-  ${ QueryImpl.deleteAll[T] }
-
-
-case class QueryBuilder[T](subQueries: Seq[SelectStatement[_]] = Seq.empty):
-
-  inline def select[T, R <: DbDataSet](query: T => Query[R]): SelectStatement[R] =
-    ${ QueryImpl.select[T, R] ('query) }
-
+inline def select[T, R <: DbDataSet](inline query: T => Query[R]): SelectStatement[R] =
+  ${ QueryImpl.select[T, R] ('query) }
 
 
 inline def insert[T <: DbTable] (inline data: T) (using Quotes, Type[T]) =
@@ -50,6 +31,30 @@ inline def insert[T <: DbTable] (query: SelectStatement[T]) (using Quotes, Type[
 
   val typeInfo = extractTypeInfo[T]
   InsertStatement (Right (query), typeInfo)
+
+
+
+inline def update[T <: DbTable] (inline setMap: T => (Map[Any, Any], Where)): UpdateStatement[T] =
+  ${ QueryImpl.update[T] ('setMap) }
+
+
+inline def updateAll[T <: DbTable] (inline setMap: T => Map[Any, Any]): UpdateStatement[T] =
+  ${ QueryImpl.updateAll[T] ('setMap) }
+
+
+inline def delete[T <: DbTable] (inline where: T => Where): DeleteStatement[T] =
+  ${ QueryImpl.delete[T] ('where) }
+
+
+inline def deleteAll[T <: DbTable]: DeleteStatement[T] =
+  ${ QueryImpl.deleteAll[T] }
+
+
+case class QueryBuilder[T](subQueries: Seq[SelectStatement[_]] = Seq.empty):
+
+  inline def select[R <: DbDataSet](inline query: T => Query[R]): SelectStatement[R] =
+    ${ QueryImpl.select[T, R] ('query) }
+
 
 
 
