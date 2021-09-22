@@ -1,18 +1,19 @@
 package test
 
 import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should.Matchers
+import org.scalatest.matchers.should.Matchers.{should, equal}
 
 import com.albertoperez1994.scalaql._
 
-class SelectStatementSpec extends AnyFunSpec with Matchers {
+
+class SelectStatementSpec extends AnyFunSpec {
 
   describe("A Select Statement") {
 
 
     it("can serialize simple queries") {
 
-      val simpleQuery = queryAll[Person]
+      val simpleQuery = selectAll[Person]
 
       val simpleQuerySql =
         """SELECT      p.*
@@ -25,7 +26,7 @@ class SelectStatementSpec extends AnyFunSpec with Matchers {
 
     it("can serialize complex queries") {
 
-      val complexQuery = select[(Person, Address, Telephone), Result] { (p, a, t) =>
+      val complexQuery = select[(Person, Address, Telephone), Result] { case (p, a, t) =>
         Query(
           Select          (Result (p.name, p.age, a.street, 72162183)),
           Where           (a.street like "%Baker St%",
@@ -64,42 +65,41 @@ class SelectStatementSpec extends AnyFunSpec with Matchers {
            WHERE       a.[street] IN ('Carnaby St', 'Downing St')"""
 
 
-      println(literalValsQuery.sql)
       literalValsQuery.sql.trimLines() should equal (literalValsQuerySql.trimLines())
     }
 
-    // it("can serialize queries including runtime values") {
+    it("can serialize queries including runtime values") {
 
-    //   val allowedPhoneNumbers = List(658976534L, 870127465L)
+      val allowedPhoneNumbers = List(658976534L, 870127465L)
 
-    //   val runtimeValsQuery = query[Telephone].select {t =>
-    //     Query(
-    //       SelectAll (t),
-    //       Where (t.number in allowedPhoneNumbers)
-    //     )
-    //   }
+      val runtimeValsQuery = query[Telephone].select {t =>
+        Query(
+          SelectAll (t),
+          Where (t.number in allowedPhoneNumbers)
+        )
+      }
 
-    //   val runtimeValsQuerySql =
-    //     """SELECT      t.*
-    //        FROM        [phone] AS t
-    //        WHERE       t.[number] IN (?, ?)"""
+      val runtimeValsQuerySql =
+        """SELECT      t.*
+           FROM        [phone] AS t
+           WHERE       t.[number] IN (?, ?)"""
 
 
-    //   runtimeValsQuery.sql.trimLines() should equal (runtimeValsQuerySql.trimLines())
+      runtimeValsQuery.sql.trimLines() should equal (runtimeValsQuerySql.trimLines())
 
-    //   runtimeValsQuery.paramList should equal (allowedPhoneNumbers)
-    // }
+      runtimeValsQuery.paramList should equal (allowedPhoneNumbers)
+    }
 
 
     it("can serialize queries using set operations") {
 
-      val personsQuery1 = select[Person, Person] {p =>
+      val personsQuery1 = select[Person, Person] { p =>
         Query(
           SelectDistinctAll (p),
           Where (p.age < 38))
       }
 
-      val personsQuery2 = select[Person, Person] {p =>
+      val personsQuery2 = select[Person, Person] { p =>
         Query(
           SelectDistinctAll (p),
           Where (p.name <> "George"))
@@ -134,93 +134,93 @@ class SelectStatementSpec extends AnyFunSpec with Matchers {
     }
 
 
-    // it("can serialize deeply nested queries into nested CTEs") {
+    it("can serialize deeply nested queries into nested CTEs") {
 
-    //   val personsQuery = select[Person, Person] {
-    //     p => Query(
-    //       SelectAll (p),
-    //       Where (p.name === "Mark" or p.name === "John",
-    //              p.age > 25))
-    //   }
+      val personsQuery = select[Person, Person] { p =>
+        Query(
+          SelectAll (p),
+          Where (p.name === "Mark" or p.name === "John",
+                 p.age > 25))
+      }
 
-    //   val adressesQuery = select[Address, Address] {
-    //     a => Query(
-    //       SelectAll (a),
-    //       Where (a.street like "%Baker St%"))
-    //   }
+      val adressesQuery = select[Address, Address] { a =>
+        Query(
+          SelectAll (a),
+          Where (a.street like "%Baker St%"))
+      }
 
-    //   val telephoneQuery = select[Telephone, Telephone] {
-    //     t => Query(
-    //       SelectAll (t),
-    //       Where (t.number <> 676874981))
-    //   }
+      val telephoneQuery = select[Telephone, Telephone] { t =>
+        Query(
+          SelectAll (t),
+          Where (t.number <> 676874981))
+      }
 
-    //   val innerNestedQuery1 = query(personsQuery, adressesQuery).select {
-    //     case (p, a) => Query(
-    //       Select        (InnerResult1(p.name, max(p.age), a.street))
-    //     )
-    //   }
+      val innerNestedQuery1 = query(personsQuery, adressesQuery).select { case (p, a) =>
+        Query(
+          Select        (InnerResult1(p.name, max(p.age), a.street))
+        )
+      }
 
-    //   val innerNestedQuery2 = query(personsQuery, telephoneQuery).select {
-    //     case (p, t) => Query(
-    //       Select        (InnerResult2(p.name, t.number)),
-    //     )
-    //   }
+      val innerNestedQuery2 = query(personsQuery, telephoneQuery).select { case (p, t) =>
+        Query(
+          Select        (InnerResult2(p.name, t.number)),
+        )
+      }
 
-    //   val deeplyNestedQuery = query(innerNestedQuery1, innerNestedQuery2).select {
-    //     case (a, b) => Query(
-    //       Select          (Result (a.name, a.age, a.street, b.telephoneNumber)),
-    //       OrderBy         (asc (a.name)),
-    //       InnerJoin (b)    (b.name === a.name))
-    //   }
+      val deeplyNestedQuery = query(innerNestedQuery1, innerNestedQuery2).select { case (a, b) =>
+        Query(
+          Select          (Result (a.name, a.age, a.street, b.telephoneNumber)),
+          OrderBy         (asc (a.name)),
+          InnerJoin (b)    (b.name === a.name))
+      }
 
-    //   val deeplyNestedQuerySql =
-    //    """WITH q1 AS
-    //       (
-    //         SELECT      p.*
-    //         FROM        [person] AS p
-    //         WHERE       (p.[name] = 'Mark' OR p.[name] = 'John') AND
-    //                     (p.[age] > 25)
-    //       ),
-    //       q2 AS
-    //       (
-    //         SELECT      a.*
-    //         FROM        [address] AS a
-    //         WHERE       a.[street] LIKE '%Baker St%'
-    //       ),
-    //       q3 AS
-    //       (
-    //         SELECT      p.[name] AS [name], MAX (p.[age]) AS [age], a.[street] AS [street]
-    //         FROM        [q1] AS p, [q2] AS a
-    //         GROUP BY    p.[name], a.[street]
-    //       ),
-    //       q4 AS
-    //       (
-    //         SELECT      p.*
-    //         FROM        [person] AS p
-    //         WHERE       (p.[name] = 'Mark' OR p.[name] = 'John') AND
-    //                     (p.[age] > 25)
-    //       ),
-    //       q5 AS
-    //       (
-    //         SELECT      t.*
-    //         FROM        [phone] AS t
-    //         WHERE       t.[number] <> 676874981
-    //       ),
-    //       q6 AS
-    //       (
-    //         SELECT      p.[name] AS [name], t.[number] AS [phone_number]
-    //         FROM        [q4] AS p, [q5] AS t
-    //       )
+      val deeplyNestedQuerySql =
+       """WITH q1 AS
+          (
+            SELECT      p.*
+            FROM        [person] AS p
+            WHERE       (p.[name] = 'Mark' OR p.[name] = 'John') AND
+                        (p.[age] > 25)
+          ),
+          q2 AS
+          (
+            SELECT      a.*
+            FROM        [address] AS a
+            WHERE       a.[street] LIKE '%Baker St%'
+          ),
+          q3 AS
+          (
+            SELECT      p.[name] AS [name], MAX (p.[age]) AS [age], a.[street] AS [street]
+            FROM        [q1] AS p, [q2] AS a
+            GROUP BY    p.[name], a.[street]
+          ),
+          q4 AS
+          (
+            SELECT      p.*
+            FROM        [person] AS p
+            WHERE       (p.[name] = 'Mark' OR p.[name] = 'John') AND
+                        (p.[age] > 25)
+          ),
+          q5 AS
+          (
+            SELECT      t.*
+            FROM        [phone] AS t
+            WHERE       t.[number] <> 676874981
+          ),
+          q6 AS
+          (
+            SELECT      p.[name] AS [name], t.[number] AS [phone_number]
+            FROM        [q4] AS p, [q5] AS t
+          )
 
-    //       SELECT      a.[name] AS [name], a.[age] AS [age], a.[street] AS [street], b.[phone_number] AS [phone_number]
-    //       FROM        [q3] AS a
-    //       INNER JOIN  [q6] AS b ON b.[name] = a.[name]
-    //       ORDER BY    a.[name] ASC"""
+          SELECT      a.[name] AS [name], a.[age] AS [age], a.[street] AS [street], b.[phone_number] AS [phone_number]
+          FROM        [q3] AS a
+          INNER JOIN  [q6] AS b ON b.[name] = a.[name]
+          ORDER BY    a.[name] ASC"""
 
 
-    //   deeplyNestedQuery.sql.trimLines() should equal (deeplyNestedQuerySql.trimLines())
-    // }
+      deeplyNestedQuery.sql.trimLines() should equal (deeplyNestedQuerySql.trimLines())
+    }
 
   }
 }

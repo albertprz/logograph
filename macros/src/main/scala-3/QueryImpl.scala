@@ -13,9 +13,9 @@ object QueryImpl:
     buildQueryAll[T]
 
 
-  def select[T, R <: DbDataSet] (query: Expr[T => Query[R]])
+  def select[T, R <: DbDataSet] (query: Expr[T => Query[R]], subQueries: Expr[Seq[SelectStatement[?]]])
                                 (using Quotes, Type[T], Type[R]): Expr[SelectStatement[R]] =
-    buildQuery[T, R] (query)
+    buildQuery[T, R] (query, subQueries)
 
 
   def updateAll[T <: DbTable] (setMap: Expr[T => Map[Any, Any]])
@@ -37,8 +37,25 @@ object QueryImpl:
     buildDelete[T] (Some(where))
 
 
-given ToExpr[Expr[Any]] with
-  def apply(exp: Expr[Any]) (using Quotes) = Expr(exp)
+  def insert[T <: DbTable] (data: Expr[T]) (using Quotes, Type[T]): Expr[InsertStatement[T]] =
+
+    val typeInfo = extractTypeInfo[T]
+    '{ InsertStatement (Left (List ($data)), ${Expr(typeInfo)}) }
+
+
+  def insertSeq[T <: DbTable] (data: Expr[Seq[T]]) (using Quotes, Type[T]): Expr[InsertStatement[T]] =
+
+    val typeInfo = extractTypeInfo[T]
+    '{ InsertStatement (Left ($data), ${Expr(typeInfo)}) }
+
+
+  def insertQuery[T <: DbTable] (query: Expr[SelectStatement[T]]) (using Quotes, Type[T]): Expr[InsertStatement[T]] =
+
+    val typeInfo = extractTypeInfo[T]
+    '{ InsertStatement (Right ($query), ${Expr(typeInfo)}) }
+
+end QueryImpl
+
 
 
 given ToExpr[TypeInfo] with
@@ -46,7 +63,7 @@ given ToExpr[TypeInfo] with
     '{ utils.TypeInfo(${Expr(t.fullClassName)}, ${Expr(t.className)}, ${Expr(t.elemNames)}, ${Expr(t.elemTypes)}) }
 
 
-private def buildQuery[T, R <: DbDataSet] (queryTree: Expr[T => Query[R]])
+private def buildQuery[T, R <: DbDataSet] (queryTree: Expr[T => Query[R]], subQueries: Expr[Seq[SelectStatement[?]]])
                                           (using Quotes, Type[T], Type[R]): Expr[SelectStatement[R]] =
 
   val extractor = new QueryExtractor(quotes)
@@ -54,6 +71,7 @@ private def buildQuery[T, R <: DbDataSet] (queryTree: Expr[T => Query[R]])
   import extractor.*
   import quotes.reflect.*
 
+  import extractor.given ToExpr[Any]
 
   val typeInfo = extractTypeInfo[R]
 
@@ -64,11 +82,10 @@ private def buildQuery[T, R <: DbDataSet] (queryTree: Expr[T => Query[R]])
 
 
   '{ SelectStatement[R](sqlTemplate  = ${Expr(clause.sql)},
-                        params       = Map.empty,
-                        // params       = ${Expr(params.asInstanceOf[Map[String, Expr[Any]]])},
+                        params       = ${Expr(params.asInstanceOf[Map[String, Any]])},
                         tableNames   = ${Expr(table.map(_.sql))},
                         typeInfo     = ${Expr(typeInfo)},
-                        subQueries   = Seq.empty,
+                        subQueries   = $subQueries.asInstanceOf[Seq[SelectStatement[DbDataSet]]],
                         index        = 0,
                         dependencies = Seq.empty) }
 
@@ -78,6 +95,8 @@ private def buildQueryAll[T <: DbDataSet] (using Quotes, Type[T]): Expr[SelectSt
   val extractor = new QueryExtractor(quotes)
 
   import extractor.*
+  import extractor.given ToExpr[Any]
+
   import quotes.reflect.*
 
   val typeInfo = extractTypeInfo[T]
@@ -99,6 +118,8 @@ private def buildUpdate[T <: DbTable] (updateTree: Expr[Any])
   val extractor = new QueryExtractor(quotes)
 
   import extractor.*
+  import extractor.given ToExpr[Any]
+
   import quotes.reflect.*
 
   val typeInfo = extractTypeInfo[T]
@@ -108,7 +129,7 @@ private def buildUpdate[T <: DbTable] (updateTree: Expr[Any])
   emitMessage("Update", clause)
 
   '{ UpdateStatement[T](sqlTemplate = ${Expr(clause.sql)},
-                        params      = ${Expr(params.asInstanceOf[Map[String, Expr[Any]]])}) }
+                        params      = ${Expr(params.asInstanceOf[Map[String, Any]])}) }
 
 
 private def buildDelete[T <: DbTable] (whereTree: Option[Expr[T => Where]] = None)
@@ -117,7 +138,10 @@ private def buildDelete[T <: DbTable] (whereTree: Option[Expr[T => Where]] = Non
   val extractor = new QueryExtractor(quotes)
 
   import extractor.*
+  import extractor.given ToExpr[Any]
+
   import quotes.reflect.*
+
 
   val typeInfo = extractTypeInfo[T]
 
@@ -126,7 +150,7 @@ private def buildDelete[T <: DbTable] (whereTree: Option[Expr[T => Where]] = Non
   emitMessage("Delete", clause)
 
   '{ DeleteStatement[T](sqlTemplate = ${Expr(clause.sql)},
-                        params      = ${Expr(params.asInstanceOf[Map[String, Expr[Any]]])}) }
+                        params      = ${Expr(params.asInstanceOf[Map[String, Any]])}) }
 
 
 private def emitMessage (operation: String, clause: SQLClause) (using Quotes) =

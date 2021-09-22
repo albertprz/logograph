@@ -2,36 +2,28 @@ package com.albertoperez1994.scalaql
 
 import com.albertoperez1994.scalaql.core.*
 import com.albertoperez1994.scalaql.macros.QueryImpl
-import com.albertoperez1994.scalaql.utils.ReflectionUtils.*
 import scala.quoted.*
 
 
 // Statement factory functions
-inline def queryAll[T <: DbTable]: SelectStatement[T] =
+inline def selectAll[T <: DbTable]: SelectStatement[T] =
   ${ QueryImpl.selectAll[T] }
 
 
 inline def select[T, R <: DbDataSet](inline query: T => Query[R]): SelectStatement[R] =
-  ${ QueryImpl.select[T, R] ('query) }
+  ${ QueryImpl.select[T, R] ('query, '{Seq.empty}) }
 
 
-inline def insert[T <: DbTable] (inline data: T) (using Quotes, Type[T]) =
-
-  val typeInfo = extractTypeInfo[T]
-  InsertStatement (Left (Seq(data)), typeInfo)
+inline def insert[T <: DbTable] (data: T): InsertStatement[T] =
+  ${ QueryImpl.insert[T] ('data) }
 
 
-inline def insert[T <: DbTable] (inline data: Seq[T]) (using Quotes, Type[T]) =
-
-  val typeInfo = extractTypeInfo[T]
-  InsertStatement (Left (data), typeInfo)
+inline def insert[T <: DbTable] (data: Seq[T]): InsertStatement[T] =
+  ${ QueryImpl.insertSeq[T] ('data) }
 
 
-inline def insert[T <: DbTable] (query: SelectStatement[T]) (using Quotes, Type[T]) =
-
-  val typeInfo = extractTypeInfo[T]
-  InsertStatement (Right (query), typeInfo)
-
+inline def insert[T <: DbTable] (query: SelectStatement[T]): InsertStatement[T] =
+  ${ QueryImpl.insertQuery[T] ('query) }
 
 
 inline def update[T <: DbTable] (inline setMap: T => (Map[Any, Any], Where)): UpdateStatement[T] =
@@ -50,10 +42,10 @@ inline def deleteAll[T <: DbTable]: DeleteStatement[T] =
   ${ QueryImpl.deleteAll[T] }
 
 
-case class QueryBuilder[T](subQueries: Seq[SelectStatement[_]] = Seq.empty):
+case class QueryBuilder[T](subQueries: Seq[SelectStatement[?]] = Seq.empty):
 
   inline def select[R <: DbDataSet](inline query: T => Query[R]): SelectStatement[R] =
-    ${ QueryImpl.select[T, R] ('query) }
+    ${ QueryImpl.select[T, R] ('query, 'subQueries) }
 
 
 

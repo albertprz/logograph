@@ -13,7 +13,7 @@ lazy val mainSettings = Seq(
 
   scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((2, 13)) => Seq("-Ytasty-reader")
-    case _             => Seq("-new-syntax", "-indent", "-Yforce-sbt-phases")
+    case _             => Seq("-new-syntax", "-indent")
   }),
 
   libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {

@@ -16,6 +16,9 @@ class QueryExtractor  (val quotes: Quotes):
 
   import quotes.reflect.*
 
+  given ToExpr[Any] with
+    def apply(expr: Any) (using Quotes) = expr.asInstanceOf[Ident].asExpr
+
 
   def getUpdateClause (updateTree: Tree, typeName: String) =
 
@@ -99,9 +102,9 @@ class QueryExtractor  (val quotes: Quotes):
 
 
     if      distinctAllArgs.nonEmpty then  Some(SelectDistinctAllClause(distinctAllArgs.head))
-    else if distinctArgs.nonEmpty then     Some(SelectDistinctClause(distinctArgs, columns))
-    else if allArgs.nonEmpty then          Some(SelectAllClause(allArgs.head))
-    else if args.nonEmpty then             Some(SelectClause(args, columns))
+    else if distinctArgs.nonEmpty    then  Some(SelectDistinctClause(distinctArgs, columns))
+    else if allArgs.nonEmpty         then  Some(SelectAllClause(allArgs.head))
+    else if args.nonEmpty            then  Some(SelectClause(args, columns))
     else                                   None
 
 
@@ -118,6 +121,7 @@ class QueryExtractor  (val quotes: Quotes):
 
     val args = findCtorArgs (tree, "OrderBy").flatten
                   .flatMap(getExpressions)
+
 
     if args.nonEmpty then  Some(OrderByClause(args))
     else                   None
@@ -143,7 +147,7 @@ class QueryExtractor  (val quotes: Quotes):
 
 
     val args = for  (joinType, argLists) <- argListsMap
-                      argList <- argLists.grouped(2).filter(_.size > 1)
+                      argList <- argLists.grouped(3).map(_.dropRight(1))
       yield (joinType, getTableAlias(argList(0).head).get, argList(1) flatMap getExpressions)
 
 
@@ -155,10 +159,9 @@ class QueryExtractor  (val quotes: Quotes):
   private def getExpressions(tree: Tree): List[Expression] =
 
 
-    val exprTrees = tree match {
+    val exprTrees = tree match
       case block: Typed =>  getSeqLiteralElems(block.expr)
       case x            =>  List(x)
-    }
 
 
     val expressions = for exprTree <- exprTrees
@@ -177,7 +180,8 @@ class QueryExtractor  (val quotes: Quotes):
       case Apply(TypeApply(Ident(operator), _), operands)       =>  Some((operator, operands))
       case Apply(Apply(Ident(operator), operands1), operands2)  =>  Some((operator, operands1 ++ operands2))
       case Apply(Select(operand, operator), operands)           =>  Some((operator, operand +: operands))
-      case _ => None
+      case Apply(Ident(operator), operands)                     =>  Some((operator, operands))
+      case _                                                    =>  None
 
 
     for (operator, operands) <- op
@@ -255,8 +259,6 @@ class QueryExtractor  (val quotes: Quotes):
 
 
   def findMapArgs (tree: Tree) =
-
-    // println(tree.show)
 
     val mapEntries = findAll(tree) (_ match {
         case Apply(TypeApply(Select(Apply(TypeApply(Ident(arrow), _), _), _), _), _) =>

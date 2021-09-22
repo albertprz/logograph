@@ -1,11 +1,11 @@
 package test
 
 import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should.Matchers
+import org.scalatest.matchers.should.Matchers.{should, equal}
 
 import com.albertoperez1994.scalaql._
 
-class DeleteStatementSpec extends AnyFunSpec with Matchers {
+class DeleteStatementSpec extends AnyFunSpec {
 
   describe("A Delete Statement") {
 

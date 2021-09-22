@@ -1,11 +1,11 @@
 package test
 
 import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should.Matchers
+import org.scalatest.matchers.should.Matchers.{should, equal}
 
 import com.albertoperez1994.scalaql._
 
-class UpdateStatementSpec extends AnyFunSpec with Matchers {
+class UpdateStatementSpec extends AnyFunSpec {
 
   describe("An Update Statement") {
 
