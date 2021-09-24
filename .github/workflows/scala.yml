@@ -18,5 +18,7 @@ jobs:
       with:
         java-version: '16'
         distribution: 'adopt'
-    - name: Run tests
+    - name: Run tests for Scala 3
       run: sbt test
+    - name: Run tests for Scala 2.13
+      run: sbt "++2.13.6; test"
