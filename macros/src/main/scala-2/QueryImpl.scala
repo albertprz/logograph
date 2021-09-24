@@ -39,14 +39,6 @@ class QueryImpl(val c: blackbox.Context) {
     q"utils.TypeInfo(${t.fullClassName}, ${t.className}, ${t.elemNames}, ${t.elemTypes})"
   }
 
-  implicit val selectLiftable: Liftable[SelectStatement[DbDataSet]] = Liftable[SelectStatement[DbDataSet]] { s => {
-      selectLiftable
-
-      q"""SelectStatement(${s.sqlTemplate}, ${s.params.asInstanceOf[Map[String, Tree]]},
-                          ${s.tableNames.toList}, ${s.typeInfo},
-                          ${s.subQueries.toList}, 0, Seq.empty[Int])"""
-    }
-  }
 
   private def buildQuery[T, R <: DbDataSet] (queryTree: Tree, includeSubQueries: Boolean)
                                             (implicit tag1: WeakTypeTag[T], tag2: WeakTypeTag[R]) = {
@@ -55,7 +47,7 @@ class QueryImpl(val c: blackbox.Context) {
     val (clause, params, table) = extractor.getQueryClause(queryTree, typeInfoT.fullClassName,
                                                            typeInfoR.fullClassName, typeInfoR.elemNames)
 
-    emitMessage("Query", clause)
+    emitMessage(clause)
 
     val subQueries =
       if (includeSubQueries)
@@ -79,6 +71,7 @@ class QueryImpl(val c: blackbox.Context) {
 
     val (clause, table) = extractor.getQueryClause(weakTypeOf[T].toString)
 
+
     c.Expr[SelectStatement[T]](q"""SelectStatement(sqlTemplate = ${clause.sql},
                                                    params = Map.empty[String, Any],
                                                    tableNames = ${List(table.sql)},
@@ -92,7 +85,7 @@ class QueryImpl(val c: blackbox.Context) {
 
      val (clause, params) = extractor.getUpdateClause(updateTree, weakTypeOf[T].toString)
 
-    emitMessage("Update", clause)
+    emitMessage(clause)
 
     c.Expr[UpdateStatement[T]](q"""UpdateStatement(sqlTemplate = ${clause.sql},
                                                    params = ${params.asInstanceOf[Map[String, Tree]]})""")
@@ -103,15 +96,15 @@ class QueryImpl(val c: blackbox.Context) {
 
      val (clause, params) = extractor.getDeleteClause(whereTree, weakTypeOf[T].toString)
 
-    emitMessage("Delete", clause)
+    emitMessage(clause)
 
     c.Expr[DeleteStatement[T]](q"""DeleteStatement(sqlTemplate = ${clause.sql},
                                                    params = ${params.asInstanceOf[Map[String, Tree]]})""")
   }
 
-  private def emitMessage(operation: String, clause: SQLClause) = {
+  private def emitMessage(clause: SQLClause) = {
 
-    val compilationMessage = s"Debugging ${operation.toLowerCase()}:\n\n\n${clause.sql}\n\n\n".stripMargin
+    val compilationMessage = s"\n${clause.sql}\n\n\n".stripMargin
 
       c.info(c.enclosingPosition, compilationMessage, false)
   }

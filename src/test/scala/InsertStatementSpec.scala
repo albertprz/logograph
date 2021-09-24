@@ -48,7 +48,7 @@ class InsertStatementSpec extends AnyFunSpec {
 
     it("can serialize insert statements from a query") {
 
-      val adressesQuery = select[Address, Address] {
+      val adressesQuery = from[Address].select {
         a => Query(
           SelectAll (a),
           Where (a.street like "%Baker St%"))

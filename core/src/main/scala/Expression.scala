@@ -82,10 +82,10 @@ case class Column(columnName: String, tableName: String) (using cfg: ScalaQLConf
     extends SQLClause:
 
   val validate = {}
-  val sql = if columnName != "*" then  columnName.convert(cfg.columnConverter.getOrElse(tableName, Map.empty))
-                                              .convertCase(cfg.columnCaseConverter)
-                                              .wrapBrackets()
-            else columnName
+  val sql = if columnName != "*" then  columnName.convert(cfg.columnConverter.map(_.getOrElse(tableName, Map.empty)))
+                                                 .convertCase(cfg.columnCaseConverter)
+                                                 .wrapBrackets()
+              else columnName
 
 case class Operator(operatorName: String) (using cfg: ScalaQLConfig)
     extends SQLClause:

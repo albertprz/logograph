@@ -10,10 +10,6 @@ inline def selectAll[T <: DbTable]: SelectStatement[T] =
   ${ QueryImpl.selectAll[T] }
 
 
-inline def select[T, R <: DbDataSet](inline query: T => Query[R]): SelectStatement[R] =
-  ${ QueryImpl.select[T, R] ('query, '{Seq.empty}) }
-
-
 inline def insert[T <: DbTable] (data: T): InsertStatement[T] =
   ${ QueryImpl.insert[T] ('data) }
 
@@ -50,28 +46,28 @@ case class QueryBuilder[T](subQueries: Seq[SelectStatement[?]] = Seq.empty):
 
 
 
-def query[T] = QueryBuilder[T]()
+def from[T] = QueryBuilder[T]()
 
-def query[T <: DbDataSet] (fromQuery: SelectStatement[T]) =
+def from[T <: DbDataSet] (fromQuery: SelectStatement[T]) =
     QueryBuilder[T](subQueries = Seq(fromQuery))
 
-def query[T <: DbDataSet, R <: DbDataSet]
+def from[T <: DbDataSet, R <: DbDataSet]
   (fromQuery1: SelectStatement[T], fromQuery2: SelectStatement[R]) =
   QueryBuilder[(T, R)](subQueries = Seq(fromQuery1, fromQuery2))
 
-def query[T <: DbDataSet, R <: DbDataSet, X <: DbDataSet]
+def from[T <: DbDataSet, R <: DbDataSet, X <: DbDataSet]
   (fromQuery1: SelectStatement[T], fromQuery2: SelectStatement[R],
     fromQuery3: SelectStatement[X]) =
   QueryBuilder[(T, R, X)](subQueries = Seq(fromQuery1, fromQuery2, fromQuery3))
 
-def query[T <: DbDataSet, R <: DbDataSet, X <: DbDataSet,
+def from[T <: DbDataSet, R <: DbDataSet, X <: DbDataSet,
           S <: DbDataSet]
   (fromQuery1: SelectStatement[T], fromQuery2: SelectStatement[R],
     fromQuery3: SelectStatement[X], fromQuery4: SelectStatement[S]) =
   QueryBuilder[(T, R, X, S)](subQueries = Seq(fromQuery1, fromQuery2, fromQuery3,
                                               fromQuery4))
 
-def query[T <: DbDataSet, R <: DbDataSet, X <: DbDataSet,
+def from[T <: DbDataSet, R <: DbDataSet, X <: DbDataSet,
           S <: DbDataSet, Q <: DbDataSet]
     (fromQuery1: SelectStatement[T], fromQuery2: SelectStatement[R],
     fromQuery3: SelectStatement[X], fromQuery4: SelectStatement[S],
@@ -79,7 +75,7 @@ def query[T <: DbDataSet, R <: DbDataSet, X <: DbDataSet,
   QueryBuilder[(T, R, X, S, Q)](subQueries = Seq(fromQuery1, fromQuery2, fromQuery3,
                                                   fromQuery4, fromQuery5))
 
-def query[T <: DbDataSet, R <: DbDataSet, X <: DbDataSet,
+def from[T <: DbDataSet, R <: DbDataSet, X <: DbDataSet,
           S <: DbDataSet, Q <: DbDataSet, H <: DbDataSet]
     (fromQuery1: SelectStatement[T], fromQuery2: SelectStatement[R],
       fromQuery3: SelectStatement[X], fromQuery4: SelectStatement[S],
@@ -93,11 +89,14 @@ def query[T <: DbDataSet, R <: DbDataSet, X <: DbDataSet,
 def union[T <: DbDataSet] (selects: SelectStatement[T]*) =
   SelectStatement.union(selects)
 
+
 def unionAll[T <: DbDataSet] (selects: SelectStatement[T]*) =
   SelectStatement.unionAll(selects)
 
+
 def intersect[T <: DbDataSet] (selects: SelectStatement[T]*) =
   SelectStatement.intersect(selects)
+
 
 def except[T <: DbDataSet] (selects: SelectStatement[T]*) =
   SelectStatement.except(selects)
@@ -138,6 +137,7 @@ extension (x: String)
   def like (y: String): Boolean = ???
   def notLike (y: String): Boolean = ???
 
+
 // Infix Operators for Booleans
 extension (x: Boolean)
 
@@ -145,6 +145,7 @@ extension (x: Boolean)
   def <>  (y: Boolean): Boolean = ???
   def and (y: Boolean): Boolean = ???
   def or (y: Boolean): Boolean = ???
+
 
 // Infix Operators for Ints
 extension (x: Int)
@@ -154,6 +155,7 @@ extension (x: Int)
   def in  (y: List[Int]): Boolean = ???
   def notIn  (y: List[Int]): Boolean = ???
 
+
 // Infix Operators for Longs
 extension (x: Long)
 
@@ -161,6 +163,7 @@ extension (x: Long)
   def <>  (y: Long): Boolean = ???
   def in  (y: List[Long]): Boolean = ???
   def notIn  (y: List[Long]): Boolean = ???
+
 
 // Infix Operators for BigDecimals
 extension (x: BigDecimal)

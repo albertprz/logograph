@@ -25,7 +25,7 @@ class SelectStatementSpec extends AnyFunSpec {
 
     it("can serialize complex queries") {
 
-      val complexQuery = select[(Person, Address, Telephone), Result] { case (p, a, t) =>
+      val complexQuery = from[(Person, Address, Telephone)].select { case (p, a, t) =>
         Query(
           Select          (Result (p.name, p.age, a.street, 72162183)),
           Where           (a.street like "%Baker St%",
@@ -51,7 +51,7 @@ class SelectStatementSpec extends AnyFunSpec {
 
     it("can serialize queries including literal values") {
 
-      val literalValsQuery = select[Address, Address] { a =>
+      val literalValsQuery = from[Address].select { a =>
         Query(
           SelectAll (a),
           Where (a.street in List("Carnaby St", "Downing St"))
@@ -71,7 +71,7 @@ class SelectStatementSpec extends AnyFunSpec {
 
       val allowedPhoneNumbers = List(658976534L, 870127465L)
 
-      val runtimeValsQuery = query[Telephone].select {t =>
+      val runtimeValsQuery = from[Telephone].select {t =>
         Query(
           SelectAll (t),
           Where (t.number in allowedPhoneNumbers)
@@ -92,13 +92,13 @@ class SelectStatementSpec extends AnyFunSpec {
 
     it("can serialize queries using set operations") {
 
-      val personsQuery1 = select[Person, Person] { p =>
+      val personsQuery1 = from[Person].select { p =>
         Query(
           SelectDistinctAll (p),
           Where (p.age < 38))
       }
 
-      val personsQuery2 = select[Person, Person] { p =>
+      val personsQuery2 = from[Person].select { p =>
         Query(
           SelectDistinctAll (p),
           Where (p.name <> "George"))
@@ -135,38 +135,38 @@ class SelectStatementSpec extends AnyFunSpec {
 
     it("can serialize deeply nested queries into nested CTEs") {
 
-      val personsQuery = select[Person, Person] { p =>
+      val personsQuery = from[Person].select { p =>
         Query(
           SelectAll (p),
           Where (p.name === "Mark" or p.name === "John",
                  p.age > 25))
       }
 
-      val adressesQuery = select[Address, Address] { a =>
+      val adressesQuery = from[Address].select { a =>
         Query(
           SelectAll (a),
           Where (a.street like "%Baker St%"))
       }
 
-      val telephoneQuery = select[Telephone, Telephone] { t =>
+      val telephoneQuery = from[Telephone].select { t =>
         Query(
           SelectAll (t),
           Where (t.number <> 676874981))
       }
 
-      val innerNestedQuery1 = query(personsQuery, adressesQuery).select { case (p, a) =>
+      val innerNestedQuery1 = from(personsQuery, adressesQuery).select { case (p, a) =>
         Query(
           Select        (InnerResult1(p.name, max(p.age), a.street))
         )
       }
 
-      val innerNestedQuery2 = query(personsQuery, telephoneQuery).select { case (p, t) =>
+      val innerNestedQuery2 = from(personsQuery, telephoneQuery).select { case (p, t) =>
         Query(
           Select        (InnerResult2(p.name, t.number)),
         )
       }
 
-      val deeplyNestedQuery = query(innerNestedQuery1, innerNestedQuery2).select { case (a, b) =>
+      val deeplyNestedQuery = from(innerNestedQuery1, innerNestedQuery2).select { case (a, b) =>
         Query(
           Select          (Result (a.name, a.age, a.street, b.telephoneNumber)),
           OrderBy         (asc (a.name)),

@@ -48,8 +48,9 @@ object StringUtils:
     def convertCase (caseConverter: Option[CaseConverter]) =
       caseConverter.fold(str)(_.convertCase(str))
 
-    def convert (converterMap: Map[String, String]) =
-      converterMap.getOrElse(str, str)
+    def convert (converterMap: Option[Map[String, String]]) =
+      converterMap.getOrElse(Map.empty)
+                  .getOrElse(str, str)
 
     def betweenChars (start: Char, ending: Char) =
       str.slice(str.indexOf(start) + 1, str.indexOf(ending))

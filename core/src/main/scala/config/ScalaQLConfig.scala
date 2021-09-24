@@ -11,13 +11,13 @@ import pureconfig.{ConfigReader, ConfigCursor, ReadsMissingKeys, ConfigSource}
 import pureconfig.generic.ProductHint
 
 
-case class ScalaQLConfig (engine:                Option[SQLEngine]                = None,
-                          tableCaseConverter:    Option[CaseConverter]            = None,
-                          columnCaseConverter:   Option[CaseConverter]            = None,
-                          operatorCaseConverter: Option[CaseConverter]            = None,
-                          tableConverter:        Map[String, String]              = Map.empty,
-                          columnConverter:       Map[String, Map[String, String]] = Map.empty,
-                          operatorConverter:     Map[String, String]              = Map.empty)
+case class ScalaQLConfig (engine:                Option[SQLEngine]                        = None,
+                          tableCaseConverter:    Option[CaseConverter]                    = None,
+                          columnCaseConverter:   Option[CaseConverter]                    = None,
+                          operatorCaseConverter: Option[CaseConverter]                    = None,
+                          tableConverter:        Option[Map[String, String]]              = None,
+                          columnConverter:       Option[Map[String, Map[String, String]]] = None,
+                          operatorConverter:     Option[Map[String, String]]              = None)
 
 
 object ScalaQLConfig:
@@ -45,8 +45,9 @@ object Implicits:
 
   given ConfigReader[ScalaQLConfig] =
     ConfigReader.forProduct7[ScalaQLConfig, Option[SQLEngine],
-                            Option[CaseConverter], Option[CaseConverter], Option[CaseConverter],
-                            Map[String, String], Map[String, Map[String, String]], Map[String, String]] (
+                             Option[CaseConverter], Option[CaseConverter], Option[CaseConverter],
+                             Option[Map[String, String]], Option[Map[String, Map[String, String]]],
+                             Option[Map[String, String]]] (
       "engine", "tableCaseConverter", "columnCaseConverter", "operatorCaseConverter",
                 "tableConverter", "columnConverter", "operatorConverter") {
       case (engine, tableCaseConverter, columnCaseConverter, operatorCaseConverter,

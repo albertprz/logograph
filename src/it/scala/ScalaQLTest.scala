@@ -24,7 +24,7 @@ class ScalaQLTest extends AnyFunSpec with BeforeAndAfter {
 
     it("can retrieve query results") {
 
-      val complexQuery = select[(Person, Address, Telephone), Result] { case (p, a, t) =>
+      val complexQuery = from[(Person, Address, Telephone)].select { case (p, a, t) =>
         Query(
           Select          (Result (p.name, p.age, a.street, t.number)),
           Where           (a.street like "%Baker St%",
@@ -65,11 +65,9 @@ class ScalaQLTest extends AnyFunSpec with BeforeAndAfter {
                                            p.isEmployer -> true),
                                        Where(p.name === "John")))).unsafeRunSync()
 
-      val simpleQuery = selectAll[Person]
 
-
-      assert (simpleQuery.run().unsafeRunSync() == Seq(SeedData.john.copy(age = 40, isEmployer = true),
-                                                                  SeedData.thomas))
+      assert (selectAll[Person].run().unsafeRunSync() == Seq(SeedData.john.copy(age = 40, isEmployer = true),
+                                                             SeedData.thomas))
     }
 
 

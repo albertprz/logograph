@@ -78,7 +78,7 @@ private def buildQuery[T, R <: DbDataSet] (queryTree: Expr[T => Query[R]], subQu
   val (clause, params, table) = extractor.getQueryClause(queryTree.asTerm, getClassName[T],
                                                          typeInfo.fullClassName, typeInfo.elemNames)
 
-  emitMessage("Query", clause)
+  emitMessage(clause)
 
 
   '{ SelectStatement[R](sqlTemplate  = ${Expr(clause.sql)},
@@ -103,6 +103,7 @@ private def buildQueryAll[T <: DbDataSet] (using Quotes, Type[T]): Expr[SelectSt
 
   val (clause, table) = extractor.getQueryClause(typeInfo.fullClassName)
 
+
   '{ SelectStatement[T](sqlTemplate  = ${Expr(clause.sql)},
                         params       = Map.empty,
                         tableNames   = ${Expr(List(table.sql))},
@@ -126,7 +127,7 @@ private def buildUpdate[T <: DbTable] (updateTree: Expr[Any])
 
   val (clause, params) = extractor.getUpdateClause(updateTree.asTerm, typeInfo.fullClassName)
 
-  emitMessage("Update", clause)
+  emitMessage(clause)
 
   '{ UpdateStatement[T](sqlTemplate = ${Expr(clause.sql)},
                         params      = ${Expr(params.asInstanceOf[Map[String, Any]])}) }
@@ -147,17 +148,17 @@ private def buildDelete[T <: DbTable] (whereTree: Option[Expr[T => Where]] = Non
 
   val (clause, params) = extractor.getDeleteClause(whereTree.map(_.asTerm), typeInfo.fullClassName)
 
-  emitMessage("Delete", clause)
+  emitMessage(clause)
 
   '{ DeleteStatement[T](sqlTemplate = ${Expr(clause.sql)},
                         params      = ${Expr(params.asInstanceOf[Map[String, Any]])}) }
 
 
-private def emitMessage (operation: String, clause: SQLClause) (using Quotes) =
+private def emitMessage (clause: SQLClause) (using Quotes) =
 
   import quotes.reflect.*
 
-  val compilationMessage = s"Debugging ${operation.toLowerCase()}:\n\n\n${clause.sql}\n\n\n"
+  val compilationMessage = s"\n${clause.sql}\n\n\n"
 
   report.info(compilationMessage)
 

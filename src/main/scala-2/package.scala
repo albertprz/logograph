@@ -12,9 +12,6 @@ package object scalaql {
   import scala.language.experimental.macros
 
   // Statement factory functions
-  def select[T, R <: DbDataSet](query: T => Query[R]): SelectStatement[R] =
-    macro QueryImpl.select[T, R]
-
   def selectAll[T <: DbTable]: SelectStatement[T] =
     macro QueryImpl.selectAll[T]
 
@@ -39,28 +36,36 @@ package object scalaql {
   def insert[T <: DbTable] (query: SelectStatement[T]) (implicit tag: ru.TypeTag[T]) =
     InsertStatement (Right (query), extractTypeInfo[T]())
 
-  def query[T] = QueryBuilder[T]()
 
-  def query[T <: DbDataSet] (fromQuery: SelectStatement[T]) =
+  case class QueryBuilder[T](subQueries: Seq[SelectStatement[_]] = Seq.empty) {
+
+    def select[R <: DbDataSet](query: T => Query[R]): SelectStatement[R] =
+      macro QueryImpl.selectFrom[T, R]
+  }
+
+
+  def from[T] = QueryBuilder[T]()
+
+  def from[T <: DbDataSet] (fromQuery: SelectStatement[T]) =
       QueryBuilder[T](subQueries = Seq(fromQuery))
 
-  def query[T <: DbDataSet, R <: DbDataSet]
+  def from[T <: DbDataSet, R <: DbDataSet]
     (fromQuery1: SelectStatement[T], fromQuery2: SelectStatement[R]) =
     QueryBuilder[(T, R)](subQueries = Seq(fromQuery1, fromQuery2))
 
-  def query[T <: DbDataSet, R <: DbDataSet, X <: DbDataSet]
+  def from[T <: DbDataSet, R <: DbDataSet, X <: DbDataSet]
     (fromQuery1: SelectStatement[T], fromQuery2: SelectStatement[R],
      fromQuery3: SelectStatement[X]) =
     QueryBuilder[(T, R, X)](subQueries = Seq(fromQuery1, fromQuery2, fromQuery3))
 
-  def query[T <: DbDataSet, R <: DbDataSet, X <: DbDataSet,
+  def from[T <: DbDataSet, R <: DbDataSet, X <: DbDataSet,
             S <: DbDataSet]
     (fromQuery1: SelectStatement[T], fromQuery2: SelectStatement[R],
      fromQuery3: SelectStatement[X], fromQuery4: SelectStatement[S]) =
     QueryBuilder[(T, R, X, S)](subQueries = Seq(fromQuery1, fromQuery2, fromQuery3,
                                                 fromQuery4))
 
-  def query[T <: DbDataSet, R <: DbDataSet, X <: DbDataSet,
+  def from[T <: DbDataSet, R <: DbDataSet, X <: DbDataSet,
             S <: DbDataSet, Q <: DbDataSet]
      (fromQuery1: SelectStatement[T], fromQuery2: SelectStatement[R],
       fromQuery3: SelectStatement[X], fromQuery4: SelectStatement[S],
@@ -68,7 +73,7 @@ package object scalaql {
     QueryBuilder[(T, R, X, S, Q)](subQueries = Seq(fromQuery1, fromQuery2, fromQuery3,
                                                    fromQuery4, fromQuery5))
 
-  def query[T <: DbDataSet, R <: DbDataSet, X <: DbDataSet,
+  def from[T <: DbDataSet, R <: DbDataSet, X <: DbDataSet,
             S <: DbDataSet, Q <: DbDataSet, H <: DbDataSet]
       (fromQuery1: SelectStatement[T], fromQuery2: SelectStatement[R],
        fromQuery3: SelectStatement[X], fromQuery4: SelectStatement[S],
@@ -76,11 +81,6 @@ package object scalaql {
     QueryBuilder[(T, R, X, S, Q, H)](subQueries = Seq(fromQuery1, fromQuery2, fromQuery3,
                                                       fromQuery4, fromQuery5, fromQuery6))
 
-  case class QueryBuilder[T](subQueries: Seq[SelectStatement[_]] = Seq.empty) {
-
-    def select[R <: DbDataSet](query: T => Query[R]): SelectStatement[R] =
-      macro QueryImpl.selectFrom[T, R]
-  }
 
 
   // Query Set Operations
