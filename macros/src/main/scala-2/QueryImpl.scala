@@ -14,11 +14,11 @@ class QueryImpl(val c: blackbox.Context) {
     buildQueryAll[T] ()
 
   def select[T, R <: DbDataSet] (query: Tree) (implicit tag1: WeakTypeTag[T], tag2: WeakTypeTag[R]): Expr[SelectStatement[R]] =
-    buildQuery[T, R] (query)
+    buildQuery[T, R] (query, false)
 
-  def selectFrom[T <: DbDataSet, R <: DbDataSet] (fromQueries: Tree, query: Tree)
+  def selectFrom[T, R <: DbDataSet] (query: Tree)
                 (implicit tag1: WeakTypeTag[T], tag2: WeakTypeTag[R]) : Expr[SelectStatement[R]] =
-    buildQuery[T, R] (query)
+    buildQuery[T, R] (query, true)
 
   def updateAll[T <: DbTable] (setMap: Tree) (implicit tag: WeakTypeTag[T]): Expr[UpdateStatement[T]] =
     buildUpdate[T] (setMap)
@@ -48,7 +48,7 @@ class QueryImpl(val c: blackbox.Context) {
     }
   }
 
-  private def buildQuery[T, R <: DbDataSet] (queryTree: Tree)
+  private def buildQuery[T, R <: DbDataSet] (queryTree: Tree, includeSubQueries: Boolean)
                                             (implicit tag1: WeakTypeTag[T], tag2: WeakTypeTag[R]) = {
 
     val (typeInfoT, typeInfoR) = (extractTypeInfo[T], extractTypeInfo[R])
@@ -57,7 +57,12 @@ class QueryImpl(val c: blackbox.Context) {
 
     emitMessage("Query", clause)
 
-    val subQueries = c.Expr[Seq[SelectStatement[_]]] (Select(c.prefix.tree, TermName("subQueries")))
+    val subQueries =
+      if (includeSubQueries)
+        c.Expr[Seq[SelectStatement[_]]] (Select(c.prefix.tree, TermName("subQueries")))
+      else
+        c.Expr[Seq[SelectStatement[_]]] (q"Seq.empty")
+
 
     c.Expr[SelectStatement[R]](q"""SelectStatement(sqlTemplate = ${clause.sql},
                                                    params = ${params.asInstanceOf[Map[String, Tree]]},

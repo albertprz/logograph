@@ -1,7 +1,6 @@
 package test
 
 import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should.Matchers.{should, equal}
 
 import com.albertoperez1994.scalaql._
 
@@ -20,7 +19,7 @@ class UpdateStatementSpec extends AnyFunSpec {
            SET         [age] = [age] + 5"""
 
 
-      simpleUpdate.sql.trimLines() should equal (simpleUpdateSql.trimLines())
+      assert (simpleUpdate.sql.trimLines() == simpleUpdateSql.trimLines())
     }
 
 
@@ -36,7 +35,7 @@ class UpdateStatementSpec extends AnyFunSpec {
          WHERE       [name] = 'Peter'"""
 
 
-      filteredUpdate.sql.trimLines() should equal (filteredUpdateSql.trimLines())
+      assert (filteredUpdate.sql.trimLines() == filteredUpdateSql.trimLines())
     }
   }
 }

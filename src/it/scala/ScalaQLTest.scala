@@ -2,7 +2,6 @@ package it
 
 import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.BeforeAndAfter
-import org.scalatest.matchers.should.Matchers.{should, equal}
 import cats.effect.unsafe.implicits.global
 
 import com.albertoperez1994.scalaql._
@@ -35,8 +34,8 @@ class ScalaQLTest extends AnyFunSpec with BeforeAndAfter {
       }
 
 
-      complexQuery.run().unsafeRunSync().head should equal (Result(SeedData.john.name, SeedData.john.age,
-                                                                   SeedData.johnAddress.street, SeedData.johnTelephone.number))
+      assert (complexQuery.run().unsafeRunSync().head == (Result(SeedData.john.name, SeedData.john.age,
+                                                                 SeedData.johnAddress.street, SeedData.johnTelephone.number)))
     }
 
 
@@ -51,11 +50,12 @@ class ScalaQLTest extends AnyFunSpec with BeforeAndAfter {
                   insert(mattTelephone))
               .unsafeRunSync()
 
-      selectAll[Person].run().unsafeRunSync() should equal (SeedData.people :+ matt)
 
-      selectAll[Address].run().unsafeRunSync() should equal (SeedData.addresses :+ mattAddress)
+      assert (selectAll[Person].run().unsafeRunSync() == SeedData.people :+ matt)
 
-      selectAll[Telephone].run().unsafeRunSync() should equal (SeedData.telephones :+ mattTelephone)
+      assert (selectAll[Address].run().unsafeRunSync() == SeedData.addresses :+ mattAddress)
+
+      assert (selectAll[Telephone].run().unsafeRunSync() == SeedData.telephones :+ mattTelephone)
     }
 
 
@@ -68,8 +68,8 @@ class ScalaQLTest extends AnyFunSpec with BeforeAndAfter {
       val simpleQuery = selectAll[Person]
 
 
-      simpleQuery.run().unsafeRunSync() should equal (Seq(SeedData.john.copy(age = 40, isEmployer = true),
-                                                          SeedData.thomas))
+      assert (simpleQuery.run().unsafeRunSync() == Seq(SeedData.john.copy(age = 40, isEmployer = true),
+                                                                  SeedData.thomas))
     }
 
 
@@ -81,11 +81,11 @@ class ScalaQLTest extends AnyFunSpec with BeforeAndAfter {
               .unsafeRunSync()
 
 
-      selectAll[Person].run().unsafeRunSync().head should equal (SeedData.thomas)
+      assert (selectAll[Person].run().unsafeRunSync().head == SeedData.thomas)
 
-      selectAll[Address].run().unsafeRunSync().head should equal (SeedData.thomasAddress)
+      assert (selectAll[Address].run().unsafeRunSync().head == SeedData.thomasAddress)
 
-      selectAll[Telephone].run().unsafeRunSync().head should equal (SeedData.thomasTelephone)
+      assert (selectAll[Telephone].run().unsafeRunSync().head == SeedData.thomasTelephone)
     }
   }
 }

@@ -7,7 +7,7 @@ Test / parallelExecution := false
 
 
 
-lazy val mainSettings = Seq(
+lazy val commonSettings = Seq(
 
   scalaVersion := "3.0.0",
 
@@ -23,22 +23,36 @@ lazy val mainSettings = Seq(
 )
 
 
-lazy val core = project
-  .in(file("core"))
-  .settings(
-    name := "scalaql-core",
-    mainSettings,
+lazy val coreSettings = Seq(
     libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
       case Some((2, 13)) => cats ++ catsEffect ++ pureconfig
       case _             => cats ++ catsEffect ++ pureconfig.map(_.cross(CrossVersion.for3Use2_13))
     })
+)
+
+
+lazy val testSettings = inConfig(IntegrationTest)(Defaults.itSettings) ++
+  Seq (
+    IntegrationTest / scalaSource := baseDirectory.value / "src/it/scala",
+    TaskKey[Unit]("test") := (IntegrationTest / test).dependsOn(Test / test).value,
+    libraryDependencies ++= (scalaTest ++ sqlite).map(_ % "it,test")
+)
+
+
+
+lazy val core = project
+  .in(file("core"))
+  .settings(
+    name := "scalaql-core",
+    commonSettings,
+    coreSettings
   )
 
 lazy val macros = project
   .in(file("macros"))
   .settings(
     name := "scalaql-macros",
-    mainSettings,
+    commonSettings,
     crossScalaVersions := Seq("3.0.0", "2.13.6")
   )
 .dependsOn(core)
@@ -48,9 +62,8 @@ lazy val app = project
   .configs(IntegrationTest)
   .settings(
     name := "scalaql",
-    mainSettings,
-    integrationTestSettings,
-    libraryDependencies ++= testDependencies,
+    commonSettings,
+    testSettings,
     crossScalaVersions := Seq("3.0.0", "2.13.6")
   )
 .dependsOn(core, macros)
@@ -58,14 +71,8 @@ lazy val app = project
 
 
 
-lazy val testDependencies = (scalaTest ++ sqlite).map(_ % "it,test")
 
-lazy val integrationTestSettings = inConfig(IntegrationTest)(Defaults.itSettings) ++
-                                      Seq (IntegrationTest / scalaSource := baseDirectory.value / "src/it/scala",
-                                           TaskKey[Unit]("test") := (IntegrationTest / test).dependsOn(Test / test).value)
-
-
-/// Dependencies ///
+/// Main Dependencies ///
 val scalaReflect = Seq("org.scala-lang" % "scala-reflect")
 
 val cats = Seq("org.typelevel" %% "cats-core"   % "2.6.1",
@@ -75,6 +82,8 @@ val catsEffect = Seq("org.typelevel" %% "cats-effect" % "3.1.1")
 
 val pureconfig = Seq("com.github.pureconfig" %% "pureconfig" % "0.16.0")
 
+
+/// Test Dependencies ///
 val scalaTest = Seq("org.scalatest" %% "scalatest" % "3.2.9",
                     "org.scalactic" %% "scalactic" % "3.2.9")
 

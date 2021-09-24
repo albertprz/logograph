@@ -1,7 +1,6 @@
 package test
 
 import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should.Matchers.{should, equal}
 
 import com.albertoperez1994.scalaql._
 
@@ -22,9 +21,9 @@ class InsertStatementSpec extends AnyFunSpec {
            VALUES      (?, ?, ?, ?, ?)"""
 
 
-      singleValueInsert.sql.trimLines() should equal (singleValueInsertSql.trimLines())
+      assert (singleValueInsert.sql.trimLines() == singleValueInsertSql.trimLines())
 
-      singleValueInsert.paramList should equal (joe.productIterator.toList)
+      assert (singleValueInsert.paramList == (joe.productIterator.toList))
     }
 
 
@@ -41,15 +40,15 @@ class InsertStatementSpec extends AnyFunSpec {
                        (?, ?, ?, ?, ?)"""
 
 
-      sequencedValuesInsert.sql.trimLines() should equal (sequencedValuesInsertSql.trimLines())
+      assert (sequencedValuesInsert.sql.trimLines() == sequencedValuesInsertSql.trimLines())
 
-      sequencedValuesInsert.paramList should equal (Seq(joe, mark).flatMap(_.productIterator).toList)
+      assert (sequencedValuesInsert.paramList == Seq(joe, mark).flatMap(_.productIterator).toList)
     }
 
 
     it("can serialize insert statements from a query") {
 
-      val adressesQuery = query[Address].select {
+      val adressesQuery = select[Address, Address] {
         a => Query(
           SelectAll (a),
           Where (a.street like "%Baker St%"))
@@ -64,7 +63,7 @@ class InsertStatementSpec extends AnyFunSpec {
            WHERE       a.[street] LIKE '%Baker St%'"""
 
 
-      queryInsert.sql.trimLines() should equal (queryInsertSql.trimLines())
+      assert (queryInsert.sql.trimLines() == queryInsertSql.trimLines())
     }
   }
 }

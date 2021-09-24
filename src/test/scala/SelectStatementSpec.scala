@@ -1,7 +1,6 @@
 package test
 
 import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should.Matchers.{should, equal}
 
 import com.albertoperez1994.scalaql._
 
@@ -20,7 +19,7 @@ class SelectStatementSpec extends AnyFunSpec {
            FROM        [person] AS p"""
 
 
-      simpleQuery.sql.trimLines() should equal (simpleQuerySql.trimLines())
+      assert (simpleQuery.sql.trimLines() == simpleQuerySql.trimLines())
     }
 
 
@@ -46,7 +45,7 @@ class SelectStatementSpec extends AnyFunSpec {
            ORDER BY    p.[age] DESC"""
 
 
-      complexQuery.sql.trimLines() should equal (complexQuerySql.trimLines())
+      assert (complexQuery.sql.trimLines() == complexQuerySql.trimLines())
     }
 
 
@@ -65,7 +64,7 @@ class SelectStatementSpec extends AnyFunSpec {
            WHERE       a.[street] IN ('Carnaby St', 'Downing St')"""
 
 
-      literalValsQuery.sql.trimLines() should equal (literalValsQuerySql.trimLines())
+      assert (literalValsQuery.sql.trimLines() == literalValsQuerySql.trimLines())
     }
 
     it("can serialize queries including runtime values") {
@@ -85,9 +84,9 @@ class SelectStatementSpec extends AnyFunSpec {
            WHERE       t.[number] IN (?, ?)"""
 
 
-      runtimeValsQuery.sql.trimLines() should equal (runtimeValsQuerySql.trimLines())
+      assert (runtimeValsQuery.sql.trimLines() == runtimeValsQuerySql.trimLines())
 
-      runtimeValsQuery.paramList should equal (allowedPhoneNumbers)
+      assert (runtimeValsQuery.paramList == allowedPhoneNumbers)
     }
 
 
@@ -128,9 +127,9 @@ class SelectStatementSpec extends AnyFunSpec {
           WHERE       p.[name] <> 'George'"""
 
 
-      (personsQuery1 union personsQuery2).sql.trimLines() should equal (unionQuerySql.trimLines())
+      assert ((personsQuery1 union personsQuery2).sql.trimLines() == unionQuerySql.trimLines())
 
-      (personsQuery1 intersect personsQuery2).sql.trimLines() should equal (intersectQuerySql.trimLines())
+      assert ((personsQuery1 intersect personsQuery2).sql.trimLines() == intersectQuerySql.trimLines())
     }
 
 
@@ -219,8 +218,7 @@ class SelectStatementSpec extends AnyFunSpec {
           ORDER BY    a.[name] ASC"""
 
 
-      deeplyNestedQuery.sql.trimLines() should equal (deeplyNestedQuerySql.trimLines())
+      assert (deeplyNestedQuery.sql.trimLines() == deeplyNestedQuerySql.trimLines())
     }
-
   }
 }

@@ -12,7 +12,10 @@ package object scalaql {
   import scala.language.experimental.macros
 
   // Statement factory functions
-  def queryAll[T <: DbTable]: SelectStatement[T] =
+  def select[T, R <: DbDataSet](query: T => Query[R]): SelectStatement[R] =
+    macro QueryImpl.select[T, R]
+
+  def selectAll[T <: DbTable]: SelectStatement[T] =
     macro QueryImpl.selectAll[T]
 
   def update[T <: DbTable] (setMap: T => (Map[Any, Any], Where)): UpdateStatement[T] =
@@ -76,7 +79,7 @@ package object scalaql {
   case class QueryBuilder[T](subQueries: Seq[SelectStatement[_]] = Seq.empty) {
 
     def select[R <: DbDataSet](query: T => Query[R]): SelectStatement[R] =
-      macro QueryImpl.select[T, R]
+      macro QueryImpl.selectFrom[T, R]
   }
 
 

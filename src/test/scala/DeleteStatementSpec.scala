@@ -1,9 +1,9 @@
 package test
 
 import org.scalatest.funspec.AnyFunSpec
-import org.scalatest.matchers.should.Matchers.{should, equal}
 
 import com.albertoperez1994.scalaql._
+
 
 class DeleteStatementSpec extends AnyFunSpec {
 
@@ -18,7 +18,7 @@ class DeleteStatementSpec extends AnyFunSpec {
         """DELETE FROM [address]"""
 
 
-      simpleDelete.sql.trimLines() should equal (simpleDeleteSql.trimLines())
+      assert (simpleDelete.sql.trimLines() == simpleDeleteSql.trimLines())
     }
 
 
@@ -32,7 +32,7 @@ class DeleteStatementSpec extends AnyFunSpec {
            WHERE       [number] IN (16792021, 72181292)"""
 
 
-      filteredDelete.sql.trimLines() should equal (filteredDeleteSql.trimLines())
+      assert (filteredDelete.sql.trimLines() == filteredDeleteSql.trimLines())
     }
   }
 }

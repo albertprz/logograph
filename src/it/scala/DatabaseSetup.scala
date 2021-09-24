@@ -44,7 +44,7 @@ private object Connection {
 
     val stmt = connection.createStatement()
 
-    for stmtSql <- initStatementsSql do
+    for (stmtSql <- initStatementsSql)
       stmt.addBatch(stmtSql)
 
     stmt.executeBatch()
