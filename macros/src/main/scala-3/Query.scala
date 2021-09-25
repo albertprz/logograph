@@ -1,4 +1,4 @@
-package com.albertoperez1994.scalaql
+package com.albertprz.maglor
 
 
 enum SelectBase [T <: DbDataSet]:

@@ -1,4 +1,4 @@
-package com.albertoperez1994.scalaql
+package com.albertprz.maglor
 
 import java.sql.{Connection, ResultSet, PreparedStatement, Statement, Date, Time}
 import java.math.BigDecimal
@@ -8,15 +8,15 @@ import cats.Monad
 import cats.syntax.all.*
 import cats.effect.{Sync, Resource}
 
-import com.albertoperez1994.scalaql.config.ScalaQLConfig
+import com.albertprz.maglor.config.MaglorConfig
 import utils.TypeInfo
 import utils.StringUtils.*
 import java.lang.reflect.Method
 
 
-class ScalaQLContext [F[_] : Sync : Monad] (conn: Connection):
+class MaglorContext [F[_] : Sync : Monad] (conn: Connection):
 
-  import ScalaQLContext.*
+  import MaglorContext.*
 
   conn.setAutoCommit(false)
 
@@ -49,7 +49,7 @@ class ScalaQLContext [F[_] : Sync : Monad] (conn: Connection):
             .map  { stmt => parameteriseStatement(stmt, paramList) }
 
 
-private object ScalaQLContext:
+private object MaglorContext:
 
   def extractResults [T <: DbDataSet] (resultSet: ResultSet, typeInfo: TypeInfo) =
 

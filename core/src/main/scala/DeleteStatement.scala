@@ -1,7 +1,7 @@
-package com.albertoperez1994.scalaql
+package com.albertprz.maglor
 
-import com.albertoperez1994.scalaql.config.ScalaQLConfig
-import com.albertoperez1994.scalaql.utils
+import com.albertprz.maglor.config.MaglorConfig
+import com.albertprz.maglor.utils
 import utils.StringUtils.*
 
 case class DeleteStatement [T <: DbTable]  (sqlTemplate: String,
@@ -12,7 +12,7 @@ case class DeleteStatement [T <: DbTable]  (sqlTemplate: String,
 
   lazy val validate = {}
 
-  def run [F[+_]] () (using context: ScalaQLContext[F]) =
+  def run [F[+_]] () (using context: MaglorContext[F]) =
     context.run(this)
 
   override def toString () =
@@ -23,7 +23,7 @@ object DeleteStatement:
 
   import SQLStatement.*
 
-  given ScalaQLConfig = ScalaQLConfig.get
+  given MaglorConfig = MaglorConfig.get
 
   def generate [T <: DbTable] (delete: DeleteStatement[T]) =
 

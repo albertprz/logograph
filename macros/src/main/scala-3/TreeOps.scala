@@ -1,4 +1,4 @@
-// package com.albertoperez1994.scalaql.macros
+// package com.albertprz.maglor.macros
 
 // import scala.quoted.*
 

@@ -1,13 +1,13 @@
 package it
 
 import java.sql.DriverManager
-import com.albertoperez1994.scalaql._
+import com.albertprz.maglor._
 import cats.effect.IO
 
 
 object Database {
 
-  implicit val context: ScalaQLContext[IO] = Connection.context
+  implicit val context: MaglorContext[IO] = Connection.context
 
   def setup(): IO[Unit] = context.run (insert(SeedData.people),
                                        insert(SeedData.addresses),
@@ -22,7 +22,7 @@ object Database {
 
 private object Connection {
 
-  lazy val context = new ScalaQLContext[IO](connection)
+  lazy val context = new MaglorContext[IO](connection)
 
   private val connection = {
 

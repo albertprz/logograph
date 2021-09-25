@@ -2,7 +2,7 @@ package test
 
 import org.scalatest.funspec.AnyFunSpec
 
-import com.albertoperez1994.scalaql._
+import com.albertprz.maglor._
 
 
 class InsertStatementSpec extends AnyFunSpec {

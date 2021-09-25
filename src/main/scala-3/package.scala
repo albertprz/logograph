@@ -1,7 +1,7 @@
-package com.albertoperez1994.scalaql
+package com.albertprz.maglor
 
-import com.albertoperez1994.scalaql.core.*
-import com.albertoperez1994.scalaql.macros.QueryImpl
+import com.albertprz.maglor.core.*
+import com.albertprz.maglor.macros.QueryImpl
 import scala.quoted.*
 
 

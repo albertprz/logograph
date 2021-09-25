@@ -1,11 +1,11 @@
-package com.albertoperez1994.scalaql.macros
+package com.albertprz.maglor.macros
 
-import com.albertoperez1994.scalaql.core._
-import com.albertoperez1994.scalaql.{utils => utils}
+import com.albertprz.maglor.core._
+import com.albertprz.maglor.{utils => utils}
 import utils.QueryUtils._
 import utils.StringUtils._
 import scala.reflect.macros.blackbox
-import com.albertoperez1994.scalaql.config.ScalaQLConfig
+import com.albertprz.maglor.config.MaglorConfig
 
 class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
@@ -13,7 +13,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
   private val ops = new TreeOps[c.type](c)
   private var tableAliasMap: Map[String, Table] = null
-  private implicit val config: ScalaQLConfig = ScalaQLConfig.get
+  private implicit val config: MaglorConfig = MaglorConfig.get
 
   import ops._
 
@@ -163,18 +163,18 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
   private def getOperation(tree: Tree) = {
 
     val op = tree match {
-      case q"com.albertoperez1994.scalaql.`package`.ScalaQLString($operand1).$operator($operand2)" =>
+      case q"com.albertprz.maglor.`package`.MaglorString($operand1).$operator($operand2)" =>
         Some((operator, List(operand1, operand2)))
-      case q"com.albertoperez1994.scalaql.`package`.ScalaQLBoolean($operand1).$operator($operand2)" =>
+      case q"com.albertprz.maglor.`package`.MaglorBoolean($operand1).$operator($operand2)" =>
         Some((operator, List(operand1, operand2)))
-      case q"com.albertoperez1994.scalaql.`package`.ScalaQLInt($operand1).$operator($operand2)" =>
+      case q"com.albertprz.maglor.`package`.MaglorInt($operand1).$operator($operand2)" =>
         Some((operator, List(operand1, operand2)))
-      case q"com.albertoperez1994.scalaql.`package`.ScalaQLLong($operand1).$operator($operand2)" =>
+      case q"com.albertprz.maglor.`package`.MaglorLong($operand1).$operator($operand2)" =>
         Some((operator, List(operand1, operand2)))
-      case q"com.albertoperez1994.scalaql.`package`.ScalaQLBigDecimal($operand1).$operator($operand2)" =>
+      case q"com.albertprz.maglor.`package`.MaglorBigDecimal($operand1).$operator($operand2)" =>
         Some((operator, List(operand1, operand2)))
-      case q"com.albertoperez1994.scalaql.`package`.$operator[$tpe](..$operands)" =>  Some((operator, operands))
-      case q"com.albertoperez1994.scalaql.`package`.$operator(..$operands)"       =>  Some((operator, operands))
+      case q"com.albertprz.maglor.`package`.$operator[$tpe](..$operands)" =>  Some((operator, operands))
+      case q"com.albertprz.maglor.`package`.$operator(..$operands)"       =>  Some((operator, operands))
       case q"$operand.$operator(..$operands)"           =>  Some((operator, operand +: operands))
       case _ => None
     }

@@ -1,7 +1,7 @@
-package com.albertoperez1994.scalaql.core
+package com.albertprz.maglor.core
 
-import com.albertoperez1994.scalaql.utils.StringUtils.*
-import com.albertoperez1994.scalaql.config.ScalaQLConfig
+import com.albertprz.maglor.utils.StringUtils.*
+import com.albertprz.maglor.config.MaglorConfig
 
 
 trait ExpressionClause extends SQLClause:
@@ -9,7 +9,7 @@ trait ExpressionClause extends SQLClause:
 
 sealed trait BaseSelectClause extends ExpressionClause
 
-case class SelectClause (exprs: List[Expression], columnAliases: List[Column]) (using ScalaQLConfig)
+case class SelectClause (exprs: List[Expression], columnAliases: List[Column]) (using MaglorConfig)
     extends BaseSelectClause:
 
   val validate = {}
@@ -19,7 +19,7 @@ case class SelectClause (exprs: List[Expression], columnAliases: List[Column]) (
               .mkString("SELECT      ", ", ", "\n")
 
 
-case class SelectDistinctClause (exprs: List[Expression], columnAliases: List[Column]) (using ScalaQLConfig)
+case class SelectDistinctClause (exprs: List[Expression], columnAliases: List[Column]) (using MaglorConfig)
     extends BaseSelectClause:
 
   val validate = {}
@@ -29,7 +29,7 @@ case class SelectDistinctClause (exprs: List[Expression], columnAliases: List[Co
               .mkString("SELECT      DISTINCT ", ", ", "\n")
 
 
-case class SelectAllClause (tableAlias: String) (using ScalaQLConfig)
+case class SelectAllClause (tableAlias: String) (using MaglorConfig)
     extends BaseSelectClause:
 
   val exprs = List.empty
@@ -39,7 +39,7 @@ case class SelectAllClause (tableAlias: String) (using ScalaQLConfig)
   val sql = s"SELECT      $tableAlias.*\n"
 
 
-case class SelectDistinctAllClause (tableAlias: String) (using ScalaQLConfig)
+case class SelectDistinctAllClause (tableAlias: String) (using MaglorConfig)
     extends BaseSelectClause:
 
   val exprs = List.empty
@@ -49,7 +49,7 @@ case class SelectDistinctAllClause (tableAlias: String) (using ScalaQLConfig)
   val sql = s"SELECT      DISTINCT $tableAlias.*\n"
 
 
-case class FromClause (tableAliasesMap: Map[String, Table]) (using ScalaQLConfig)
+case class FromClause (tableAliasesMap: Map[String, Table]) (using MaglorConfig)
     extends SQLClause:
 
   val validate = {}
@@ -60,7 +60,7 @@ case class FromClause (tableAliasesMap: Map[String, Table]) (using ScalaQLConfig
               .mkString("FROM        ", ", ", "\n")
 
 
-case class WhereClause (exprs: List[Expression]) (using ScalaQLConfig)
+case class WhereClause (exprs: List[Expression]) (using MaglorConfig)
     extends ExpressionClause:
 
   val validate = {}
@@ -71,7 +71,7 @@ case class WhereClause (exprs: List[Expression]) (using ScalaQLConfig)
               .mkString("WHERE       ", s" ${Operator("and").sql} \n            ", "\n")
 
 
-case class GroupByClause (fields: List[Field]) (using ScalaQLConfig)
+case class GroupByClause (fields: List[Field]) (using MaglorConfig)
     extends SQLClause:
 
   val validate = {}
@@ -81,7 +81,7 @@ case class GroupByClause (fields: List[Field]) (using ScalaQLConfig)
               .mkString("GROUP BY    ", ", ", "\n")
 
 
-case class HavingClause (exprs: List[Expression]) (using ScalaQLConfig)
+case class HavingClause (exprs: List[Expression]) (using MaglorConfig)
     extends ExpressionClause:
 
   val validate = {}
@@ -92,7 +92,7 @@ case class HavingClause (exprs: List[Expression]) (using ScalaQLConfig)
               .mkString("HAVING      ", s" ${Operator("and").sql} \n            ", "\n")
 
 
-case class OrderByClause (exprs: List[Expression]) (using ScalaQLConfig)
+case class OrderByClause (exprs: List[Expression]) (using MaglorConfig)
     extends ExpressionClause:
 
   val validate =
@@ -108,7 +108,7 @@ case class OrderByClause (exprs: List[Expression]) (using ScalaQLConfig)
               .mkString("ORDER BY    ", ", ", "\n")
 
 
-sealed abstract class BaseJoinClause (joinType: String) (using ScalaQLConfig)
+sealed abstract class BaseJoinClause (joinType: String) (using MaglorConfig)
     extends ExpressionClause:
 
   val table: Table
@@ -127,7 +127,7 @@ sealed abstract class BaseJoinClause (joinType: String) (using ScalaQLConfig)
 
 object BaseJoinClause:
 
-  def apply (str: String) (using ScalaQLConfig):
+  def apply (str: String) (using MaglorConfig):
       (Table, String, List[Expression]) => BaseJoinClause =
     str match
       case "InnerJoin" => InnerJoinClause.apply _
@@ -135,19 +135,19 @@ object BaseJoinClause:
       case "LeftJoin"  => LeftJoinClause.apply _
 
 case class InnerJoinClause (table: Table, tableAlias: String, exprs: List[Expression])
-                           (using ScalaQLConfig) extends BaseJoinClause("INNER JOIN")
+                           (using MaglorConfig) extends BaseJoinClause("INNER JOIN")
 
 case class LeftJoinClause (table: Table, tableAlias: String, exprs: List[Expression])
-                          (using ScalaQLConfig) extends BaseJoinClause("LEFT JOIN ")
+                          (using MaglorConfig) extends BaseJoinClause("LEFT JOIN ")
 
 case class RightJoinClause (table: Table, tableAlias: String, exprs: List[Expression])
-                           (using ScalaQLConfig) extends BaseJoinClause("RIGHT JOIN")
+                           (using MaglorConfig) extends BaseJoinClause("RIGHT JOIN")
 
 
 case class QueryClause (select: Option[BaseSelectClause] = None, from: Option[FromClause] = None,
                         joins: List[BaseJoinClause] = List.empty, wher: Option[WhereClause] = None,
                         orderBy: Option[OrderByClause] = None)
-                       (using ScalaQLConfig)
+                       (using MaglorConfig)
                         extends SQLClause:
 
   import ExpressionClause._
@@ -210,7 +210,7 @@ case class QueryClause (select: Option[BaseSelectClause] = None, from: Option[Fr
 
 end QueryClause
 
-case class SetClause (setMap: Map[Field, Expression]) (using ScalaQLConfig)
+case class SetClause (setMap: Map[Field, Expression]) (using MaglorConfig)
     extends ExpressionClause:
 
   val exprs = (setMap.keys ++ setMap.values).toList
@@ -222,7 +222,7 @@ case class SetClause (setMap: Map[Field, Expression]) (using ScalaQLConfig)
 
 
 case class UpdateClause (table: Table, setClause: SetClause, whereClause: Option[WhereClause])
-                        (using ScalaQLConfig)
+                        (using MaglorConfig)
     extends SQLClause:
 
   val validate = {}
@@ -238,7 +238,7 @@ case class UpdateClause (table: Table, setClause: SetClause, whereClause: Option
 
 
 case class DeleteClause (table: Table, whereClause: Option[WhereClause])
-                        (using ScalaQLConfig)
+                        (using MaglorConfig)
     extends SQLClause:
 
   val validate = {}

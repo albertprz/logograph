@@ -1,7 +1,7 @@
-package com.albertoperez1994.scalaql.utils
+package com.albertprz.maglor.utils
 
-import com.albertoperez1994.scalaql.core.Identity
-import com.albertoperez1994.scalaql.config.ScalaQLConfig
+import com.albertprz.maglor.core.Identity
+import com.albertprz.maglor.config.MaglorConfig
 import StringUtils.*
 
 

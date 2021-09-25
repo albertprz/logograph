@@ -1,9 +1,9 @@
-package com.albertoperez1994.scalaql
+package com.albertprz.maglor
 
 
-import com.albertoperez1994.scalaql.config.ScalaQLConfig
-import com.albertoperez1994.scalaql.core.{Table, Column}
-import com.albertoperez1994.scalaql.utils
+import com.albertprz.maglor.config.MaglorConfig
+import com.albertprz.maglor.core.{Table, Column}
+import com.albertprz.maglor.utils
 import utils.StringUtils.*
 import utils.TypeInfo
 
@@ -15,7 +15,7 @@ case class InsertStatement [T <: DbTable] (data: Either[Seq[T], SelectStatement[
 
   lazy val validate = {}
 
-  def run [F[+_]] () (using context: ScalaQLContext[F]) =
+  def run [F[+_]] () (using context: MaglorContext[F]) =
     context.run(this)
 
   override def toString () =
@@ -26,7 +26,7 @@ case class InsertStatement [T <: DbTable] (data: Either[Seq[T], SelectStatement[
 
 object InsertStatement:
 
-  given ScalaQLConfig = ScalaQLConfig.get
+  given MaglorConfig = MaglorConfig.get
 
   def generate [T <: DbTable] (insert: InsertStatement[T]) =
 

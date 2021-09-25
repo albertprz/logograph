@@ -1,10 +1,10 @@
-package com.albertoperez1994.scalaql.macros
+package com.albertprz.maglor.macros
 
 import scala.reflect.macros.blackbox
 
-import com.albertoperez1994.scalaql._
-import com.albertoperez1994.scalaql.core._
-import com.albertoperez1994.scalaql.utils.TypeInfo
+import com.albertprz.maglor._
+import com.albertprz.maglor.core._
+import com.albertprz.maglor.utils.TypeInfo
 
 class QueryImpl(val c: blackbox.Context) {
 
@@ -127,7 +127,7 @@ class QueryImpl(val c: blackbox.Context) {
     if (nestedCaseClass.nonEmpty) {
 
       c.error(c.enclosingPosition,
-              s"""ScalaQL Compilation Error:
+              s"""Maglor Compilation Error:
                   Case classes used in queries must be defined at the top-level within a package scope.
                   Case class '${nestedCaseClass.get}' defined within the scope of an object or class is not supported."""
                 +"\n\n")

@@ -1,6 +1,6 @@
-package com.albertoperez1994.scalaql
+package com.albertprz.maglor
 
-import config.ScalaQLConfig
+import config.MaglorConfig
 import utils.TypeInfo
 import utils.StringUtils.*
 import utils.TreeUtils.*
@@ -21,7 +21,7 @@ case class SelectStatement [T <: DbDataSet] (sqlTemplate: String,
 
   lazy val validate = {}
 
-  def run [F[+_]] () (using context: ScalaQLContext[F]): F[List[T]] =
+  def run [F[+_]] () (using context: MaglorContext[F]): F[List[T]] =
     context.run(this)
 
   def union (select: SelectStatement[T]) =
@@ -53,7 +53,7 @@ case object SelectStatement:
 
   import SQLStatement.*
 
-  given ScalaQLConfig = ScalaQLConfig.get
+  given MaglorConfig = MaglorConfig.get
 
   def union[T <: DbDataSet] (selects: Seq[SelectStatement[T]]) =
     concat(selects, "UNION")

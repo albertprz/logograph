@@ -1,7 +1,7 @@
-package com.albertoperez1994.scalaql.utils
+package com.albertprz.maglor.utils
 
 import Error.CaseNotAllowed
-import com.albertoperez1994.scalaql.utils.StringUtils.*
+import com.albertprz.maglor.utils.StringUtils.*
 
 
 case class BiCaseConverter (from: StringCase, to: StringCase):

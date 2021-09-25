@@ -1,4 +1,4 @@
-package com.albertoperez1994.scalaql.utils
+package com.albertprz.maglor.utils
 
 
 object Error:
@@ -6,5 +6,5 @@ object Error:
   case class CaseNotAllowed (elem: String, elemType: String, set: Set[?])
       extends Exception(s"Element $elem does not belong to the set of allowed $elemType: $set")
 
-  case class InvalidScalaQLConfig ()
-      extends Exception("ScalaQL config is not valid")
+  case class InvalidMaglorConfig ()
+      extends Exception("Maglor config is not valid")

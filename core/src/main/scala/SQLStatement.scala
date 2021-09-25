@@ -1,7 +1,7 @@
-package com.albertoperez1994.scalaql
+package com.albertprz.maglor
 
-import com.albertoperez1994.scalaql.core.{SQLClause, Operator}
-import com.albertoperez1994.scalaql.config.ScalaQLConfig
+import com.albertprz.maglor.core.{SQLClause, Operator}
+import com.albertprz.maglor.config.MaglorConfig
 
 
 trait SQLStatement:
@@ -9,7 +9,7 @@ trait SQLStatement:
   def validate: Unit
   def sql: String
   def paramList: List[?]
-  def run [F[+_]] () (using ScalaQLContext[F]): F[Any]
+  def run [F[+_]] () (using MaglorContext[F]): F[Any]
 
 trait SQLStatefulStatement extends SQLStatement
 
@@ -24,7 +24,7 @@ private object SQLStatement:
     }).toList
 
 
-  def getSQL (sqlTemplate: String, params: Map[String, Any]) (using ScalaQLConfig) =
+  def getSQL (sqlTemplate: String, params: Map[String, Any]) (using MaglorConfig) =
     params.values
           .filter (_.isInstanceOf[List[Any]])
           .foldLeft (sqlTemplate) {

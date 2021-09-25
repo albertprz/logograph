@@ -1,4 +1,4 @@
-package com.albertoperez1994.scalaql
+package com.albertprz.maglor
 
 sealed trait SelectBase [T <: DbDataSet]
 case class Select [T <: DbDataSet] (select: T) extends SelectBase[T]

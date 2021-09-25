@@ -1,17 +1,17 @@
-package com.albertoperez1994.scalaql.macros
+package com.albertprz.maglor.macros
 
-import com.albertoperez1994.scalaql.core.*
-import com.albertoperez1994.scalaql.{utils => utils}
+import com.albertprz.maglor.core.*
+import com.albertprz.maglor.{utils => utils}
 import utils.QueryUtils.*
 import utils.StringUtils.*
-import com.albertoperez1994.scalaql.config.ScalaQLConfig
+import com.albertprz.maglor.config.MaglorConfig
 
 import scala.quoted.*
 
 class QueryExtractor  (val quotes: Quotes):
 
   private var tableAliasMap: Map[String, Table] = null
-  given cfg: ScalaQLConfig = ScalaQLConfig.get
+  given cfg: MaglorConfig = MaglorConfig.get
   given Quotes = quotes
 
   import quotes.reflect.*
@@ -253,7 +253,7 @@ class QueryExtractor  (val quotes: Quotes):
     tableAliasMap = getTableAliasMap(tree, fromTypeName)
 
 
-  def getSeqLiteralElems (seqLiteral: Any) =
+  private def getSeqLiteralElems (seqLiteral: Any) =
     seqLiteral.asInstanceOf[Product].productIterator.toList.head
               .asInstanceOf[List[Tree]]
 

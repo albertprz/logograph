@@ -1,4 +1,4 @@
-package com.albertoperez1994.scalaql.core
+package com.albertprz.maglor.core
 
 object QueryOps:
 

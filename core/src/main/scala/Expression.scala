@@ -1,8 +1,8 @@
-package com.albertoperez1994.scalaql.core
+package com.albertprz.maglor.core
 
-import com.albertoperez1994.scalaql.utils.StringUtils._
-import com.albertoperez1994.scalaql.utils.PrettyPrintTree
-import com.albertoperez1994.scalaql.config.ScalaQLConfig
+import com.albertprz.maglor.utils.StringUtils.*
+import com.albertprz.maglor.utils.PrettyPrintTree
+import com.albertprz.maglor.config.MaglorConfig
 
 trait SQLClause extends PrettyPrintTree:
 
@@ -16,19 +16,19 @@ sealed trait Expression extends SQLClause:
   val nonAggFields = fields diff aggFields
 
 
-case class LiteralVal (value: String) (using ScalaQLConfig)
+case class LiteralVal (value: String) (using MaglorConfig)
     extends Expression:
 
   val validate = {}
   val sql = value
 
-case class Field (tableAlias: String, column: Column) (using ScalaQLConfig)
+case class Field (tableAlias: String, column: Column) (using MaglorConfig)
     extends Expression:
 
   val validate = {}
   val sql = s"$tableAlias.${column.sql}"
 
-case class Identity (name: String, tree: Any) (using ScalaQLConfig)
+case class Identity (name: String, tree: Any) (using MaglorConfig)
     extends Expression:
 
   val validate = {}
@@ -39,7 +39,7 @@ case class Identity (name: String, tree: Any) (using ScalaQLConfig)
 
 
 
-case class Operation (operator: String, operands: List[Expression]) (using ScalaQLConfig)
+case class Operation (operator: String, operands: List[Expression]) (using MaglorConfig)
     extends Expression:
 
   enum OpType:
@@ -70,7 +70,7 @@ case class Operation (operator: String, operands: List[Expression]) (using Scala
                                                              .wrapParens()
 
 
-case class Table(tableName: String) (using cfg: ScalaQLConfig)
+case class Table(tableName: String) (using cfg: MaglorConfig)
     extends SQLClause:
 
   val validate = {}
@@ -78,7 +78,7 @@ case class Table(tableName: String) (using cfg: ScalaQLConfig)
                      .convertCase(cfg.tableCaseConverter)
                      .wrapBrackets()
 
-case class Column(columnName: String, tableName: String) (using cfg: ScalaQLConfig)
+case class Column(columnName: String, tableName: String) (using cfg: MaglorConfig)
     extends SQLClause:
 
   val validate = {}
@@ -87,7 +87,7 @@ case class Column(columnName: String, tableName: String) (using cfg: ScalaQLConf
                                                  .wrapBrackets()
               else columnName
 
-case class Operator(operatorName: String) (using cfg: ScalaQLConfig)
+case class Operator(operatorName: String) (using cfg: MaglorConfig)
     extends SQLClause:
 
   val validate = {}
@@ -113,6 +113,6 @@ private object Expression:
 
 private object Predicate:
 
-  def adaptSql (exp: Expression) (using ScalaQLConfig) = exp match
+  def adaptSql (exp: Expression) (using MaglorConfig) = exp match
       case op: Operation => op.sql
       case _ => s"${exp.sql} = 1"

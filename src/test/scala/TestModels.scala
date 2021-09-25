@@ -1,6 +1,6 @@
 package test
 
-import com.albertoperez1994.scalaql.DbTable
+import com.albertprz.maglor.DbTable
 
 
 case class Person (name: String, age: Int, isEmployer: Boolean, addressId: Int, telephoneId: Int)

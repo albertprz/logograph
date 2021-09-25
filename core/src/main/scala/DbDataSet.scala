@@ -1,4 +1,4 @@
-package com.albertoperez1994.scalaql
+package com.albertprz.maglor
 
 sealed trait DbDataSet extends Product with Serializable
 trait DbResult extends DbDataSet

@@ -1,7 +1,7 @@
-package com.albertoperez1994.scalaql.core
+package com.albertprz.maglor.core
 
-import com.albertoperez1994.scalaql.utils.StringUtils._
-import com.albertoperez1994.scalaql.utils.Error.CaseNotAllowed
+import com.albertprz.maglor.utils.StringUtils._
+import com.albertprz.maglor.utils.Error.CaseNotAllowed
 
 
 enum SQLEngine:

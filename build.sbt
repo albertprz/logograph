@@ -1,4 +1,4 @@
-ThisBuild / organization := "com.albertoperez1994"
+ThisBuild / organization := "com.albertprz"
 ThisBuild / version      := "1.0.0"
 ThisBuild / Compile / compile / logLevel := Level.Warn
 Global / excludeLintKeys += logLevel
@@ -6,10 +6,13 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 Test / parallelExecution := false
 
 
+val scala3Ver = "3.0.0"
+val scala2Ver = "2.13.6"
+
 
 lazy val commonSettings = Seq(
 
-  scalaVersion := "3.0.0",
+  scalaVersion := scala3Ver,
 
   scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((2, 13)) => Seq("-Ytasty-reader")
@@ -43,7 +46,7 @@ lazy val testSettings = inConfig(IntegrationTest)(Defaults.itSettings) ++
 lazy val core = project
   .in(file("core"))
   .settings(
-    name := "scalaql-core",
+    name := "maglor-core",
     commonSettings,
     coreSettings
   )
@@ -51,9 +54,9 @@ lazy val core = project
 lazy val macros = project
   .in(file("macros"))
   .settings(
-    name := "scalaql-macros",
+    name := "maglor-macros",
     commonSettings,
-    crossScalaVersions := Seq("3.0.0", "2.13.6")
+    crossScalaVersions := Seq(scala3Ver, scala2Ver)
   )
 .dependsOn(core)
 
@@ -61,10 +64,10 @@ lazy val app = project
   .in(file("."))
   .configs(IntegrationTest)
   .settings(
-    name := "scalaql",
+    name := "maglor",
     commonSettings,
     testSettings,
-    crossScalaVersions := Seq("3.0.0", "2.13.6")
+    crossScalaVersions := Seq(scala3Ver, scala2Ver)
   )
 .dependsOn(core, macros)
 .aggregate(core, macros)

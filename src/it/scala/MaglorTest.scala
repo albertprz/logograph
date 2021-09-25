@@ -4,11 +4,11 @@ import org.scalatest.funspec.AnyFunSpec
 import org.scalatest.BeforeAndAfter
 import cats.effect.unsafe.implicits.global
 
-import com.albertoperez1994.scalaql._
+import com.albertprz.maglor._
 import Database.context
 
 
-class ScalaQLTest extends AnyFunSpec with BeforeAndAfter {
+class MaglorTest extends AnyFunSpec with BeforeAndAfter {
 
   before {
     Database.setup().unsafeRunSync()
@@ -19,7 +19,7 @@ class ScalaQLTest extends AnyFunSpec with BeforeAndAfter {
   }
 
 
-  describe("ScalaQL") {
+  describe("Maglor") {
 
 
     it("can retrieve query results") {

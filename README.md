@@ -1,8 +1,8 @@
-# ScalaQL
+# Maglor
 
 ## Summary
 This library provides a typesafe Scala DSL for generating SQL queries and statements<br>
-These statements can then be executed against a Database using the ScalaQL Context, <br>
+These statements can then be executed against a Database using the Maglor Context, <br>
 which uses JDBC for connecting to the Database, or using any other Database connection middleware<br>
 
 
@@ -22,24 +22,24 @@ The DSL works in a similar fashion to some other SQL compile-time DSLs available
 for instance [Quill](https://github.com/getquill/quill),
 but it aims to provide a streamlined API, with a focus on simplicity<br>
 from the user standpoint, leaving some advanced functionality aside, in order to adapt better<br>
-to the most common business use cases, following the convention over configuration motto.<br>
+to the most common business use cases, following a convention over configuration approac.<br>
 
 ## Usage
 
 In order to use this library, you would need to add it to the dependencies in build.sbt:<br>
-At the moment it is only available for scala 2.13.*
+All the releases are cross-compiled and therefore available for both **scala 3** & **scala 2.13**
 
 ```scala
-libraryDependencies += "io.github.alberto-perez-1994" % "scalaql_2.13" % "1.0.0")
+libraryDependencies += "io.github.albertprz" % "maglor" %% "0.1.0")
 ```
 
-ScalaQL DSL aim is to reflect as closely as possible the underlying SQL representation,<br>
+Maglor DSL aim is to reflect as closely as possible the underlying SQL representation,<br>
 so the API is very SQL like:
 
 ```scala
-import com.albertoperez1994.scalaql._
+import com.albertprz.maglor._
 
-val qry = query[(Person, Address, Telephone)].select {
+val qry = from[(Person, Address, Telephone)].select {
   case (p, a, t) ⇒ Query(
     Select          (Result (p.name, p.age, a.street, t.number))
     Where           (a.street like "%Baker St%",
@@ -145,11 +145,11 @@ and **params** fields:
 (qry.sql, qry.params)
 ```
 
-At last, the statements can be run against a Database by using a **ScalaQLContext** instance,<br>
+At last, the statements can be run against a Database by using a **MaglorContext** instance,<br>
 using the appropiate JDBC connection object<br>
 
 ```scala
-implicit val context = new ScalaQLContext(conn)
+implicit val context = new MaglorContext(conn)
 context.run(stmts:_*)
 val results: Seq[Person] = qry.run()
 ```

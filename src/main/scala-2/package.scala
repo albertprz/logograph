@@ -1,13 +1,13 @@
-package com.albertoperez1994
+package com.albertprz
 
-import com.albertoperez1994.scalaql.core._
-import com.albertoperez1994.scalaql.macros.QueryImpl
-import com.albertoperez1994.scalaql.utils.ReflectionUtils._
+import com.albertprz.maglor.core._
+import com.albertprz.maglor.macros.QueryImpl
+import com.albertprz.maglor.utils.ReflectionUtils._
 
 import scala.reflect.runtime.{universe => ru}
 
 
-package object scalaql {
+package object maglor {
 
   import scala.language.experimental.macros
 
@@ -123,7 +123,7 @@ package object scalaql {
 
 
   // Infix Operators for Strings
-  implicit class ScalaQLString (x: String) {
+  implicit class MaglorString (x: String) {
 
     def === (y: String): Boolean = ???
     def <>  (y: String): Boolean = ???
@@ -134,7 +134,7 @@ package object scalaql {
   }
 
   // Infix Operators for Booleans
-  implicit class ScalaQLBoolean (x: Boolean) {
+  implicit class MaglorBoolean (x: Boolean) {
 
     def === (y: Boolean): Boolean = ???
     def <>  (y: Boolean): Boolean = ???
@@ -143,7 +143,7 @@ package object scalaql {
   }
 
   // Infix Operators for Ints
-  implicit class ScalaQLInt (x: Int) {
+  implicit class MaglorInt (x: Int) {
 
     def === (y: Int): Boolean = ???
     def <>  (y: Int): Boolean = ???
@@ -152,7 +152,7 @@ package object scalaql {
   }
 
   // Infix Operators for Longs
-  implicit class ScalaQLLong (x: Long) {
+  implicit class MaglorLong (x: Long) {
 
     def === (y: Long): Boolean = ???
     def <>  (y: Long): Boolean = ???
@@ -161,7 +161,7 @@ package object scalaql {
   }
 
   // Infix Operators for BigDecimals
-  implicit class ScalaQLBigDecimal (x: BigDecimal) {
+  implicit class MaglorBigDecimal (x: BigDecimal) {
 
     def === (y: BigDecimal): Boolean = ???
     def <>  (y: BigDecimal): Boolean = ???

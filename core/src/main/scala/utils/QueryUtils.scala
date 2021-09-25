@@ -1,4 +1,4 @@
-package com.albertoperez1994.scalaql.utils
+package com.albertprz.maglor.utils
 
 
 object QueryUtils:
