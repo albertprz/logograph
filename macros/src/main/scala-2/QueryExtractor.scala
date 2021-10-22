@@ -1,11 +1,11 @@
-package com.albertprz.maglor.macros
+package com.albertprz.logograph.macros
 
-import com.albertprz.maglor.core._
-import com.albertprz.maglor.{utils => utils}
+import com.albertprz.logograph.core._
+import com.albertprz.logograph.{utils => utils}
 import utils.QueryUtils._
 import utils.StringUtils._
 import scala.reflect.macros.blackbox
-import com.albertprz.maglor.config.MaglorConfig
+import com.albertprz.logograph.config.LogographConfig
 
 class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
@@ -13,7 +13,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
   private val ops = new TreeOps[c.type](c)
   private var tableAliasMap: Map[String, Table] = null
-  private implicit val config: MaglorConfig = MaglorConfig.get
+  private implicit val config: LogographConfig = LogographConfig.get
 
   import ops._
 
@@ -163,18 +163,18 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
   private def getOperation(tree: Tree) = {
 
     val op = tree match {
-      case q"com.albertprz.maglor.`package`.MaglorString($operand1).$operator($operand2)" =>
+      case q"com.albertprz.logograph.`package`.LogographString($operand1).$operator($operand2)" =>
         Some((operator, List(operand1, operand2)))
-      case q"com.albertprz.maglor.`package`.MaglorBoolean($operand1).$operator($operand2)" =>
+      case q"com.albertprz.logograph.`package`.LogographBoolean($operand1).$operator($operand2)" =>
         Some((operator, List(operand1, operand2)))
-      case q"com.albertprz.maglor.`package`.MaglorInt($operand1).$operator($operand2)" =>
+      case q"com.albertprz.logograph.`package`.LogographInt($operand1).$operator($operand2)" =>
         Some((operator, List(operand1, operand2)))
-      case q"com.albertprz.maglor.`package`.MaglorLong($operand1).$operator($operand2)" =>
+      case q"com.albertprz.logograph.`package`.LogographLong($operand1).$operator($operand2)" =>
         Some((operator, List(operand1, operand2)))
-      case q"com.albertprz.maglor.`package`.MaglorBigDecimal($operand1).$operator($operand2)" =>
+      case q"com.albertprz.logograph.`package`.LogographBigDecimal($operand1).$operator($operand2)" =>
         Some((operator, List(operand1, operand2)))
-      case q"com.albertprz.maglor.`package`.$operator[$tpe](..$operands)" =>  Some((operator, operands))
-      case q"com.albertprz.maglor.`package`.$operator(..$operands)"       =>  Some((operator, operands))
+      case q"com.albertprz.logograph.`package`.$operator[$tpe](..$operands)" =>  Some((operator, operands))
+      case q"com.albertprz.logograph.`package`.$operator(..$operands)"       =>  Some((operator, operands))
       case q"$operand.$operator(..$operands)"           =>  Some((operator, operand +: operands))
       case _ => None
     }

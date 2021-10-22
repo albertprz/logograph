@@ -1,7 +1,7 @@
-package com.albertprz.maglor.utils
+package com.albertprz.logograph.utils
 
-import com.albertprz.maglor.core.Identity
-import com.albertprz.maglor.config.MaglorConfig
+import com.albertprz.logograph.core.Identity
+import com.albertprz.logograph.config.LogographConfig
 import StringUtils.*
 
 

@@ -1,4 +1,4 @@
-package com.albertprz.maglor
+package com.albertprz.logograph
 
 sealed trait SelectBase [T <: DbDataSet]
 case class Select [T <: DbDataSet] (select: T) extends SelectBase[T]

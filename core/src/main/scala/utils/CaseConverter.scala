@@ -1,7 +1,7 @@
-package com.albertprz.maglor.utils
+package com.albertprz.logograph.utils
 
 import Error.CaseNotAllowed
-import com.albertprz.maglor.utils.StringUtils.*
+import com.albertprz.logograph.utils.StringUtils.*
 
 
 case class BiCaseConverter (from: StringCase, to: StringCase):

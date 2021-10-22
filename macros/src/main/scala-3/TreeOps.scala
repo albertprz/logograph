@@ -1,4 +1,4 @@
-// package com.albertprz.maglor.macros
+// package com.albertprz.logograph.macros
 
 // import scala.quoted.*
 

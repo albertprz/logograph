@@ -1,9 +1,9 @@
-package com.albertprz.maglor.macros
+package com.albertprz.logograph.macros
 
-import com.albertprz.maglor.*
-import com.albertprz.maglor.core.*
-import com.albertprz.maglor.utils.StringUtils.*
-import com.albertprz.maglor.utils.TypeInfo
+import com.albertprz.logograph.*
+import com.albertprz.logograph.core.*
+import com.albertprz.logograph.utils.StringUtils.*
+import com.albertprz.logograph.utils.TypeInfo
 
 import scala.quoted.*
 
@@ -196,7 +196,7 @@ private def extractTypeInfo[T: Type] (using Quotes) =
   if nestedCaseClass.nonEmpty then
 
 
-  report.error(s"""Maglor Compilation Error:
+  report.error(s"""Logograph Compilation Error:
                 Case classes used in queries must be defined at the top-level within a package scope.
                 Case class '${nestedCaseClass.get}' defined within the scope of an object or class is not supported."""
               +"\n\n")

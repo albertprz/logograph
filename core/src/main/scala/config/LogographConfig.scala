@@ -1,17 +1,17 @@
-package com.albertprz.maglor.config
+package com.albertprz.logograph.config
 
-import com.albertprz.maglor.core
-import com.albertprz.maglor.utils
+import com.albertprz.logograph.core
+import com.albertprz.logograph.utils
 import utils.{FileUtils, Error, CaseConverter, StringCase}
 import core.SQLEngine
 import StringCase.CamelCase
-import Error.InvalidMaglorConfig
+import Error.InvalidLogographConfig
 
 import pureconfig.{ConfigReader, ConfigCursor, ReadsMissingKeys, ConfigSource}
 import pureconfig.generic.ProductHint
 
 
-case class MaglorConfig (engine:                Option[SQLEngine]                        = None,
+case class LogographConfig (engine:                Option[SQLEngine]                        = None,
                          tableCaseConverter:    Option[CaseConverter]                    = None,
                          columnCaseConverter:   Option[CaseConverter]                    = None,
                          operatorCaseConverter: Option[CaseConverter]                    = None,
@@ -20,22 +20,22 @@ case class MaglorConfig (engine:                Option[SQLEngine]               
                          operatorConverter:     Option[Map[String, String]]              = None)
 
 
-object MaglorConfig:
+object LogographConfig:
 
-  import Implicits.given ConfigReader[MaglorConfig]
+  import Implicits.given ConfigReader[LogographConfig]
 
-  val configFileName = "maglor.conf"
+  val configFileName = "logograph.conf"
 
   val get = FileUtils.getFile(configFileName)
                           .map(file => ConfigSource.file(file)
-                                                    .load[MaglorConfig]
-                                                    .getOrElse(throw new InvalidMaglorConfig))
-                          .getOrElse(MaglorConfig())
+                                                    .load[LogographConfig]
+                                                    .getOrElse(throw new InvalidLogographConfig))
+                          .getOrElse(LogographConfig())
 
 object Implicits:
 
-  given ProductHint[MaglorConfig] =
-    ProductHint[MaglorConfig](allowUnknownKeys = false)
+  given ProductHint[LogographConfig] =
+    ProductHint[LogographConfig](allowUnknownKeys = false)
 
   given ConfigReader[CaseConverter] =
     ConfigReader.fromNonEmptyStringTry(StringCase(_).map(CaseConverter.apply).toTry)
@@ -43,8 +43,8 @@ object Implicits:
   given ConfigReader[SQLEngine] =
     ConfigReader.fromNonEmptyStringTry(SQLEngine(_).toTry)
 
-  given ConfigReader[MaglorConfig] =
-    ConfigReader.forProduct7[MaglorConfig, Option[SQLEngine],
+  given ConfigReader[LogographConfig] =
+    ConfigReader.forProduct7[LogographConfig, Option[SQLEngine],
                              Option[CaseConverter], Option[CaseConverter], Option[CaseConverter],
                              Option[Map[String, String]], Option[Map[String, Map[String, String]]],
                              Option[Map[String, String]]] (
@@ -52,6 +52,6 @@ object Implicits:
                 "tableConverter", "columnConverter", "operatorConverter") {
       case (engine, tableCaseConverter, columnCaseConverter, operatorCaseConverter,
                     tableConverter, columnConverter, operatorConverter) =>
-        MaglorConfig(engine, tableCaseConverter, columnCaseConverter, operatorCaseConverter,
+        LogographConfig(engine, tableCaseConverter, columnCaseConverter, operatorCaseConverter,
                     tableConverter, columnConverter, operatorConverter)
     }

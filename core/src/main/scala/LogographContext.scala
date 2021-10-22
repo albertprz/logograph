@@ -1,4 +1,4 @@
-package com.albertprz.maglor
+package com.albertprz.logograph
 
 import java.sql.{Connection, ResultSet, PreparedStatement, Statement, Date, Time}
 import java.math.BigDecimal
@@ -8,15 +8,15 @@ import cats.Monad
 import cats.syntax.all.*
 import cats.effect.{Sync, Resource}
 
-import com.albertprz.maglor.config.MaglorConfig
+import com.albertprz.logograph.config.LogographConfig
 import utils.TypeInfo
 import utils.StringUtils.*
 import java.lang.reflect.Method
 
 
-class MaglorContext [F[_] : Sync : Monad] (conn: Connection):
+class LogographContext [F[_] : Sync : Monad] (conn: Connection):
 
-  import MaglorContext.*
+  import LogographContext.*
 
   conn.setAutoCommit(false)
 
@@ -49,7 +49,7 @@ class MaglorContext [F[_] : Sync : Monad] (conn: Connection):
             .map  { stmt => parameteriseStatement(stmt, paramList) }
 
 
-private object MaglorContext:
+private object LogographContext:
 
   def extractResults [T <: DbDataSet] (resultSet: ResultSet, typeInfo: TypeInfo) =
 

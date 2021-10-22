@@ -1,7 +1,7 @@
-package com.albertprz.maglor
+package com.albertprz.logograph
 
-import com.albertprz.maglor.config.MaglorConfig
-import com.albertprz.maglor.utils
+import com.albertprz.logograph.config.LogographConfig
+import com.albertprz.logograph.utils
 import utils.StringUtils.*
 
 case class UpdateStatement [T <: DbTable] (sqlTemplate: String,
@@ -12,7 +12,7 @@ case class UpdateStatement [T <: DbTable] (sqlTemplate: String,
 
   lazy val validate = {}
 
-  def run [F[+_]] () (using context: MaglorContext[F]) =
+  def run [F[+_]] () (using context: LogographContext[F]) =
     context.run(this)
 
   override def toString () =
@@ -23,7 +23,7 @@ object UpdateStatement:
 
   import SQLStatement.*
 
-  given MaglorConfig = MaglorConfig.get
+  given LogographConfig = LogographConfig.get
 
   def generate [T <: DbTable] (update: UpdateStatement[T]) =
 

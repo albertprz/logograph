@@ -2,7 +2,7 @@ package test
 
 import org.scalatest.funspec.AnyFunSpec
 
-import com.albertprz.maglor._
+import com.albertprz.logograph._
 
 class UpdateStatementSpec extends AnyFunSpec {
 

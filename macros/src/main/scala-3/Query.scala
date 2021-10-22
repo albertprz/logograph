@@ -1,4 +1,4 @@
-package com.albertprz.maglor
+package com.albertprz.logograph
 
 
 enum SelectBase [T <: DbDataSet]:

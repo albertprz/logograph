@@ -1,8 +1,8 @@
-package com.albertprz.maglor.core
+package com.albertprz.logograph.core
 
-import com.albertprz.maglor.utils.StringUtils.*
-import com.albertprz.maglor.utils.PrettyPrintTree
-import com.albertprz.maglor.config.MaglorConfig
+import com.albertprz.logograph.utils.StringUtils.*
+import com.albertprz.logograph.utils.PrettyPrintTree
+import com.albertprz.logograph.config.LogographConfig
 
 trait SQLClause extends PrettyPrintTree:
 
@@ -16,19 +16,19 @@ sealed trait Expression extends SQLClause:
   val nonAggFields = fields diff aggFields
 
 
-case class LiteralVal (value: String) (using MaglorConfig)
+case class LiteralVal (value: String) (using LogographConfig)
     extends Expression:
 
   val validate = {}
   val sql = value
 
-case class Field (tableAlias: String, column: Column) (using MaglorConfig)
+case class Field (tableAlias: String, column: Column) (using LogographConfig)
     extends Expression:
 
   val validate = {}
   val sql = s"$tableAlias.${column.sql}"
 
-case class Identity (name: String, tree: Any) (using MaglorConfig)
+case class Identity (name: String, tree: Any) (using LogographConfig)
     extends Expression:
 
   val validate = {}
@@ -39,7 +39,7 @@ case class Identity (name: String, tree: Any) (using MaglorConfig)
 
 
 
-case class Operation (operator: String, operands: List[Expression]) (using MaglorConfig)
+case class Operation (operator: String, operands: List[Expression]) (using LogographConfig)
     extends Expression:
 
   enum OpType:
@@ -70,7 +70,7 @@ case class Operation (operator: String, operands: List[Expression]) (using Maglo
                                                              .wrapParens()
 
 
-case class Table(tableName: String) (using cfg: MaglorConfig)
+case class Table(tableName: String) (using cfg: LogographConfig)
     extends SQLClause:
 
   val validate = {}
@@ -78,7 +78,7 @@ case class Table(tableName: String) (using cfg: MaglorConfig)
                      .convertCase(cfg.tableCaseConverter)
                      .wrapBrackets()
 
-case class Column(columnName: String, tableName: String) (using cfg: MaglorConfig)
+case class Column(columnName: String, tableName: String) (using cfg: LogographConfig)
     extends SQLClause:
 
   val validate = {}
@@ -87,7 +87,7 @@ case class Column(columnName: String, tableName: String) (using cfg: MaglorConfi
                                                  .wrapBrackets()
               else columnName
 
-case class Operator(operatorName: String) (using cfg: MaglorConfig)
+case class Operator(operatorName: String) (using cfg: LogographConfig)
     extends SQLClause:
 
   val validate = {}
@@ -113,6 +113,6 @@ private object Expression:
 
 private object Predicate:
 
-  def adaptSql (exp: Expression) (using MaglorConfig) = exp match
+  def adaptSql (exp: Expression) (using LogographConfig) = exp match
       case op: Operation => op.sql
       case _ => s"${exp.sql} = 1"

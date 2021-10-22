@@ -1,13 +1,13 @@
 package com.albertprz
 
-import com.albertprz.maglor.core._
-import com.albertprz.maglor.macros.QueryImpl
-import com.albertprz.maglor.utils.ReflectionUtils._
+import com.albertprz.logograph.core._
+import com.albertprz.logograph.macros.QueryImpl
+import com.albertprz.logograph.utils.ReflectionUtils._
 
 import scala.reflect.runtime.{universe => ru}
 
 
-package object maglor {
+package object logograph {
 
   import scala.language.experimental.macros
 
@@ -123,7 +123,7 @@ package object maglor {
 
 
   // Infix Operators for Strings
-  implicit class MaglorString (x: String) {
+  implicit class LogographString (x: String) {
 
     def === (y: String): Boolean = ???
     def <>  (y: String): Boolean = ???
@@ -134,7 +134,7 @@ package object maglor {
   }
 
   // Infix Operators for Booleans
-  implicit class MaglorBoolean (x: Boolean) {
+  implicit class LogographBoolean (x: Boolean) {
 
     def === (y: Boolean): Boolean = ???
     def <>  (y: Boolean): Boolean = ???
@@ -143,7 +143,7 @@ package object maglor {
   }
 
   // Infix Operators for Ints
-  implicit class MaglorInt (x: Int) {
+  implicit class LogographInt (x: Int) {
 
     def === (y: Int): Boolean = ???
     def <>  (y: Int): Boolean = ???
@@ -152,7 +152,7 @@ package object maglor {
   }
 
   // Infix Operators for Longs
-  implicit class MaglorLong (x: Long) {
+  implicit class LogographLong (x: Long) {
 
     def === (y: Long): Boolean = ???
     def <>  (y: Long): Boolean = ???
@@ -161,7 +161,7 @@ package object maglor {
   }
 
   // Infix Operators for BigDecimals
-  implicit class MaglorBigDecimal (x: BigDecimal) {
+  implicit class LogographBigDecimal (x: BigDecimal) {
 
     def === (y: BigDecimal): Boolean = ???
     def <>  (y: BigDecimal): Boolean = ???

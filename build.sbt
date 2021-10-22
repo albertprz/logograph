@@ -46,7 +46,7 @@ lazy val testSettings = inConfig(IntegrationTest)(Defaults.itSettings) ++
 lazy val core = project
   .in(file("core"))
   .settings(
-    name := "maglor-core",
+    name := "logograph-core",
     commonSettings,
     coreSettings
   )
@@ -54,7 +54,7 @@ lazy val core = project
 lazy val macros = project
   .in(file("macros"))
   .settings(
-    name := "maglor-macros",
+    name := "logograph-macros",
     commonSettings,
     crossScalaVersions := Seq(scala3Ver, scala2Ver)
   )
@@ -64,7 +64,7 @@ lazy val app = project
   .in(file("."))
   .configs(IntegrationTest)
   .settings(
-    name := "maglor",
+    name := "logograph",
     commonSettings,
     testSettings,
     crossScalaVersions := Seq(scala3Ver, scala2Ver)

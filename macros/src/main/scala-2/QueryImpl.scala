@@ -1,10 +1,10 @@
-package com.albertprz.maglor.macros
+package com.albertprz.logograph.macros
 
 import scala.reflect.macros.blackbox
 
-import com.albertprz.maglor._
-import com.albertprz.maglor.core._
-import com.albertprz.maglor.utils.TypeInfo
+import com.albertprz.logograph._
+import com.albertprz.logograph.core._
+import com.albertprz.logograph.utils.TypeInfo
 
 class QueryImpl(val c: blackbox.Context) {
 
@@ -127,7 +127,7 @@ class QueryImpl(val c: blackbox.Context) {
     if (nestedCaseClass.nonEmpty) {
 
       c.error(c.enclosingPosition,
-              s"""Maglor Compilation Error:
+              s"""Logograph Compilation Error:
                   Case classes used in queries must be defined at the top-level within a package scope.
                   Case class '${nestedCaseClass.get}' defined within the scope of an object or class is not supported."""
                 +"\n\n")

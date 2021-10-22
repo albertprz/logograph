@@ -1,9 +1,9 @@
-package com.albertprz.maglor
+package com.albertprz.logograph
 
 
-import com.albertprz.maglor.config.MaglorConfig
-import com.albertprz.maglor.core.{Table, Column}
-import com.albertprz.maglor.utils
+import com.albertprz.logograph.config.LogographConfig
+import com.albertprz.logograph.core.{Table, Column}
+import com.albertprz.logograph.utils
 import utils.StringUtils.*
 import utils.TypeInfo
 
@@ -15,7 +15,7 @@ case class InsertStatement [T <: DbTable] (data: Either[Seq[T], SelectStatement[
 
   lazy val validate = {}
 
-  def run [F[+_]] () (using context: MaglorContext[F]) =
+  def run [F[+_]] () (using context: LogographContext[F]) =
     context.run(this)
 
   override def toString () =
@@ -26,7 +26,7 @@ case class InsertStatement [T <: DbTable] (data: Either[Seq[T], SelectStatement[
 
 object InsertStatement:
 
-  given MaglorConfig = MaglorConfig.get
+  given LogographConfig = LogographConfig.get
 
   def generate [T <: DbTable] (insert: InsertStatement[T]) =
 

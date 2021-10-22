@@ -1,17 +1,17 @@
-package com.albertprz.maglor.macros
+package com.albertprz.logograph.macros
 
-import com.albertprz.maglor.core.*
-import com.albertprz.maglor.{utils => utils}
+import com.albertprz.logograph.core.*
+import com.albertprz.logograph.{utils => utils}
 import utils.QueryUtils.*
 import utils.StringUtils.*
-import com.albertprz.maglor.config.MaglorConfig
+import com.albertprz.logograph.config.LogographConfig
 
 import scala.quoted.*
 
 class QueryExtractor  (val quotes: Quotes):
 
   private var tableAliasMap: Map[String, Table] = null
-  given cfg: MaglorConfig = MaglorConfig.get
+  given cfg: LogographConfig = LogographConfig.get
   given Quotes = quotes
 
   import quotes.reflect.*

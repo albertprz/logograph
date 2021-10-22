@@ -1,4 +1,4 @@
-package com.albertprz.maglor.utils
+package com.albertprz.logograph.utils
 
 import scala.quoted.*
 

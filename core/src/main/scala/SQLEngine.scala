@@ -1,7 +1,7 @@
-package com.albertprz.maglor.core
+package com.albertprz.logograph.core
 
-import com.albertprz.maglor.utils.StringUtils._
-import com.albertprz.maglor.utils.Error.CaseNotAllowed
+import com.albertprz.logograph.utils.StringUtils._
+import com.albertprz.logograph.utils.Error.CaseNotAllowed
 
 
 enum SQLEngine:

@@ -1,7 +1,7 @@
-package com.albertprz.maglor
+package com.albertprz.logograph
 
-import com.albertprz.maglor.core.*
-import com.albertprz.maglor.macros.QueryImpl
+import com.albertprz.logograph.core.*
+import com.albertprz.logograph.macros.QueryImpl
 import scala.quoted.*
 
 

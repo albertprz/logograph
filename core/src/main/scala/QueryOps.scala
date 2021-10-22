@@ -1,4 +1,4 @@
-package com.albertprz.maglor.core
+package com.albertprz.logograph.core
 
 object QueryOps:
 

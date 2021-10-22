@@ -1,6 +1,6 @@
 package test
 
-import com.albertprz.maglor.DbTable
+import com.albertprz.logograph.DbTable
 
 
 case class Person (name: String, age: Int, isEmployer: Boolean, addressId: Int, telephoneId: Int)

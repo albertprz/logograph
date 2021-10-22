@@ -1,7 +1,7 @@
-package com.albertprz.maglor
+package com.albertprz.logograph
 
-import com.albertprz.maglor.core.{SQLClause, Operator}
-import com.albertprz.maglor.config.MaglorConfig
+import com.albertprz.logograph.core.{SQLClause, Operator}
+import com.albertprz.logograph.config.LogographConfig
 
 
 trait SQLStatement:
@@ -9,7 +9,7 @@ trait SQLStatement:
   def validate: Unit
   def sql: String
   def paramList: List[?]
-  def run [F[+_]] () (using MaglorContext[F]): F[Any]
+  def run [F[+_]] () (using LogographContext[F]): F[Any]
 
 trait SQLStatefulStatement extends SQLStatement
 
@@ -24,7 +24,7 @@ private object SQLStatement:
     }).toList
 
 
-  def getSQL (sqlTemplate: String, params: Map[String, Any]) (using MaglorConfig) =
+  def getSQL (sqlTemplate: String, params: Map[String, Any]) (using LogographConfig) =
     params.values
           .filter (_.isInstanceOf[List[Any]])
           .foldLeft (sqlTemplate) {

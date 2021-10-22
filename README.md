@@ -1,8 +1,8 @@
-# Maglor
+# Logograph
 
 ## Summary
 This library provides a typesafe Scala DSL for generating SQL queries and statements<br>
-These statements can then be executed against a Database using the Maglor Context, <br>
+These statements can then be executed against a Database using the Logograph Context, <br>
 which uses JDBC for connecting to the Database, or using any other Database connection middleware<br>
 
 
@@ -30,14 +30,14 @@ In order to use this library, you would need to add it to the dependencies in bu
 All the releases are cross-compiled and therefore available for both **scala 3** & **scala 2.13**
 
 ```scala
-libraryDependencies += "io.github.albertprz" % "maglor" %% "0.1.0")
+libraryDependencies += "io.github.albertprz" % "logograph" %% "0.1.0")
 ```
 
-Maglor DSL aim is to reflect as closely as possible the underlying SQL representation,<br>
+Logograph DSL aim is to reflect as closely as possible the underlying SQL representation,<br>
 so the API is very SQL like:
 
 ```scala
-import com.albertprz.maglor._
+import com.albertprz.logograph._
 
 val qry = from[(Person, Address, Telephone)].select {
   case (p, a, t) ⇒ Query(
@@ -145,11 +145,11 @@ and **params** fields:
 (qry.sql, qry.params)
 ```
 
-At last, the statements can be run against a Database by using a **MaglorContext** instance,<br>
+At last, the statements can be run against a Database by using a **LogographContext** instance,<br>
 using the appropiate JDBC connection object<br>
 
 ```scala
-implicit val context = new MaglorContext(conn)
+implicit val context = new LogographContext(conn)
 context.run(stmts:_*)
 val results: Seq[Person] = qry.run()
 ```
