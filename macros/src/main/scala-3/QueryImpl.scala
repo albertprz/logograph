@@ -154,13 +154,17 @@ private def buildDelete[T <: DbTable] (whereTree: Option[Expr[T => Where]] = Non
                         params      = ${Expr(params.asInstanceOf[Map[String, Any]])}) }
 
 
-private def emitMessage (clause: SQLClause) (using Quotes) =
+private def emitMessage (clause: SQLExpressionClause) (using Quotes) =
 
   import quotes.reflect.*
 
   val compilationMessage = s"\n${clause.sql}\n\n\n"
 
   report.info(compilationMessage)
+
+  SQLExpressionClause.getValidationErrors(clause)
+                     .headOption
+                     .foreach(err => report.error(err.message))
 
 
 private def getClassName[T: Type] (using Quotes) =
@@ -197,9 +201,9 @@ private def extractTypeInfo[T: Type] (using Quotes) =
 
 
   report.error(s"""Logograph Compilation Error:
-                Case classes used in queries must be defined at the top-level within a package scope.
-                Case class '${nestedCaseClass.get}' defined within the scope of an object or class is not supported."""
-              +"\n\n")
+                   Case classes used in queries must be defined at the top-level within a package scope.
+                   Case class '${nestedCaseClass.get}' defined within the scope of an object or class is not supported."""
+                    +"\n\n")
 
 
   TypeInfo(fullClassName, className, elemNames, elemTypes)

@@ -1,12 +1,12 @@
 package com.albertprz.logograph
 
-import com.albertprz.logograph.core.{SQLClause, Operator}
+import com.albertprz.logograph.utils.Error.SQLError
+import com.albertprz.logograph.core.{SQLExpressionClause, Operator}
 import com.albertprz.logograph.config.LogographConfig
 
 
 trait SQLStatement:
 
-  def validate: Unit
   def sql: String
   def paramList: List[?]
   def run [F[+_]] () (using LogographContext[F]): F[Any]

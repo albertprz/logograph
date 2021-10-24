@@ -102,11 +102,15 @@ class QueryImpl(val c: blackbox.Context) {
                                                    params = ${params.asInstanceOf[Map[String, Tree]]})""")
   }
 
-  private def emitMessage(clause: SQLClause) = {
+  private def emitMessage(clause: SQLExpressionClause) = {
 
     val compilationMessage = s"\n${clause.sql}\n\n\n".stripMargin
 
-      c.info(c.enclosingPosition, compilationMessage, false)
+    c.info(c.enclosingPosition, compilationMessage, false)
+
+    SQLExpressionClause.getValidationErrors(clause)
+                        .headOption
+                        .foreach(err => c.error(c.enclosingPosition, err.message))
   }
 
 

@@ -10,8 +10,6 @@ case class DeleteStatement [T <: DbTable]  (sqlTemplate: String,
 
   lazy val (sql, paramList) = DeleteStatement.generate(this)
 
-  lazy val validate = {}
-
   def run [F[+_]] () (using context: LogographContext[F]) =
     context.run(this)
 

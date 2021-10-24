@@ -22,7 +22,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     init(updateTree, typeName)
 
     val mapArgs = findMapArgs(updateTree)
-    val setMap = mapArgs.map { case (key, value) => (getField(key).get, getExpression(value).get)  }
+    val setMap = mapArgs.map { case (key, value) => (getField(key).get, getSQLExpression(value).get)  }
                         .toMap
 
     val table = Table(splitTupledTypeTag(typeName).head)
@@ -30,7 +30,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     val whereClause = getWhereClause(updateTree)
 
     val updateClause = UpdateClause(table, setClause, whereClause)
-    val params = ExpressionClause.findParameters(updateClause)
+    val params = SQLExpressionClause.findParameters(updateClause)
 
     (updateClause, params)
   }
@@ -45,7 +45,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     val table = Table(splitTupledTypeTag(typeName).head)
 
     val deleteClause = DeleteClause(table, whereClause)
-    val params = ExpressionClause.findParameters(deleteClause)
+    val params = SQLExpressionClause.findParameters(deleteClause)
 
     (deleteClause, params)
   }
@@ -63,7 +63,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
     val fromClause = getFromClause(tree, joinClauses)
 
     val queryClause = QueryClause (selectClause, fromClause, joinClauses, whereClause, orderByClause)
-    val params = ExpressionClause.findParameters(queryClause)
+    val params = SQLExpressionClause.findParameters(queryClause)
 
     (queryClause, params, tableAliasMap.values.toList)
   }
@@ -85,10 +85,10 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
   private def getSelectClause (tree: Tree, columnAliases: List[String], selectTableName: String) = {
 
     val args = findTypedCtorArgs(tree, "Select").flatten
-                  .flatMap(getExpression)
+                  .flatMap(getSQLExpression)
 
     val distinctArgs =  findTypedCtorArgs(tree, "SelectDistinct").flatten
-                           .flatMap(getExpression)
+                           .flatMap(getSQLExpression)
 
     val allArgs =  findCtorArgs(tree, "SelectAll").flatten
                       .flatMap(getTableAlias)
@@ -109,7 +109,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
   private def getWhereClause (tree: Tree) = {
 
     val args = findCtorArgs(tree, "Where").flatten
-                  .flatMap(getExpression)
+                  .flatMap(getSQLExpression)
 
     if (args.nonEmpty)  Some(WhereClause(args))
     else                None
@@ -118,7 +118,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
   private def getOrderByClause (tree: Tree) = {
 
     val args = findCtorArgs (tree, "OrderBy").flatten
-                  .flatMap(getExpression)
+                  .flatMap(getSQLExpression)
 
     if (args.nonEmpty)  Some(OrderByClause(args))
     else                None
@@ -144,7 +144,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
     val args = for { (joinType, argLists) <- argListsMap
                       argList <- argLists.grouped(2)}
-      yield (joinType, getTableAlias(argList(0).head).get, argList(1) flatMap getExpression)
+      yield (joinType, getTableAlias(argList(0).head).get, argList(1) flatMap getSQLExpression)
 
     args.map { case (joinType, tableAlias, exps) =>
         BaseJoinClause (joinType) (config) (tableAliasMap(tableAlias), tableAlias, exps)
@@ -152,7 +152,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
   }
 
 
-  private def getExpression(tree: Tree): Option[Expression] = {
+  private def getSQLExpression(tree: Tree): Option[SQLExpression] = {
 
     val expressions = List (getField(tree), getOperation(tree), getLiteral(tree),
                                                 getIdentity(tree))
@@ -181,7 +181,7 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
 
 
     for ((operator, operands) <- op)
-      yield Operation(operator.decodedName.toString, operands.flatMap(getExpression))
+      yield Operation(operator.decodedName.toString, operands.flatMap(getSQLExpression))
   }
 
   private def getField(tree: Tree) = tree match {
@@ -208,8 +208,12 @@ class QueryExtractor [C <: blackbox.Context] (val c: C) {
       Some(LiteralVal(literaltoSql(value)))
 
     case q"scala.`package`.List.apply[$_](..$values)" if values.forall(getLiteral(_).isDefined) =>
-      Some(LiteralVal(values.flatMap(getLiteral(_).map(_.value))
-                            .mkString("(", ", ", ")")))
+
+      val list = values.flatMap(getLiteral(_).map(_.sql))
+                       .mkString(", ")
+                       .wrapParens()
+
+      Some(LiteralVal(Right(list)))
 
     case _ => None
   }

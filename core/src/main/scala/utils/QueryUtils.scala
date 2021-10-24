@@ -1,5 +1,7 @@
 package com.albertprz.logograph.utils
 
+import Error.{SQLError, InvalidLiteralType}
+
 
 object QueryUtils:
 
@@ -11,15 +13,12 @@ object QueryUtils:
               .map(_.split('.').last)
               .toList
 
-  def literaltoSql (literal: Any): String =
+  def literaltoSql (literal: Any): Either[SQLError, String] =
 
     literal match
-      case str: String   => s"'${str.replace("'", "''")}'"
-      case num: Number   => num.toString
-      case bool: Boolean => if bool then "1" else "0"
-      case list: List[?]   => list.map(literaltoSql)
-                                  .mkString("(", ", ", ")")
-      case other: Any    => throw new Exception(s"""|Unknown types cannot be used in queries
-                                                    |for constant or runtime parameter values:
-                                                    |Type: ${literal.getClass.getSimpleName}
-                                                    |Value: $literal""".stripMargin)
+      case str: String   => Right (s"'${str.replace("'", "''")}'")
+      case num: Number   => Right (num.toString)
+      case bool: Boolean => Right (if bool then "1" else "0")
+      case list: List[?] => Right (list.map(literaltoSql)
+                                       .mkString("(", ", ", ")"))
+      case other: Any    => Left (InvalidLiteralType(other))

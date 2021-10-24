@@ -5,19 +5,19 @@ import com.albertprz.logograph.utils
 import utils.{FileUtils, Error, CaseConverter, StringCase}
 import core.SQLEngine
 import StringCase.CamelCase
-import Error.InvalidLogographConfig
+import Error.InvalidConfig
 
 import pureconfig.{ConfigReader, ConfigCursor, ReadsMissingKeys, ConfigSource}
 import pureconfig.generic.ProductHint
 
 
 case class LogographConfig (engine:                Option[SQLEngine]                        = None,
-                         tableCaseConverter:    Option[CaseConverter]                    = None,
-                         columnCaseConverter:   Option[CaseConverter]                    = None,
-                         operatorCaseConverter: Option[CaseConverter]                    = None,
-                         tableConverter:        Option[Map[String, String]]              = None,
-                         columnConverter:       Option[Map[String, Map[String, String]]] = None,
-                         operatorConverter:     Option[Map[String, String]]              = None)
+                            tableCaseConverter:    Option[CaseConverter]                    = None,
+                            columnCaseConverter:   Option[CaseConverter]                    = None,
+                            operatorCaseConverter: Option[CaseConverter]                    = None,
+                            tableConverter:        Option[Map[String, String]]              = None,
+                            columnConverter:       Option[Map[String, Map[String, String]]] = None,
+                            operatorConverter:     Option[Map[String, String]]              = None)
 
 
 object LogographConfig:
@@ -29,7 +29,7 @@ object LogographConfig:
   val get = FileUtils.getFile(configFileName)
                           .map(file => ConfigSource.file(file)
                                                     .load[LogographConfig]
-                                                    .getOrElse(throw new InvalidLogographConfig))
+                                                    .getOrElse(throw new InvalidConfig))
                           .getOrElse(LogographConfig())
 
 object Implicits:

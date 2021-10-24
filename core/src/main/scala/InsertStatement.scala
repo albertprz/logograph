@@ -13,8 +13,6 @@ case class InsertStatement [T <: DbTable] (data: Either[Seq[T], SelectStatement[
 
   lazy val (sql, paramList) = InsertStatement.generate(this)
 
-  lazy val validate = {}
-
   def run [F[+_]] () (using context: LogographContext[F]) =
     context.run(this)
 

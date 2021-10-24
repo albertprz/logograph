@@ -11,6 +11,7 @@ import cats.effect.{Sync, Resource}
 import com.albertprz.logograph.config.LogographConfig
 import utils.TypeInfo
 import utils.StringUtils.*
+import utils.Error.{InvalidParameterType, InvalidQueryResultType}
 import java.lang.reflect.Method
 
 
@@ -41,7 +42,7 @@ class LogographContext [F[_] : Sync : Monad] (conn: Connection):
                                 .use { stmt => Sync[F].blocking { stmt.executeUpdate() } }
 
     preparedStmts.fold (Sync[F].pure(0)) { (acc, curr) => acc *> curr } *>
-    Sync[F].blocking { conn.commit() }
+      Sync[F].blocking { conn.commit() }
 
   private def prepareStatement (querySql: String, paramList: List[?]) =
     Resource.make { Sync[F].blocking { conn.prepareStatement(querySql) } }
@@ -79,10 +80,7 @@ private object LogographContext:
         case dec: BigDecimal => stmt.setBigDecimal(i + 1, dec)
         case date: Date      => stmt.setDate(i + 1, date)
         case time: Time      => stmt.setTime(i + 1, time)
-        case other @ _      => throw new Exception("Unknown types cannot be used in queries " +
-                                                    "for constant or runtime parameter values: \n" +
-                                                    s"""|Type: ${other.getClass.getName()}
-                                                        |Value: $other""".stripMargin)
+        case other @ _       => throw InvalidParameterType(other)
     stmt
 
   def getCtorArgs (resultSet: ResultSet, paramTypes: List[String]) =
@@ -98,6 +96,4 @@ private object LogographContext:
           case "BigDecimal"     => resultSet.getBigDecimal(i + 1)
           case "date"           => resultSet.getDate(i + 1)
           case "time"           => resultSet.getTime(i + 1)
-          case other @ _        => throw new Exception("Unknown types cannot be returned " +
-                                                        "as query results: \n" +
-                                                        s"Type: ${other.getClass.getName()}".stripMargin)
+          case other @ _        => throw InvalidQueryResultType(other)

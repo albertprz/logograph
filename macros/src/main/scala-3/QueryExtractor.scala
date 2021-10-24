@@ -25,7 +25,7 @@ class QueryExtractor  (val quotes: Quotes):
     init(updateTree, typeName)
 
     val mapArgs = findMapArgs(updateTree)
-    val setMap = mapArgs.map { case (key, value) => (getField(key).get, getExpressions(value).head)  }
+    val setMap = mapArgs.map { case (key, value) => (getField(key).get, getSQLExpressions(value).head)  }
                         .toMap
 
     val table = Table(splitTupledTypeTag(typeName).head)
@@ -33,7 +33,7 @@ class QueryExtractor  (val quotes: Quotes):
     val whereClause = getWhereClause(updateTree)
 
     val updateClause = UpdateClause(table, setClause, whereClause)
-    val params = ExpressionClause.findParameters(updateClause)
+    val params = SQLExpressionClause.findParameters(updateClause)
 
     (updateClause, params)
 
@@ -47,7 +47,7 @@ class QueryExtractor  (val quotes: Quotes):
     val table = Table(splitTupledTypeTag(typeName).head)
 
     val deleteClause = DeleteClause(table, whereClause)
-    val params = ExpressionClause.findParameters(deleteClause)
+    val params = SQLExpressionClause.findParameters(deleteClause)
 
     (deleteClause, params)
 
@@ -65,7 +65,7 @@ class QueryExtractor  (val quotes: Quotes):
     val fromClause = getFromClause(tree, joinClauses)
 
     val queryClause = QueryClause (selectClause, fromClause, joinClauses, whereClause, orderByClause)
-    val params = ExpressionClause.findParameters(queryClause)
+    val params = SQLExpressionClause.findParameters(queryClause)
 
     (queryClause, params, tableAliasMap.values.toList)
 
@@ -87,10 +87,10 @@ class QueryExtractor  (val quotes: Quotes):
   private def getSelectClause (tree: Tree, columnAliases: List[String], selectTableName: String) =
 
     val args = findTypedCtorArgs(tree, "Select").flatten
-                  .flatMap(getExpressions)
+                  .flatMap(getSQLExpressions)
 
     val distinctArgs =  findTypedCtorArgs(tree, "SelectDistinct").flatten
-                           .flatMap(getExpressions)
+                           .flatMap(getSQLExpressions)
 
     val allArgs =  findCtorArgs(tree, "SelectAll").flatten
                       .flatMap(getTableAlias)
@@ -111,7 +111,7 @@ class QueryExtractor  (val quotes: Quotes):
   private def getWhereClause (tree: Tree) =
 
     val args = findCtorArgs (tree, "Where").flatten
-                  .flatMap(getExpressions)
+                  .flatMap(getSQLExpressions)
 
     if args.nonEmpty then  Some(WhereClause(args))
     else                   None
@@ -120,7 +120,7 @@ class QueryExtractor  (val quotes: Quotes):
   private def getOrderByClause (tree: Tree) =
 
     val args = findCtorArgs (tree, "OrderBy").flatten
-                  .flatMap(getExpressions)
+                  .flatMap(getSQLExpressions)
 
 
     if args.nonEmpty then  Some(OrderByClause(args))
@@ -148,7 +148,7 @@ class QueryExtractor  (val quotes: Quotes):
 
     val args = for  (joinType, argLists) <- argListsMap
                       argList <- argLists.grouped(3).map(_.dropRight(1))
-      yield (joinType, getTableAlias(argList(0).head).get, argList(1) flatMap getExpressions)
+      yield (joinType, getTableAlias(argList(0).head).get, argList(1) flatMap getSQLExpressions)
 
 
     args.map { case (joinType, tableAlias, exps) =>
@@ -156,7 +156,7 @@ class QueryExtractor  (val quotes: Quotes):
      }.toList
 
 
-  private def getExpressions(tree: Tree): List[Expression] =
+  private def getSQLExpressions(tree: Tree): List[SQLExpression] =
 
 
     val exprTrees = tree match
@@ -185,7 +185,7 @@ class QueryExtractor  (val quotes: Quotes):
 
 
     for (operator, operands) <- op
-      yield Operation(operator, operands.flatMap(getExpressions))
+      yield Operation(operator, operands.flatMap(getSQLExpressions))
 
 
   private def getField(tree: Tree) = tree match
@@ -217,11 +217,11 @@ class QueryExtractor  (val quotes: Quotes):
     case Apply(TypeApply(Select(Ident(id), _), _), List(block))  if id.toString.contains("List") =>
 
        val list = getSeqLiteralElems(block.asInstanceOf[Typed].expr)
-                      .flatMap(getLiteral(_).map(_.value))
+                      .flatMap(getLiteral(_).map(_.sql))
                       .mkString(", ")
                       .wrapParens()
 
-       Some(LiteralVal(list))
+       Some(LiteralVal(Right(list)))
 
     case _ => None
 

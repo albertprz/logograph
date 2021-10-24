@@ -19,8 +19,6 @@ case class SelectStatement [T <: DbDataSet] (sqlTemplate: String,
 
   lazy val (sql, paramList) = SelectStatement.generate(this)
 
-  lazy val validate = {}
-
   def run [F[+_]] () (using context: LogographContext[F]): F[List[T]] =
     context.run(this)
 
@@ -84,8 +82,6 @@ case object SelectStatement:
 
 
   private def generate [T <: DbDataSet] (select: SelectStatement[?]) =
-
-    select.validate
 
     val queries = buildTree(select.asInstanceOf[SelectStatement[DbDataSet]]) (_.subQueries)
       .foldLeftWithIndex(Seq.empty[SelectStatement[DbDataSet]]) {
