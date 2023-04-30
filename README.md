@@ -114,9 +114,13 @@ The API also exposes **Insert**, **Update** & **Delete** statements, which have 
 
 ```scala
 val stmts = Seq(insert(john),
-                insert(johnAddress), update[Person] (p => (Map(p.name -> "Mark",
+
+                insert(johnAddress),
+
+                update[Person] (p => (Map(p.name -> "Mark",
                                           p.age  -> 50),
                                       Where(p.age >= 10))),
+
                 delete[Address] (a => Where(a.street <> "Baker Street"))
 ```
 
