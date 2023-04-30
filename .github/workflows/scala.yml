@@ -21,4 +21,4 @@ jobs:
     - name: Run tests for Scala 3
       run: sbt test
     - name: Run tests for Scala 2.13
-      run: sbt "++2.13.6; test"
+      run: sbt "++2.13.8; test"
