@@ -6,7 +6,7 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 Test / parallelExecution := false
 
 
-val scala3Ver = "3.2.0"
+val scala3Ver = "3.0.0"
 val scala2Ver = "2.13.8"
 
 
