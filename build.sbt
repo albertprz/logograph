@@ -6,7 +6,7 @@ Global / onChangedBuildSource := ReloadOnSourceChanges
 Test / parallelExecution := false
 
 
-val scala3Ver = "3.0.0"
+val scala3Ver = "3.3.4"
 val scala2Ver = "2.13.8"
 
 
@@ -90,4 +90,4 @@ val pureconfig = Seq("com.github.pureconfig" %% "pureconfig" % "0.16.0")
 val scalaTest = Seq("org.scalatest" %% "scalatest" % "3.2.9",
                     "org.scalactic" %% "scalactic" % "3.2.9")
 
-val sqlite = Seq("org.xerial" % "sqlite-jdbc" % "3.14.2")
+val sqlite = Seq("org.xerial" % "sqlite-jdbc" % "3.47.1.0")

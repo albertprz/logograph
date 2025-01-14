@@ -80,11 +80,12 @@ case class Table(tableName: String) (using cfg: LogographConfig)
 case class Column(columnName: String, tableName: String) (using cfg: LogographConfig)
     extends SQLClause:
 
-  lazy val sql = if columnName != "*" then columnName.convert(cfg.columnConverter
-                                                              .map(_.getOrElse(tableName, Map.empty)))
-                                                     .convertCase(cfg.columnCaseConverter)
-                                                     .wrapBrackets()
-               else columnName
+  lazy val sql = if columnName != "*"
+    then columnName
+          .convert(cfg.columnConverter.map(_.getOrElse(tableName, Map.empty)))
+          .convertCase(cfg.columnCaseConverter)
+          .wrapBrackets()
+    else columnName
 
 case class Operator(operatorName: String) (using cfg: LogographConfig)
     extends SQLClause:
@@ -99,14 +100,13 @@ private object SQLExpression:
     expr match
       case fld: Field    => if isAgg then List(fld) else List.empty
       case op: Operation => op.operands
-                              .flatMap(findAggFields(_, isAgg || SQLOperations.aggOps.contains(op.operator)))
+        .flatMap(findAggFields(_, isAgg || SQLOperations.aggOps.contains(op.operator)))
       case _ => List.empty
 
   def findFields (expr: SQLExpression): List[Field] =
     expr match
       case fld: Field    => List(fld)
-      case op: Operation => op.operands
-                              .flatMap(findFields)
+      case op: Operation => op.operands.flatMap(findFields)
       case _ => List.empty
 
 private object Predicate:
