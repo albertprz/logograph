@@ -7,7 +7,7 @@ Test / parallelExecution := false
 
 
 val scala3Ver = "3.3.4"
-val scala2Ver = "2.13.8"
+val scala2Ver = "2.13.14"
 
 
 lazy val commonSettings = Seq(
