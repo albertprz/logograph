@@ -1,7 +1,8 @@
 package com.albertprz.logograph.core
 
-import com.albertprz.logograph.utils.StringUtils.*
+import com.albertprz.logograph.utils.StringUtils._
 import com.albertprz.logograph.utils.Error.CaseNotAllowed
+
 
 enum SQLEngine:
   case PostgreSQL, SQLServer, Oracle, SQLite, MySQL
@@ -15,11 +16,4 @@ object SQLEngine:
       case "oracle"     => Right(Oracle)
       case "sqlite"     => Right(SQLite)
       case "mysql"      => Right(MySQL)
-      case _            =>
-        Left(
-          CaseNotAllowed(
-            engineName,
-            SQLEngine.toString(),
-            SQLEngine.values.toSet
-          )
-        )
+      case _            => Left(CaseNotAllowed(engineName, SQLEngine.toString(), SQLEngine.values.toSet))
