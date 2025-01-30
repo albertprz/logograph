@@ -4,19 +4,19 @@ import java.sql.DriverManager
 import com.albertprz.logograph._
 import cats.effect.IO
 
-
 object Database {
 
   implicit val context: LogographContext[IO] = Connection.context
 
-  def setup(): IO[Unit] = context.run (insert(SeedData.people),
-                                       insert(SeedData.addresses),
-                                       insert(SeedData.telephones))
+  def setup(): IO[Unit] =
+    context.run(
+      insert(SeedData.people),
+      insert(SeedData.addresses),
+      insert(SeedData.telephones)
+    )
 
-
-  def cleanup(): IO[Unit] = context.run (deleteAll[Address],
-                                         deleteAll[Telephone],
-                                         deleteAll[Person])
+  def cleanup(): IO[Unit] =
+    context.run(deleteAll[Address], deleteAll[Telephone], deleteAll[Person])
 
 }
 
@@ -32,15 +32,17 @@ private object Connection {
 
   private val init = {
 
-    val initStatementsSql = Seq( """CREATE TABLE person (
+    val initStatementsSql =
+      Seq(
+        """CREATE TABLE person (
                                     name text,
                                     age int,
                                     is_employer int,
                                     address_id int,
                                     phone_id int)""",
-
-                                  "CREATE TABLE address (id int, street text)",
-                                  "CREATE TABLE phone (id int, number string)")
+        "CREATE TABLE address (id int, street text)",
+        "CREATE TABLE phone (id int, number string)"
+      )
 
     val stmt = connection.createStatement()
 
