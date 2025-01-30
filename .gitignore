@@ -10,7 +10,7 @@ build/
 .bloop/
 .metals/
 project/project/
-project/build.properties
+build.properties
 
 #vscode
 .vscode/
