@@ -13,6 +13,7 @@ val scala2Ver = "2.13.14"
 lazy val commonSettings = Seq(
 
   scalaVersion := scala3Ver,
+  scalafmtOnCompile = true,
 
   scalacOptions ++= (CrossVersion.partialVersion(scalaVersion.value) match {
     case Some((2, 13)) => Seq("-Ytasty-reader")
