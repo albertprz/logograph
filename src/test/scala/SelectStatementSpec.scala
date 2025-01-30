@@ -2,38 +2,34 @@ package test
 
 import org.scalatest.funspec.AnyFunSpec
 
-import com.albertprz.logograph._
+import com.albertprz.logograph.*
 
-
-class SelectStatementSpec extends AnyFunSpec {
+class SelectStatementSpec extends AnyFunSpec:
 
   describe("A Select Statement") {
-
 
     it("can serialize simple queries") {
 
       val simpleQuery = selectAll[Person]
 
-      val simpleQuerySql =
-        """SELECT      p.*
+      val simpleQuerySql = """SELECT      p.*
            FROM        [person] AS p"""
 
-
-      assert (simpleQuery.sql.trimLines() == simpleQuerySql.trimLines())
+      assert(simpleQuery.sql.trimLines() == simpleQuerySql.trimLines())
     }
-
 
     it("can serialize complex queries") {
 
-      val complexQuery = from[(Person, Address, Telephone)].select { case (p, a, t) =>
-        Query(
-          Select          (Result (p.name, p.age, a.street, 72162183)),
-          Where           (a.street like "%Baker St%",
-                            coalesce (p.isEmployer, false)),
-          OrderBy         (desc (p.age)),
-          InnerJoin (t)   (t.id === p.telephoneId),
-          LeftJoin  (a)   (a.id === p.addressId))
-      }
+      val complexQuery =
+        from[(Person, Address, Telephone)].select { case (p, a, t) =>
+          Query(
+            Select(Result(p.name, p.age, a.street, 72162183)),
+            Where(a.street.like("%Baker St%"), coalesce(p.isEmployer, false)),
+            OrderBy(desc(p.age)),
+            InnerJoin(t)(t.id === p.telephoneId),
+            LeftJoin(a)(a.id === p.addressId)
+          )
+        }
 
       val complexQuerySql =
         """SELECT      p.[name] AS [name], p.[age] AS [age], a.[street] AS [street], 72162183 AS [phone_number]
@@ -44,68 +40,64 @@ class SelectStatementSpec extends AnyFunSpec {
                        (COALESCE (p.[is_employer], 0))
            ORDER BY    p.[age] DESC"""
 
-
-      assert (complexQuery.sql.trimLines() == complexQuerySql.trimLines())
+      assert(complexQuery.sql.trimLines() == complexQuerySql.trimLines())
     }
-
 
     it("can serialize queries including literal values") {
 
-      val literalValsQuery = from[Address].select { a =>
-        Query(
-          SelectAll (a),
-          Where (a.street in List("Carnaby St", "Downing St"))
-        )
-      }
+      val literalValsQuery =
+        from[Address].select { a =>
+          Query(
+            SelectAll(a),
+            Where(a.street in List("Carnaby St", "Downing St"))
+          )
+        }
 
-      val literalValsQuerySql =
-        """SELECT      a.*
+      val literalValsQuerySql = """SELECT      a.*
            FROM        [address] AS a
            WHERE       a.[street] IN ('Carnaby St', 'Downing St')"""
 
-
-      assert (literalValsQuery.sql.trimLines() == literalValsQuerySql.trimLines())
+      assert(
+        literalValsQuery.sql.trimLines() == literalValsQuerySql.trimLines()
+      )
     }
 
     it("can serialize queries including runtime values") {
 
       val allowedPhoneNumbers = List(658976534L, 870127465L)
 
-      val runtimeValsQuery = from[Telephone].select {t =>
-        Query(
-          SelectAll (t),
-          Where (t.number in allowedPhoneNumbers)
-        )
-      }
+      val runtimeValsQuery =
+        from[Telephone].select { t =>
+          Query(
+            SelectAll(t),
+            Where(t.number in allowedPhoneNumbers)
+          )
+        }
 
-      val runtimeValsQuerySql =
-        """SELECT      t.*
+      val runtimeValsQuerySql = """SELECT      t.*
            FROM        [phone] AS t
            WHERE       t.[number] IN (?, ?)"""
 
+      assert(
+        runtimeValsQuery.sql.trimLines() == runtimeValsQuerySql.trimLines()
+      )
 
-      assert (runtimeValsQuery.sql.trimLines() == runtimeValsQuerySql.trimLines())
-
-      assert (runtimeValsQuery.paramList == allowedPhoneNumbers)
+      assert(runtimeValsQuery.paramList == allowedPhoneNumbers)
     }
-
 
     it("can serialize queries using set operations") {
 
-      val personsQuery1 = from[Person].select { p =>
-        Query(
-          SelectDistinctAll (p),
-          Where (p.age < 38))
-      }
+      val personsQuery1 =
+        from[Person].select { p =>
+          Query(SelectDistinctAll(p), Where(p.age < 38))
+        }
 
-      val personsQuery2 = from[Person].select { p =>
-        Query(
-          SelectDistinctAll (p),
-          Where (p.name <> "George"))
-      }
+      val personsQuery2 =
+        from[Person].select { p =>
+          Query(SelectDistinctAll(p), Where(p.name <> "George"))
+        }
 
-      val unionQuerySql =
-        """SELECT      DISTINCT p.*
+      val unionQuerySql = """SELECT      DISTINCT p.*
            FROM        [person] AS p
            WHERE       p.[age] < 38
 
@@ -115,8 +107,7 @@ class SelectStatementSpec extends AnyFunSpec {
            FROM        [person] AS p
            WHERE       p.[name] <> 'George'"""
 
-      val intersectQuerySql =
-       """SELECT      DISTINCT p.*
+      val intersectQuerySql = """SELECT      DISTINCT p.*
           FROM        [person] AS p
           WHERE       p.[age] < 38
 
@@ -126,55 +117,64 @@ class SelectStatementSpec extends AnyFunSpec {
           FROM        [person] AS p
           WHERE       p.[name] <> 'George'"""
 
+      assert(
+        personsQuery1.union(personsQuery2).sql.trimLines() == unionQuerySql
+          .trimLines()
+      )
 
-      assert ((personsQuery1 union personsQuery2).sql.trimLines() == unionQuerySql.trimLines())
-
-      assert ((personsQuery1 intersect personsQuery2).sql.trimLines() == intersectQuerySql.trimLines())
+      assert(
+        personsQuery1
+          .intersect(personsQuery2)
+          .sql
+          .trimLines() == intersectQuerySql.trimLines()
+      )
     }
-
 
     it("can serialize deeply nested queries into nested CTEs") {
 
-      val personsQuery = from[Person].select { p =>
-        Query(
-          SelectAll (p),
-          Where (p.name === "Mark" or p.name === "John",
-                 p.age > 25))
-      }
+      val personsQuery =
+        from[Person].select { p =>
+          Query(
+            SelectAll(p),
+            Where((p.name === "Mark").or(p.name === "John"), p.age > 25)
+          )
+        }
 
-      val adressesQuery = from[Address].select { a =>
-        Query(
-          SelectAll (a),
-          Where (a.street like "%Baker St%"))
-      }
+      val adressesQuery =
+        from[Address].select { a =>
+          Query(SelectAll(a), Where(a.street.like("%Baker St%")))
+        }
 
-      val telephoneQuery = from[Telephone].select { t =>
-        Query(
-          SelectAll (t),
-          Where (t.number <> 676874981))
-      }
+      val telephoneQuery =
+        from[Telephone].select { t =>
+          Query(SelectAll(t), Where(t.number <> 676874981))
+        }
 
-      val innerNestedQuery1 = from(personsQuery, adressesQuery).select { case (p, a) =>
-        Query(
-          Select        (InnerResult1(p.name, max(p.age), a.street))
-        )
-      }
+      val innerNestedQuery1 =
+        from(personsQuery, adressesQuery).select { case (p, a) =>
+          Query(
+            Select(InnerResult1(p.name, max(p.age), a.street))
+          )
+        }
 
-      val innerNestedQuery2 = from(personsQuery, telephoneQuery).select { case (p, t) =>
-        Query(
-          Select        (InnerResult2(p.name, t.number)),
-        )
-      }
+      val innerNestedQuery2 =
+        from(personsQuery, telephoneQuery).select { case (p, t) =>
+          Query(
+            Select(InnerResult2(p.name, t.number))
+          )
+        }
 
-      val deeplyNestedQuery = from(innerNestedQuery1, innerNestedQuery2).select { case (a, b) =>
-        Query(
-          Select          (Result (a.name, a.age, a.street, b.telephoneNumber)),
-          OrderBy         (asc (a.name)),
-          InnerJoin (b)    (b.name === a.name))
-      }
+      val deeplyNestedQuery =
+        from(innerNestedQuery1, innerNestedQuery2).select { case (a, b) =>
+          Query(
+            Select(Result(a.name, a.age, a.street, b.telephoneNumber)),
+            OrderBy(asc(a.name)),
+            InnerJoin(b)(b.name === a.name)
+          )
+        }
 
       val deeplyNestedQuerySql =
-       """WITH q1 AS
+        """WITH q1 AS
           (
             SELECT      p.*
             FROM        [person] AS p
@@ -217,8 +217,8 @@ class SelectStatementSpec extends AnyFunSpec {
           INNER JOIN  [q6] AS b ON b.[name] = a.[name]
           ORDER BY    a.[name] ASC"""
 
-
-      assert (deeplyNestedQuery.sql.trimLines() == deeplyNestedQuerySql.trimLines())
+      assert(
+        deeplyNestedQuery.sql.trimLines() == deeplyNestedQuerySql.trimLines()
+      )
     }
   }
-}

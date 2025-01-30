@@ -2,8 +2,12 @@ package com.albertprz.logograph.utils
 
 import scala.quoted.*
 
-case class TypeInfo (fullClassName: String, className: String, elemNames: List[String], elemTypes: List[String])
-
+case class TypeInfo(
+    fullClassName: String,
+    className: String,
+    elemNames: List[String],
+    elemTypes: List[String]
+)
 
 object TypeInfo:
 
